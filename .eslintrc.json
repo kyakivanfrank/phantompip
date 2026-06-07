@@ -1,0 +1,20 @@
+{
+  "extends": ["next/core-web-vitals"],
+  "rules": {
+    "react/no-unescaped-entities": "off",
+    "@next/next/no-img-element": "off",
+    "no-console": [
+      "warn",
+      {
+        "allow": ["warn", "error"]
+      }
+    ],
+    "no-unused-vars": [
+      "warn",
+      {
+        "argsIgnorePattern": "^_"
+      }
+    ]
+  },
+  "ignorePatterns": [".next", "out", "build"]
+}
