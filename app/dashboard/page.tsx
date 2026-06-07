@@ -1,97 +1,232 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plug, Sparkles, Shield, Activity } from 'lucide-react';
+import Link from 'next/link';
+import { Calendar, TrendingUp, CheckCircle, Clock, Zap } from 'lucide-react';
 
 export default function DashboardPage() {
+  const [userData, setUserData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const meRes = await fetch('/api/auth/me');
+      const meData = await meRes.json();
+      setUserData(meData.user);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Failed to fetch data:', error);
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin">
+          <div className="h-12 w-12 rounded-full border-4 border-cyan-500 border-t-transparent"></div>
+        </div>
+      </div>
+    );
+  }
+
+  const daysRemaining = userData
+    ? Math.ceil((userData.subscriptionExpiresAt - Date.now()) / (24 * 60 * 60 * 1000))
+    : 0;
+
+  const statusColor =
+    userData?.accountStatus === 'Active'
+      ? 'text-green-400'
+      : userData?.accountStatus === 'Pending Approval'
+        ? 'text-yellow-400'
+        : 'text-red-400';
+
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-4 md:space-y-8 md:p-8">
-      {/* Portfolio section */}
-      <motion.section
+    <div className="space-y-6 p-4 md:p-8">
+      {/* Header */}
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="relative overflow-hidden rounded-3xl border border-white/[0.1] bg-dark-secondary/40 p-6 backdrop-blur-xl md:p-10"
+        className="space-y-2"
       >
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 -z-10 opacity-70"
-          style={{
-            background:
-              'radial-gradient(60% 80% at 78.5687% 20%, oklch(0.72 0.16 255 / 0.19952), transparent 60%), radial-gradient(50% 70% at 21.6699% 89.7614%, oklch(0.65 0.22 300 / 0.17952), transparent 60%)',
-          }}
-        ></div>
-
-        {/* Status badge */}
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/[0.1] px-3 py-1 bg-dark-tertiary/50">
-            <span className="relative flex size-2">
-              <span className="absolute inline-flex size-full rounded-full opacity-60 bg-gray-400"></span>
-              <span className="relative inline-flex size-2 rounded-full bg-gray-400"></span>
-            </span>
-            <span className="text-[11px] font-medium text-gray-400">No MT5 account</span>
-          </span>
-        </div>
-
-        {/* Portfolio value */}
-        <p className="mt-6 text-xs uppercase tracking-[0.18em] text-gray-400">Total Portfolio</p>
-        <h1 className="mt-2 text-5xl font-semibold tracking-tight md:text-6xl">—</h1>
-
-        {/* Connect button */}
-        <div className="mt-6">
-          <a
-            href="/dashboard/mt5"
-            className="inline-flex h-11 items-center gap-2 rounded-full bg-cyan-500 px-5 text-sm font-medium text-white hover:opacity-90 transition-opacity"
-          >
-            <Plug className="size-4" />
-            Connect your MT5 account
-          </a>
-          <p className="mt-3 text-xs text-gray-400">
-            Your portfolio value comes directly from your connected trading account.
-          </p>
-        </div>
-      </motion.section>
-
-      {/* Configuration section */}
-      <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-        className="rounded-3xl border border-white/[0.1] bg-dark-secondary/40 p-5 backdrop-blur-xl md:p-8"
-      >
-        <div className="grid gap-3 sm:grid-cols-3">
-          {/* Strategy */}
-          <div className="rounded-2xl border border-white/[0.05] bg-dark-tertiary/30 p-4">
-            <div className="flex items-center gap-2 text-gray-400">
-              <Sparkles className="size-4" />
-              <span className="text-[10px] uppercase tracking-widest">Strategy</span>
-            </div>
-            <p className="mt-2 font-mono text-base text-white">—</p>
-          </div>
-
-          {/* Risk Level */}
-          <div className="rounded-2xl border border-white/[0.05] bg-dark-tertiary/30 p-4">
-            <div className="flex items-center gap-2 text-gray-400">
-              <Shield className="size-4" />
-              <span className="text-[10px] uppercase tracking-widest">Risk Level</span>
-            </div>
-            <p className="mt-2 font-mono text-base text-white">—</p>
-          </div>
-
-          {/* MT5 Account */}
-          <div className="rounded-2xl border border-white/[0.05] bg-dark-tertiary/30 p-4">
-            <div className="flex items-center gap-2 text-gray-400">
-              <Activity className="size-4" />
-              <span className="text-[10px] uppercase tracking-widest">MT5 Account</span>
-            </div>
-            <p className="mt-2 font-mono text-base text-white">Not connected</p>
-          </div>
-        </div>
-
-        <p className="mt-4 text-xs text-gray-400">
-          Bot configuration and trade history will appear here once the trading engine streams data for your account.
+        <h1 className="text-3xl font-semibold text-white">Welcome back, {userData?.fullName}</h1>
+        <p className="text-gray-400">
+          Manage your MT5 account and subscription below
         </p>
-      </motion.section>
+      </motion.div>
+
+      {/* Status Cards Grid */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
+      >
+        {/* Account Status */}
+        <div className="rounded-xl border border-white/[0.1] bg-dark-secondary/40 p-6 backdrop-blur-xl">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-widest text-gray-400">Account Status</p>
+              <p className={`mt-2 text-2xl font-bold ${statusColor}`}>
+                {userData?.accountStatus}
+              </p>
+            </div>
+            <CheckCircle className={`h-8 w-8 ${statusColor}`} />
+          </div>
+        </div>
+
+        {/* Days Remaining */}
+        <div className="rounded-xl border border-white/[0.1] bg-dark-secondary/40 p-6 backdrop-blur-xl">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-widest text-gray-400">Days Remaining</p>
+              <p className={`mt-2 text-2xl font-bold ${
+                daysRemaining > 7 ? 'text-green-400' : daysRemaining > 0 ? 'text-yellow-400' : 'text-red-400'
+              }`}>
+                {daysRemaining > 0 ? daysRemaining : 0}
+              </p>
+            </div>
+            <Calendar className={`h-8 w-8 ${
+              daysRemaining > 7 ? 'text-green-400' : daysRemaining > 0 ? 'text-yellow-400' : 'text-red-400'
+            }`} />
+          </div>
+        </div>
+
+        {/* MT5 Status */}
+        <div className="rounded-xl border border-white/[0.1] bg-dark-secondary/40 p-6 backdrop-blur-xl">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-widest text-gray-400">MT5 Account</p>
+              <p className={`mt-2 text-2xl font-bold ${userData?.mt5Connected ? 'text-green-400' : 'text-gray-400'}`}>
+                {userData?.mt5Connected ? 'Connected' : 'Not Connected'}
+              </p>
+            </div>
+            <Zap className={`h-8 w-8 ${userData?.mt5Connected ? 'text-green-400' : 'text-gray-400'}`} />
+          </div>
+        </div>
+
+        {/* Trading Style */}
+        <div className="rounded-xl border border-white/[0.1] bg-dark-secondary/40 p-6 backdrop-blur-xl">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-widest text-gray-400">Trading Style</p>
+              <p className="mt-2 text-2xl font-bold text-cyan-400">
+                {userData?.tradingStyle || 'Not set'}
+              </p>
+            </div>
+            <TrendingUp className="h-8 w-8 text-cyan-400" />
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Quick Actions */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="grid gap-4 md:grid-cols-2"
+      >
+        {/* Connect MT5 Card */}
+        {!userData?.mt5Connected ? (
+          <Link
+            href="/dashboard/mt5"
+            className="group rounded-xl border-2 border-dashed border-cyan-500/30 bg-cyan-500/5 p-6 transition-all hover:border-cyan-500/50 hover:bg-cyan-500/10"
+          >
+            <div className="flex items-center gap-4">
+              <Zap className="h-8 w-8 text-cyan-400" />
+              <div>
+                <h3 className="font-semibold text-white">Connect MT5 Account</h3>
+                <p className="text-sm text-gray-400">
+                  Link your MetaTrader 5 credentials to get started
+                </p>
+              </div>
+            </div>
+          </Link>
+        ) : (
+          <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-6">
+            <div className="flex items-center gap-4">
+              <CheckCircle className="h-8 w-8 text-green-400" />
+              <div>
+                <h3 className="font-semibold text-white">MT5 Connected</h3>
+                <p className="text-sm text-gray-400">
+                  Your trading account is active and ready
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Subscription Card */}
+        {userData?.accountStatus !== 'Active' ? (
+          <Link
+            href="/dashboard/subscription"
+            className="group rounded-xl border-2 border-dashed border-purple-500/30 bg-purple-500/5 p-6 transition-all hover:border-purple-500/50 hover:bg-purple-500/10"
+          >
+            <div className="flex items-center gap-4">
+              <Clock className="h-8 w-8 text-purple-400" />
+              <div>
+                <h3 className="font-semibold text-white">Activate Subscription</h3>
+                <p className="text-sm text-gray-400">
+                  Submit payment to activate your account
+                </p>
+              </div>
+            </div>
+          </Link>
+        ) : (
+          <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 p-6">
+            <div className="flex items-center gap-4">
+              <CheckCircle className="h-8 w-8 text-purple-400" />
+              <div>
+                <h3 className="font-semibold text-white">Subscription Active</h3>
+                <p className="text-sm text-gray-400">
+                  Your subscription is active until {new Date(userData?.subscriptionExpiresAt).toLocaleDateString()}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </motion.div>
+
+      {/* Info Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="rounded-xl border border-white/[0.1] bg-dark-secondary/40 p-6 backdrop-blur-xl"
+      >
+        <h3 className="font-semibold text-white mb-4">Getting Started</h3>
+        <ol className="space-y-3 text-sm text-gray-400">
+          <li className="flex gap-3">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cyan-500/20 text-cyan-400 font-medium">1</span>
+            <span>
+              <strong className="text-white">Connect your MT5 account</strong> - Go to the MT5 Account section and enter your credentials
+            </span>
+          </li>
+          <li className="flex gap-3">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cyan-500/20 text-cyan-400 font-medium">2</span>
+            <span>
+              <strong className="text-white">Submit your payment</strong> - Send your payment and submit a receipt in the Subscription section
+            </span>
+          </li>
+          <li className="flex gap-3">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cyan-500/20 text-cyan-400 font-medium">3</span>
+            <span>
+              <strong className="text-white">Wait for approval</strong> - Our admin will review and activate your account
+            </span>
+          </li>
+          <li className="flex gap-3">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cyan-500/20 text-cyan-400 font-medium">4</span>
+            <span>
+              <strong className="text-white">Start trading</strong> - Once approved, our algorithmic bot will start trading on your behalf
+            </span>
+          </li>
+        </ol>
+      </motion.div>
     </div>
   );
 }

@@ -3,24 +3,23 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { LogOut, Home, Plug, CreditCard, Settings, Menu, X } from 'lucide-react';
+import { LogOut, Users, CreditCard, Key, TrendingUp } from 'lucide-react';
 
-export default function DashboardLayout({
+export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    // Verify user access
+    // Verify admin access by fetching current user
     fetch('/api/auth/me')
       .then(res => res.json())
       .then(data => {
-        if (data.user?.isAdmin) {
-          router.push('/admin');
+        if (!data.user?.isAdmin) {
+          router.push('/dashboard');
         }
         setIsLoading(false);
       })
@@ -45,66 +44,50 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen flex-col md:flex-row bg-dark">
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        className="md:hidden fixed top-4 right-4 z-50 p-2 rounded-lg border border-white/[0.1] bg-dark-secondary/80 text-white"
-      >
-        {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-      </button>
-
+    <div className="flex min-h-screen bg-dark">
       {/* Sidebar */}
-      <aside
-        className={`${
-          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0 fixed md:relative w-64 h-screen border-r border-white/10 bg-dark-secondary/40 backdrop-blur-xl transition-transform duration-300 z-40`}
-      >
+      <aside className="w-64 border-r border-white/10 bg-dark-secondary/40 backdrop-blur-xl">
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="p-6 border-b border-white/10">
-            <Link href="/dashboard" className="flex items-center justify-center">
+            <Link href="/admin" className="flex items-center justify-center">
               <img src="/phantompip-logo.png" alt="Phantompip" className="h-10 w-auto" />
             </Link>
-            <p className="mt-2 text-center text-xs text-gray-400">Trading Platform</p>
+            <p className="mt-2 text-center text-xs text-gray-400">Admin Dashboard</p>
           </div>
 
           {/* Navigation */}
           <nav className="flex-1 space-y-2 p-4 overflow-y-auto">
             <Link
-              href="/dashboard"
-              onClick={() => setMobileMenuOpen(false)}
+              href="/admin"
               className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-gray-300 hover:bg-cyan-500/10 hover:text-cyan-400 transition-colors"
             >
-              <Home className="h-5 w-5" />
+              <TrendingUp className="h-5 w-5" />
               Dashboard
             </Link>
 
             <Link
-              href="/dashboard/mt5"
-              onClick={() => setMobileMenuOpen(false)}
+              href="/admin/users"
               className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-gray-300 hover:bg-cyan-500/10 hover:text-cyan-400 transition-colors"
             >
-              <Plug className="h-5 w-5" />
-              MT5 Account
+              <Users className="h-5 w-5" />
+              Users
             </Link>
 
             <Link
-              href="/dashboard/subscription"
-              onClick={() => setMobileMenuOpen(false)}
+              href="/admin/payments"
               className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-gray-300 hover:bg-cyan-500/10 hover:text-cyan-400 transition-colors"
             >
               <CreditCard className="h-5 w-5" />
-              Subscription
+              Payments
             </Link>
 
             <Link
-              href="/dashboard/settings"
-              onClick={() => setMobileMenuOpen(false)}
+              href="/admin/mt5-vault"
               className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-gray-300 hover:bg-cyan-500/10 hover:text-cyan-400 transition-colors"
             >
-              <Settings className="h-5 w-5" />
-              Settings
+              <Key className="h-5 w-5" />
+              MT5 Vault
             </Link>
           </nav>
 
@@ -120,14 +103,6 @@ export default function DashboardLayout({
           </div>
         </div>
       </aside>
-
-      {/* Overlay for mobile menu */}
-      {mobileMenuOpen && (
-        <div
-          className="md:hidden fixed inset-0 bg-black/50 z-30"
-          onClick={() => setMobileMenuOpen(false)}
-        />
-      )}
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto">

@@ -3,26 +3,56 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
 export default function SignupPage() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     email: '',
+    fullName: '',
     password: '',
     confirmPassword: '',
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    setError('');
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setTimeout(() => {
+    setError('');
+
+    try {
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          fullName: formData.fullName,
+          password: formData.password,
+          confirmPassword: formData.confirmPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Signup failed');
+        setIsLoading(false);
+        return;
+      }
+
+      // Success - redirect to dashboard
+      router.push('/dashboard');
+    } catch (err) {
+      setError('An error occurred during signup');
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -49,8 +79,29 @@ export default function SignupPage() {
           <h1 className="text-2xl font-semibold tracking-tight text-white">Join Phantompip</h1>
           <p className="mt-2 text-sm text-gray-400">Create your account to access professional AI trading</p>
 
+          {/* Error Message */}
+          {error && (
+            <div className="mt-4 rounded-md border border-red-500/30 bg-red-500/10 p-3">
+              <p className="text-xs text-red-400">{error}</p>
+            </div>
+          )}
+
           {/* Form */}
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+            {/* Full Name Input */}
+            <label className="block">
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-gray-400">Full Name</span>
+              <input
+                type="text"
+                name="fullName"
+                placeholder="John Doe"
+                value={formData.fullName}
+                onChange={handleChange}
+                required
+                className="mt-2 h-11 w-full rounded-md border border-white/[0.1] bg-dark-tertiary/50 px-3 text-sm text-white outline-none transition-colors placeholder:text-gray-500 focus:border-cyan-500 focus:bg-dark-tertiary"
+              />
+            </label>
+
             {/* Email Input */}
             <label className="block">
               <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-gray-400">Email</span>
@@ -60,6 +111,7 @@ export default function SignupPage() {
                 placeholder="you@trader.io"
                 value={formData.email}
                 onChange={handleChange}
+                required
                 className="mt-2 h-11 w-full rounded-md border border-white/[0.1] bg-dark-tertiary/50 px-3 text-sm text-white outline-none transition-colors placeholder:text-gray-500 focus:border-cyan-500 focus:bg-dark-tertiary"
               />
             </label>
@@ -73,6 +125,7 @@ export default function SignupPage() {
                 placeholder="••••••••"
                 value={formData.password}
                 onChange={handleChange}
+                required
                 className="mt-2 h-11 w-full rounded-md border border-white/[0.1] bg-dark-tertiary/50 px-3 text-sm text-white outline-none transition-colors placeholder:text-gray-500 focus:border-cyan-500 focus:bg-dark-tertiary"
               />
             </label>
@@ -86,6 +139,7 @@ export default function SignupPage() {
                 placeholder="••••••••"
                 value={formData.confirmPassword}
                 onChange={handleChange}
+                required
                 className="mt-2 h-11 w-full rounded-md border border-white/[0.1] bg-dark-tertiary/50 px-3 text-sm text-white outline-none transition-colors placeholder:text-gray-500 focus:border-cyan-500 focus:bg-dark-tertiary"
               />
             </label>
@@ -101,27 +155,13 @@ export default function SignupPage() {
               </div>
             </div>
 
-            {/* Terms Checkbox */}
-            <label className="flex items-center gap-2 text-xs">
-              <input
-                type="checkbox"
-                className="w-4 h-4 rounded border border-white/[0.1] bg-dark-tertiary/50 cursor-pointer"
-              />
-              <span className="text-gray-400">
-                I agree to the{' '}
-                <a href="#" className="text-cyan-400 hover:underline">
-                  Terms of Service
-                </a>
-              </span>
-            </label>
-
             {/* Submit Button */}
             <button
               type="submit"
               disabled={isLoading}
               className="h-11 w-full rounded-md bg-cyan-500 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50 mt-6"
             >
-              {isLoading ? 'Creating account...' : 'Continue to subscription'}
+              {isLoading ? 'Creating account...' : 'Sign Up'}
             </button>
           </form>
         </div>

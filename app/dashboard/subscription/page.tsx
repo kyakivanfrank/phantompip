@@ -1,307 +1,268 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { Copy, AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { CreditCard, Check, AlertCircle, Copy as CopyIcon } from 'lucide-react';
 
 export default function SubscriptionPage() {
-  const [paymentMethod, setPaymentMethod] = useState<'crypto' | 'other'>('crypto');
-  const [selectedCountry, setSelectedCountry] = useState('UG');
-  const [txHash, setTxHash] = useState('');
-  const [paymentReference, setPaymentReference] = useState('');
+  const [formData, setFormData] = useState({
+    transactionId: '',
+    couponCode: '',
+  });
 
-  const paymentMethods: Record<string, { methods: Array<{ name: string; description: string; code: string }> }> = {
-    UG: {
-      methods: [
-        {
-          name: 'MTN MoMo Pay',
-          description:
-            'Send UGX 180,000 (or UGX 126,000 with promo PHANTOMPIP) via MTN MoMo Pay to merchant code 745979 (Wire 24 Services Ltd). Then paste the MoMo transaction ID below.',
-          code: '745979',
-        },
-        {
-          name: 'Airtel Pay',
-          description:
-            'Send UGX 180,000 (or UGX 126,000 with promo PHANTOMPIP) via Airtel Money Pay to merchant code 7104191 (Phantompip). Then paste the Airtel transaction ID below.',
-          code: '7104191',
-        },
-      ],
-    },
-    NG: {
-      methods: [
-        {
-          name: 'Bank Transfer',
-          description: 'Transfer NGN to your local bank account. Contact support for details.',
-          code: 'BANK-NG',
-        },
-      ],
-    },
-    US: {
-      methods: [
-        {
-          name: 'Bank Transfer',
-          description: 'ACH transfer to US bank account. Contact support for details.',
-          code: 'ACH-US',
-        },
-      ],
-    },
-    EU: {
-      methods: [
-        {
-          name: 'SEPA Transfer',
-          description: 'SEPA bank transfer available for Eurozone countries.',
-          code: 'SEPA-EU',
-        },
-      ],
-    },
+  const [isLoading, setIsLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
+  const [copied, setCopied] = useState<'wallet' | 'mtn' | null>(null);
+
+  const USDT_WALLET = 'TCmyVHKK8G8GYJBvQmDvZW9KCXAXSYyJAV';
+  const MTN_MERCHANT_CODE = '745979';
+  const AMOUNT_UGX = 180000;
+  const DISCOUNTED_AMOUNT_UGX = 126000;
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  const currentMethods = paymentMethods[selectedCountry]?.methods || paymentMethods['UG'].methods;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const res = await fetch('/api/payments/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setSuccess(true);
+        setFormData({ transactionId: '', couponCode: '' });
+        setTimeout(() => setSuccess(false), 5000);
+      } else {
+        setError(data.error || 'Failed to submit payment');
+      }
+    } catch (_err) {
+      setError('Error submitting payment');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const copyToClipboard = (text: string, type: 'wallet' | 'mtn') => {
+    navigator.clipboard.writeText(text);
+    setCopied(type);
+    setTimeout(() => setCopied(null), 2000);
+  };
 
   return (
-    <div className="mx-auto max-w-7xl space-y-8 p-6 lg:p-8">
+    <div className="space-y-6 p-4 md:p-8">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Subscription</h1>
-        <p className="mt-1 text-sm text-gray-400">
-          Manage your plan and payment. Bots auto-disable on expiry.
-        </p>
-      </div>
-
-      {/* Current Plan */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="glass rounded-xl p-6 border border-white/[0.05] bg-dark-secondary/40 backdrop-blur-sm"
+        className="space-y-2"
       >
-        <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-          <div>
-            <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-gray-400">
-              Current plan
-            </p>
-            <p className="mt-2 font-mono text-2xl text-blue-400">
-              Starter · $50
-              <span className="text-sm text-gray-400">/month</span>
-            </p>
-            <span className="mt-2 inline-block rounded-full bg-purple-500/15 px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest text-purple-400">
-              Assigned by admin
-            </span>
+        <div className="flex items-center gap-3">
+          <CreditCard className="h-8 w-8 text-purple-400" />
+          <h1 className="text-3xl font-semibold text-white">Subscription & Payment</h1>
+        </div>
+        <p className="text-gray-400">
+          Pay to activate your account and get 30 days of trading access
+        </p>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="max-w-4xl space-y-6"
+      >
+        {/* Payment Options */}
+        <div className="grid gap-4 md:grid-cols-2">
+          {/* USDT Wallet */}
+          <div className="rounded-xl border border-white/[0.1] bg-dark-secondary/40 p-6 backdrop-blur-xl">
+            <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+              💎 USDT (Crypto)
+            </h3>
+            <div className="space-y-3 text-sm">
+              <div>
+                <p className="text-xs text-gray-400 uppercase">Amount</p>
+                <p className="mt-1 text-lg font-mono text-cyan-400">$49.99 USDT</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 uppercase mb-2">Wallet Address (TRON/TRC20)</p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={USDT_WALLET}
+                    readOnly
+                    className="flex-1 rounded-lg border border-white/[0.1] bg-dark-tertiary/50 px-3 py-2 font-mono text-xs text-gray-300 outline-none"
+                  />
+                  <button
+                    onClick={() => copyToClipboard(USDT_WALLET, 'wallet')}
+                    className="px-3 py-2 rounded-lg border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 transition-colors"
+                  >
+                    {copied === 'wallet' ? <Check className="h-4 w-4" /> : <CopyIcon className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* MTN Mobile Money */}
+          <div className="rounded-xl border border-white/[0.1] bg-dark-secondary/40 p-6 backdrop-blur-xl">
+            <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+              📱 MTN MoMo (Uganda)
+            </h3>
+            <div className="space-y-3 text-sm">
+              <div>
+                <p className="text-xs text-gray-400 uppercase">Amount</p>
+                <p className="mt-1 text-lg font-mono text-purple-400">UGX {AMOUNT_UGX.toLocaleString()}</p>
+                <p className="text-xs text-gray-400 mt-1">or UGX {DISCOUNTED_AMOUNT_UGX.toLocaleString()} with code <strong className="text-cyan-400">PHANTOMPIP</strong></p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 uppercase mb-2">Merchant Code</p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={MTN_MERCHANT_CODE}
+                    readOnly
+                    className="flex-1 rounded-lg border border-white/[0.1] bg-dark-tertiary/50 px-3 py-2 font-mono text-xs text-gray-300 outline-none"
+                  />
+                  <button
+                    onClick={() => copyToClipboard(MTN_MERCHANT_CODE, 'mtn')}
+                    className="px-3 py-2 rounded-lg border border-purple-500/30 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 transition-colors"
+                  >
+                    {copied === 'mtn' ? <Check className="h-4 w-4" /> : <CopyIcon className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </motion.div>
 
-      {/* Subscribe / Renew */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-      >
-        <h2 className="text-lg font-semibold text-white">Subscribe / renew</h2>
-        <div className="mt-4 rounded-xl border border-blue-500/50 bg-dark-secondary/40 p-6 backdrop-blur-sm">
-          <p className="text-xs font-medium uppercase tracking-widest text-blue-400">Starter</p>
-          <p className="mt-4 font-mono text-2xl text-blue-400">
-            $50
-            <span className="text-xs text-gray-400">/mo</span>
-          </p>
-          <p className="mt-2 text-xs text-gray-400">
-            For traders validating their first automated strategy.
-          </p>
-        </div>
-      </motion.div>
+        {/* Payment Submission Form */}
+        <form onSubmit={handleSubmit} className="rounded-xl border border-white/[0.1] bg-dark-secondary/40 p-6 backdrop-blur-xl">
+          <h3 className="font-semibold text-white mb-4">Submit Payment Receipt</h3>
 
-      {/* Payment Section with Tabs */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-        className="glass rounded-xl p-6 border border-white/[0.05] bg-dark-secondary/40 backdrop-blur-sm"
-      >
-        <h2 className="text-lg font-semibold text-white">Pay</h2>
-        <p className="mt-1 text-sm text-gray-400">
-          Choose how you want to pay. Subscription activates after confirmation.
-        </p>
-
-        {/* Payment Method Tabs */}
-        <div className="mt-5 flex gap-2">
-          <button
-            onClick={() => setPaymentMethod('crypto')}
-            className={`flex-1 rounded-md border px-3 py-2 font-mono text-xs uppercase tracking-widest transition-colors ${
-              paymentMethod === 'crypto'
-                ? 'border-blue-500 bg-blue-500/10 text-blue-400'
-                : 'border-white/[0.1] bg-dark-tertiary/30 text-gray-400 hover:text-white'
-            }`}
-          >
-            Crypto
-          </button>
-          <button
-            onClick={() => setPaymentMethod('other')}
-            className={`flex-1 rounded-md border px-3 py-2 font-mono text-xs uppercase tracking-widest transition-colors ${
-              paymentMethod === 'other'
-                ? 'border-blue-500 bg-blue-500/10 text-blue-400'
-                : 'border-white/[0.1] bg-dark-tertiary/30 text-gray-400 hover:text-white'
-            }`}
-          >
-            Other payment methods
-          </button>
-        </div>
-
-        {/* CRYPTO TAB */}
-        {paymentMethod === 'crypto' && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="mt-5 space-y-4"
-          >
-            {/* Warning */}
-            <div className="rounded-md border-2 border-red-500/50 bg-red-500/10 p-4">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="mt-0.5 size-5 shrink-0 text-red-400" />
-                <div className="text-xs leading-relaxed">
-                  <p className="font-semibold uppercase tracking-wider text-red-400">
-                    Send on Tron (TRC20) network ONLY
+          {success && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 rounded-lg border border-green-500/20 bg-green-500/5 p-4"
+            >
+              <div className="flex gap-3">
+                <Check className="h-5 w-5 text-green-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-green-400">Payment Submitted</p>
+                  <p className="text-sm text-gray-400">
+                    Your payment receipt has been submitted. Our admin will review and activate your account within 24 hours.
                   </p>
-                  <p className="mt-1 text-gray-300">
-                    Sending USDT on <strong>Ethereum (ERC20)</strong>, <strong>BSC (BEP20)</strong>,
-                    Polygon, Solana, or any other network will result in{' '}
-                    <strong className="text-red-400">permanent loss of funds</strong>. Payments sent on
-                    the wrong network <strong>cannot be recovered or refunded.</strong>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 rounded-lg border border-red-500/20 bg-red-500/5 p-4"
+            >
+              <div className="flex gap-3">
+                <AlertCircle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-red-400">Submission Failed</p>
+                  <p className="text-sm text-gray-400">{error}</p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          <div className="space-y-4">
+            {/* Transaction ID */}
+            <div>
+              <label htmlFor="transactionId" className="block text-sm font-medium text-gray-300">
+                Transaction ID / Reference Code
+              </label>
+              <input
+                type="text"
+                id="transactionId"
+                name="transactionId"
+                value={formData.transactionId}
+                onChange={handleChange}
+                placeholder="e.g., TX123456789 or MOMO-2024-01-001"
+                required
+                className="mt-2 w-full rounded-lg border border-white/[0.1] bg-dark-tertiary/50 px-4 py-2.5 text-white placeholder:text-gray-500 outline-none focus:border-purple-500/50 transition-colors"
+              />
+              <p className="mt-1 text-xs text-gray-400">Your payment reference from USDT or MTN receipt</p>
+            </div>
+
+            {/* Coupon Code */}
+            <div>
+              <label htmlFor="couponCode" className="block text-sm font-medium text-gray-300">
+                Coupon Code (Optional)
+              </label>
+              <input
+                type="text"
+                id="couponCode"
+                name="couponCode"
+                value={formData.couponCode}
+                onChange={handleChange}
+                placeholder="e.g., PHANTOMPIP"
+                className="mt-2 w-full rounded-lg border border-white/[0.1] bg-dark-tertiary/50 px-4 py-2.5 text-white placeholder:text-gray-500 outline-none focus:border-purple-500/50 transition-colors"
+              />
+              <p className="mt-1 text-xs text-gray-400">Apply a promo code for discount (if applicable)</p>
+            </div>
+
+            {/* Info Box */}
+            <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-4">
+              <div className="flex gap-3">
+                <AlertCircle className="h-5 w-5 text-yellow-400 shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-medium text-yellow-400">Important</p>
+                  <p className="mt-1 text-gray-400">
+                    After submitting your payment receipt, our admin will verify and activate your account within 24 hours. Your subscription will be valid for 30 days.
                   </p>
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Wallet Address */}
-            <div className="rounded-md border border-white/[0.1] bg-dark-tertiary/30 p-4">
-              <p className="text-[10px] font-mono uppercase tracking-widest text-gray-400">
-                Send USDT to
-              </p>
-              <div className="mt-2 flex items-center justify-between gap-3">
-                <code className="break-all font-mono text-xs text-blue-400">
-                  TRrASGdHZxGAVEjot5QEZsz7YjrKCsm16a
-                </code>
-                <button className="grid size-8 shrink-0 place-items-center rounded-md border border-white/[0.1] hover:bg-dark-tertiary/50 transition-colors">
-                  <Copy className="size-3.5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Amount and Network */}
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-md border border-white/[0.05] bg-dark-tertiary/30 px-4 py-3">
-                <p className="text-[10px] font-mono uppercase tracking-widest text-gray-400">
-                  Amount due
-                </p>
-                <p className="mt-1 font-mono text-lg text-white">$50.00</p>
-              </div>
-              <div className="rounded-md border border-white/[0.05] bg-dark-tertiary/30 px-4 py-3">
-                <p className="text-[10px] font-mono uppercase tracking-widest text-gray-400">
-                  Network
-                </p>
-                <p className="mt-1 font-mono text-sm text-red-400">Tron (TRC20) only</p>
-              </div>
-            </div>
-
-            {/* Transaction ID Input */}
-            <label className="block">
-              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-gray-400">
-                Transaction ID (after sending)
-              </span>
-              <input
-                placeholder="TRC20 tx hash"
-                value={txHash}
-                onChange={(e) => setTxHash(e.target.value)}
-                className="mt-2 h-10 w-full rounded-md border border-white/[0.1] bg-dark-tertiary/30 px-3 font-mono text-xs text-white outline-none focus:border-blue-500 transition-colors placeholder:text-gray-600"
-              />
-            </label>
-
-            {/* Verify Button */}
-            <button
-              disabled={!txHash}
-              className="h-11 w-full rounded-md bg-blue-500 text-sm font-medium text-white hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Verify & activate
-            </button>
-          </motion.div>
-        )}
-
-        {/* OTHER PAYMENT METHODS TAB */}
-        {paymentMethod === 'other' && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="mt-5 space-y-4"
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="mt-6 w-full rounded-lg bg-purple-500 px-4 py-2.5 font-medium text-white hover:bg-purple-600 transition-colors disabled:opacity-50"
           >
-            {/* Country Selector */}
-            <label className="block">
-              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-gray-400">
-                Your country
+            {isLoading ? (
+              <span className="inline-flex items-center gap-2">
+                <div className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin"></div>
+                Submitting...
               </span>
-              <select
-                value={selectedCountry}
-                onChange={(e) => setSelectedCountry(e.target.value)}
-                className="mt-2 h-10 w-full rounded-md border border-white/[0.1] bg-dark-tertiary/30 px-3 text-sm text-white outline-none focus:border-blue-500 transition-colors"
-              >
-                <option value="">Select your country…</option>
-                <option value="US">United States</option>
-                <option value="EU">Eurozone (DE, FR, ES, IT, NL, …)</option>
-                <option value="UK">United Kingdom</option>
-                <option value="NG">Nigeria</option>
-                <option value="IN">India</option>
-                <option value="BR">Brazil</option>
-                <option value="AE">UAE / Saudi Arabia</option>
-                <option value="UG">Uganda</option>
-                <option value="OTHER">Other country</option>
-              </select>
-            </label>
-
-            {/* Payment Methods for Selected Country */}
-            {selectedCountry && selectedCountry !== 'OTHER' && (
-              <div className="space-y-3">
-                <p className="font-mono text-[10px] uppercase tracking-widest text-gray-400">
-                  Supported methods · {selectedCountry}
-                </p>
-
-                {currentMethods.map((method, idx) => (
-                  <div
-                    key={idx}
-                    className="rounded-md border border-white/[0.05] bg-dark-tertiary/30 p-4"
-                  >
-                    <p className="text-sm font-medium text-blue-400">{method.name}</p>
-                    <p className="mt-1 text-xs text-gray-300">{method.description}</p>
-                    <p className="mt-2 text-[11px] text-gray-400">
-                      Need help? Contact support — support@ghosttrader.ai or Telegram @ghosttraderai.
-                    </p>
-                  </div>
-                ))}
-              </div>
+            ) : (
+              <span className="inline-flex items-center gap-2">
+                <CreditCard className="h-4 w-4" />
+                Submit Payment
+              </span>
             )}
+          </button>
+        </form>
 
-            {/* Payment Reference */}
-            <label className="block">
-              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-gray-400">
-                Payment reference / receipt note
-              </span>
-              <textarea
-                rows={3}
-                placeholder="e.g. SEPA reference number, last 4 of sender account, screenshot link…"
-                value={paymentReference}
-                onChange={(e) => setPaymentReference(e.target.value)}
-                className="mt-2 w-full rounded-md border border-white/[0.1] bg-dark-tertiary/30 p-3 font-mono text-xs text-white outline-none focus:border-blue-500 transition-colors placeholder:text-gray-600"
-              />
-            </label>
-
-            {/* Submit Button */}
-            <button
-              disabled={!selectedCountry || selectedCountry === 'OTHER'}
-              className="h-11 w-full rounded-md bg-blue-500 text-sm font-medium text-white hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Submit payment
-            </button>
-          </motion.div>
-        )}
+        {/* Payment History */}
+        <div className="rounded-xl border border-white/[0.1] bg-dark-secondary/40 p-6 backdrop-blur-xl">
+          <h3 className="font-semibold text-white mb-4">Payment History</h3>
+          {/* Payments table would go here - fetch from /api/payments/list */}
+          <p className="text-sm text-gray-400">Payment history will appear here once you submit your first payment.</p>
+        </div>
       </motion.div>
     </div>
   );
