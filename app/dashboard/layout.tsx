@@ -64,9 +64,8 @@ export default function DashboardLayout({
           {/* Logo */}
           <div className="p-6 border-b border-white/10">
             <Link href="/dashboard" className="flex items-center justify-center">
-              <img src="/phantompip-logo.png" alt="Phantompip" className="h-10 w-auto" />
+              <img src="/phantompip-logo.png" alt="Phantompip" className="h-40 w-auto" />
             </Link>
-            <p className="mt-2 text-center text-xs text-gray-400">Trading Platform</p>
           </div>
 
           {/* Navigation */}
