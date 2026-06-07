@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { Rocket } from 'lucide-react';
 
 export default function AuthLayout({
   children,
