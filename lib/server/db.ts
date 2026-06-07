@@ -81,7 +81,11 @@ export async function deleteMt5Credentials(userId: string) {
 // Payment operations
 export async function createPayment(paymentId: string, paymentData: any) {
   const redis = getRedis();
-  await redis.hset(`payment:${paymentId}`, paymentData);
+  // Filter out null and undefined values since Upstash Redis doesn't support them
+  const cleanData = Object.fromEntries(
+    Object.entries(paymentData).filter(([, value]) => value !== null && value !== undefined)
+  );
+  await redis.hset(`payment:${paymentId}`, cleanData);
   await redis.lpush(`payments:${paymentData.userId}`, paymentId);
   return paymentId;
 }

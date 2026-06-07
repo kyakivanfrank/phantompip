@@ -8,6 +8,7 @@ export default function SubscriptionPage() {
   const [formData, setFormData] = useState({
     transactionId: '',
     couponCode: '',
+    method: 'USDT-TRC20',
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -44,7 +45,7 @@ export default function SubscriptionPage() {
 
       if (res.ok) {
         setSuccess(true);
-        setFormData({ transactionId: '', couponCode: '' });
+        setFormData({ transactionId: '', couponCode: '', method: 'USDT-TRC20' });
         setTimeout(() => setSuccess(false), 5000);
       } else {
         setError(data.error || 'Failed to submit payment');
@@ -88,8 +89,16 @@ export default function SubscriptionPage() {
         {/* Payment Options */}
         <div className="grid gap-4 md:grid-cols-2">
           {/* USDT Wallet */}
-          <div className="rounded-xl border border-white/[0.1] bg-dark-secondary/40 p-6 backdrop-blur-xl">
+          <div
+            onClick={() => setFormData(prev => ({ ...prev, method: 'USDT-TRC20' }))}
+            className={`rounded-xl border p-6 backdrop-blur-xl transition-all cursor-pointer ${
+              formData.method === 'USDT-TRC20'
+                ? 'border-cyan-500/50 bg-cyan-500/10'
+                : 'border-white/[0.1] bg-dark-secondary/40 hover:border-white/[0.2]'
+            }`}
+          >
             <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+              {formData.method === 'USDT-TRC20' && <Check className="h-5 w-5 text-cyan-400" />}
               💎 USDT (Crypto)
             </h3>
             <div className="space-y-3 text-sm">
@@ -107,7 +116,11 @@ export default function SubscriptionPage() {
                     className="flex-1 rounded-lg border border-white/[0.1] bg-dark-tertiary/50 px-3 py-2 font-mono text-xs text-gray-300 outline-none"
                   />
                   <button
-                    onClick={() => copyToClipboard(USDT_WALLET, 'wallet')}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      copyToClipboard(USDT_WALLET, 'wallet');
+                    }}
                     className="px-3 py-2 rounded-lg border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 transition-colors"
                   >
                     {copied === 'wallet' ? <Check className="h-4 w-4" /> : <CopyIcon className="h-4 w-4" />}
@@ -118,8 +131,16 @@ export default function SubscriptionPage() {
           </div>
 
           {/* MTN Mobile Money */}
-          <div className="rounded-xl border border-white/[0.1] bg-dark-secondary/40 p-6 backdrop-blur-xl">
+          <div
+            onClick={() => setFormData(prev => ({ ...prev, method: 'MTN-MoMo' }))}
+            className={`rounded-xl border p-6 backdrop-blur-xl transition-all cursor-pointer ${
+              formData.method === 'MTN-MoMo'
+                ? 'border-purple-500/50 bg-purple-500/10'
+                : 'border-white/[0.1] bg-dark-secondary/40 hover:border-white/[0.2]'
+            }`}
+          >
             <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+              {formData.method === 'MTN-MoMo' && <Check className="h-5 w-5 text-purple-400" />}
               📱 MTN MoMo (Uganda)
             </h3>
             <div className="space-y-3 text-sm">
@@ -138,7 +159,11 @@ export default function SubscriptionPage() {
                     className="flex-1 rounded-lg border border-white/[0.1] bg-dark-tertiary/50 px-3 py-2 font-mono text-xs text-gray-300 outline-none"
                   />
                   <button
-                    onClick={() => copyToClipboard(MTN_MERCHANT_CODE, 'mtn')}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      copyToClipboard(MTN_MERCHANT_CODE, 'mtn');
+                    }}
                     className="px-3 py-2 rounded-lg border border-purple-500/30 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 transition-colors"
                   >
                     {copied === 'mtn' ? <Check className="h-4 w-4" /> : <CopyIcon className="h-4 w-4" />}
