@@ -64,7 +64,7 @@ export default function SubscriptionPage() {
   };
 
   return (
-    <div className="space-y-6 p-4 md:p-8">
+    <div className="space-y-6">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -84,7 +84,7 @@ export default function SubscriptionPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="max-w-4xl space-y-6"
+        className="space-y-6"
       >
         {/* Payment Options */}
         <div className="grid gap-4 md:grid-cols-2">

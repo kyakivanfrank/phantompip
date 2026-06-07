@@ -51,9 +51,8 @@ export default function AdminLayout({
           {/* Logo */}
           <div className="p-6 border-b border-white/10">
             <Link href="/admin" className="flex items-center justify-center">
-              <img src="/phantompip-logo.png" alt="Phantompip" className="h-10 w-auto" />
+              <img src="/phantompip-logo.png" alt="Phantompip" className="h-40 w-auto" />
             </Link>
-            <p className="mt-2 text-center text-xs text-gray-400">Admin Dashboard</p>
           </div>
 
           {/* Navigation */}
@@ -105,8 +104,10 @@ export default function AdminLayout({
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto">
-        {children}
+      <main className="flex-1 overflow-y-auto overflow-x-hidden h-screen p-4 sm:p-6 md:p-8 bg-dark">
+        <div className="max-w-7xl mx-auto w-full">
+          {children}
+        </div>
       </main>
     </div>
   );

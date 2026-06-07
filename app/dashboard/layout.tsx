@@ -45,11 +45,12 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen flex-col md:flex-row bg-dark">
+    // Locked viewport bounds to contain all inner panels neatly
+    <div className="flex h-screen w-screen overflow-hidden flex-col md:flex-row bg-dark">
       {/* Mobile Menu Button */}
       <button
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        className="md:hidden fixed top-4 right-4 z-50 p-2 rounded-lg border border-white/[0.1] bg-dark-secondary/80 text-white"
+        className="md:hidden fixed top-4 right-4 z-50 p-2 rounded-lg border border-white/[0.1] bg-dark-secondary/80 text-white backdrop-blur-md"
       >
         {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
       </button>
@@ -58,7 +59,7 @@ export default function DashboardLayout({
       <aside
         className={`${
           mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0 fixed md:relative w-64 h-screen border-r border-white/10 bg-dark-secondary/40 backdrop-blur-xl transition-transform duration-300 z-40`}
+        } md:translate-x-0 fixed md:relative w-64 h-full border-r border-white/10 bg-dark-secondary/40 backdrop-blur-xl transition-transform duration-300 z-40 flex-shrink-0`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
@@ -69,7 +70,7 @@ export default function DashboardLayout({
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 space-y-2 p-4 overflow-y-auto">
+          <nav className="flex-1 space-y-2 p-4 overflow-y-auto custom-scrollbar">
             <Link
               href="/dashboard"
               onClick={() => setMobileMenuOpen(false)}
@@ -123,14 +124,16 @@ export default function DashboardLayout({
       {/* Overlay for mobile menu */}
       {mobileMenuOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-black/50 z-30"
+          className="md:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-30"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-auto">
-        {children}
+      {/* Smart Content Panel Scroll Layer */}
+      <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 h-full p-4 sm:p-6 md:p-8">
+        <div className="max-w-7xl mx-auto w-full">
+          {children}
+        </div>
       </main>
     </div>
   );

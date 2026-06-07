@@ -12,14 +12,18 @@ export default function SettingsPage() {
   const [twoFactor, setTwoFactor] = useState(true);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 p-6 lg:p-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
-        <p className="mt-1 text-sm text-gray-400">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-2"
+      >
+        <h1 className="text-3xl font-semibold text-white">Settings</h1>
+        <p className="text-gray-400">
           Manage your profile, security, and sessions.
         </p>
-      </div>
+      </motion.div>
 
       {/* Profile Section */}
       <motion.div

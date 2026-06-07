@@ -84,12 +84,16 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="space-y-8 p-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight text-white">Admin Dashboard</h1>
-        <p className="mt-2 text-sm text-gray-400">Platform overview and management</p>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-2"
+      >
+        <h1 className="text-3xl font-semibold text-white">Admin Dashboard</h1>
+        <p className="text-gray-400">Platform overview and management</p>
+      </motion.div>
 
       {/* Stats Grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

@@ -53,15 +53,21 @@ export default function Mt5VaultPage() {
   }
 
   return (
-    <div className="space-y-6 p-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <Key className="h-8 w-8 text-purple-400" />
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-white">MT5 Credentials Vault</h1>
-          <p className="mt-2 text-sm text-gray-400">Decrypted MT5 login details for active subscriptions</p>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-2"
+      >
+        <div className="flex items-center gap-3">
+          <Key className="h-8 w-8 text-purple-400" />
+          <div>
+            <h1 className="text-3xl font-semibold text-white">MT5 Credentials Vault</h1>
+            <p className="text-gray-400">Decrypted MT5 login details for active subscriptions</p>
+          </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Warning */}
       <motion.div

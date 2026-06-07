@@ -47,7 +47,7 @@ export default function DashboardPage() {
         : 'text-red-400';
 
   return (
-    <div className="space-y-6 p-4 md:p-8">
+    <div className="space-y-6">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}

@@ -80,16 +80,20 @@ export default function PaymentsPage() {
   }
 
   return (
-    <div className="space-y-6 p-8">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-white">Pending Payments</h1>
-          <p className="mt-2 text-sm text-gray-400">Review and approve payment submissions</p>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-2"
+        >
+          <h1 className="text-3xl font-semibold text-white">Pending Payments</h1>
+          <p className="text-gray-400">Review and approve payment submissions</p>
+        </motion.div>
         <button
           onClick={fetchPayments}
-          className="flex items-center gap-2 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-400 hover:bg-cyan-500/20 transition-colors"
+          className="flex items-center gap-2 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-400 hover:bg-cyan-500/20 transition-colors shrink-0"
         >
           <RefreshCw className="h-4 w-4" />
           Refresh
