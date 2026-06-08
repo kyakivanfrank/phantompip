@@ -35,7 +35,8 @@ export async function GET(_req: NextRequest) {
       }
 
       const credentials = await getMt5Credentials((user as any).id);
-      if (!credentials || Object.keys(credentials).length === 0) {
+      const creds: any = credentials;
+      if (!creds || Object.keys(creds).length === 0) {
         continue;
       }
 
@@ -43,9 +44,9 @@ export async function GET(_req: NextRequest) {
       let decryptedPassword = "";
       try {
         decryptedPassword = decryptMt5Password(
-          credentials.mt5PasswordEncrypted as string,
-          credentials.mt5PasswordIV as string,
-          credentials.mt5PasswordAuthTag as string
+          creds.mt5PasswordEncrypted as string,
+          creds.mt5PasswordIV as string,
+          creds.mt5PasswordAuthTag as string
         );
       } catch (e) {
         console.error(`Failed to decrypt password for user ${user.id}:`, e);
@@ -63,12 +64,12 @@ export async function GET(_req: NextRequest) {
             ((user as any).subscriptionExpiresAt - Date.now()) / (24 * 60 * 60 * 1000)
           )
         ),
-        mt5LoginId: credentials.mt5LoginId,
+        mt5LoginId: creds.mt5LoginId,
         mt5Password: decryptedPassword,
-        brokerServer: credentials.brokerServer,
-        tradingStyle: credentials.tradingStyle,
-        connectionStatus: credentials.connectionStatus,
-        connectedAt: credentials.connectedAt,
+        brokerServer: creds.brokerServer,
+        tradingStyle: creds.tradingStyle,
+        connectionStatus: creds.connectionStatus,
+        connectedAt: creds.connectedAt,
       });
     }
 
