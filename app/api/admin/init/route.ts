@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { getUserIdByEmail, createUser, setUserByEmail } from "@/lib/server/db";
 import { hashPassword } from "@/lib/server/hashing";
+import { normalizeEmail } from "@/lib/server/validation";
 
 export async function POST(_req: NextRequest) {
   try {
-    const adminEmail = process.env.ADMIN_EMAIL || "Mukisamicheal088@gmail.com";
+    const adminEmail = normalizeEmail(process.env.ADMIN_EMAIL || "Mukisamicheal088@gmail.com");
     const adminPassword = process.env.ADMIN_PASSWORD_PLAIN || "H7#xF!9t$mKQ2w5v";
 
     // Check if admin already exists

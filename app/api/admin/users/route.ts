@@ -5,7 +5,16 @@ import { getAllUsers } from "@/lib/server/db";
 export async function GET(_req: NextRequest) {
   try {
     await requireAdmin();
-    const users = await getAllUsers();
+    let users;
+    try {
+      users = await getAllUsers();
+    } catch (error) {
+      console.error("Admin users DB error:", error);
+      return NextResponse.json(
+        { error: "User service unavailable" },
+        { status: 503 }
+      );
+    }
 
     // Filter out admin user and format data
     const formattedUsers = (users as any[])

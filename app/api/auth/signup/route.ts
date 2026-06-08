@@ -6,6 +6,7 @@ import {
   isValidEmail,
   isValidPassword,
   sanitizeInput,
+  normalizeEmail,
 } from "@/lib/server/validation";
 import { setSessionCookie } from "@/lib/server/auth";
 
@@ -13,6 +14,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { email, password, confirmPassword, fullName } = body;
+    const normalizedEmail = normalizeEmail(email || "");
 
     // Validate inputs
     if (
@@ -27,7 +29,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!isValidEmail(email)) {
+    if (!isValidEmail(normalizedEmail)) {
       return NextResponse.json(
         { error: "Invalid email format" },
         { status: 400 }
@@ -52,7 +54,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if user already exists
-    const existingUserId = await getUserIdByEmail(email);
+    const existingUserId = await getUserIdByEmail(normalizedEmail);
     if (existingUserId) {
       return NextResponse.json(
         { error: "User already exists" },
@@ -69,7 +71,7 @@ export async function POST(req: NextRequest) {
     const subscriptionExpiresAt = now + 30 * 24 * 60 * 60 * 1000; // 30 days trial
 
     await createUser(userId, {
-      email,
+      email: normalizedEmail,
       passwordHash,
       fullName: sanitizeInput(fullName),
       accountStatus: "Pending Approval",
@@ -80,17 +82,17 @@ export async function POST(req: NextRequest) {
     });
 
     // Map email to userId
-    await setUserByEmail(email, userId);
+    await setUserByEmail(normalizedEmail, userId);
 
     // Set session cookie
-    await setSessionCookie(userId, email, false);
+    await setSessionCookie(userId, normalizedEmail, false);
 
     return NextResponse.json(
       {
         message: "Signup successful",
         user: {
           id: userId,
-          email,
+          email: normalizedEmail,
           fullName,
         },
       },

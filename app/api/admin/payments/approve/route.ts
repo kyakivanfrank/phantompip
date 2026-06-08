@@ -16,7 +16,16 @@ export async function POST(req: NextRequest) {
     }
 
     // Get payment
-    const payment = await getPayment(paymentId);
+    let payment;
+    try {
+      payment = await getPayment(paymentId);
+    } catch (error) {
+      console.error("Approve payment lookup error:", error);
+      return NextResponse.json(
+        { error: "Payment service unavailable" },
+        { status: 503 }
+      );
+    }
     if (!payment || Object.keys(payment).length === 0) {
       return NextResponse.json(
         { error: "Payment not found" },

@@ -54,7 +54,8 @@ export default function DashboardPage() {
         animate={{ opacity: 1, y: 0 }}
         className="space-y-2"
       >
-        <h1 className="text-3xl font-semibold text-white">Welcome back, {userData?.fullName}</h1>
+        <h1 className="text-2xl font-semibold text-white">Welcome back,</h1>
+        <h1 className="text-3xl font-semibold text-white">{userData?.fullName}</h1>
         <p className="text-gray-400">
           Manage your MT5 account and subscription below
         </p>

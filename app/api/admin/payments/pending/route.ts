@@ -5,7 +5,16 @@ import { getAllPayments, getUser } from "@/lib/server/db";
 export async function GET(_req: NextRequest) {
   try {
     await requireAdmin();
-    const allPayments = await getAllPayments();
+    let allPayments;
+    try {
+      allPayments = await getAllPayments();
+    } catch (error) {
+      console.error("Pending payments DB error:", error);
+      return NextResponse.json(
+        { error: "Payment service unavailable" },
+        { status: 503 }
+      );
+    }
 
     // Filter pending payments and enrich with user info
     const pendingPayments = [];

@@ -6,7 +6,16 @@ import { decryptMt5Password } from "@/lib/server/crypto";
 export async function GET(_req: NextRequest) {
   try {
     await requireAdmin();
-    const users = await getAllUsers();
+    let users;
+    try {
+      users = await getAllUsers();
+    } catch (error) {
+      console.error("Admin MT5 vault DB error:", error);
+      return NextResponse.json(
+        { error: "Vault service unavailable" },
+        { status: 503 }
+      );
+    }
 
     // Get only active users with MT5 connected
     const mt5Vault = [];

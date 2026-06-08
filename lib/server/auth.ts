@@ -26,9 +26,10 @@ export async function setSessionCookie(
   cookieStore.set("phantompip_session", encodedSession, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: "lax",
     maxAge: SESSION_EXPIRY,
     path: "/",
+    ...(process.env.SESSION_COOKIE_DOMAIN ? { domain: process.env.SESSION_COOKIE_DOMAIN } : {}),
   });
 }
 

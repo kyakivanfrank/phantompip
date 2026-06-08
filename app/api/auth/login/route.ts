@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserIdByEmail, getUser } from "@/lib/server/db";
 import { verifyPassword } from "@/lib/server/hashing";
-import { isValidEmail } from "@/lib/server/validation";
+import { isValidEmail, normalizeEmail } from "@/lib/server/validation";
 import { setSessionCookie } from "@/lib/server/auth";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { email, password } = body;
+    const normalizedEmail = normalizeEmail(email || "");
 
     // Validate inputs
     if (!email || !password) {
@@ -17,7 +18,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!isValidEmail(email)) {
+    if (!isValidEmail(normalizedEmail)) {
       return NextResponse.json(
         { error: "Invalid email format" },
         { status: 400 }
@@ -25,7 +26,16 @@ export async function POST(req: NextRequest) {
     }
 
     // Get user ID by email
-    const userId = await getUserIdByEmail(email);
+    let userId;
+    try {
+      userId = await getUserIdByEmail(normalizedEmail);
+    } catch (err) {
+      console.error("Redis error while fetching userId:", err);
+      return NextResponse.json(
+        { error: "Authentication service unavailable" },
+        { status: 503 }
+      );
+    }
     if (!userId) {
       return NextResponse.json(
         { error: "Invalid email or password" },
@@ -34,7 +44,16 @@ export async function POST(req: NextRequest) {
     }
 
     // Get user data
-    const user = await getUser(userId as string);
+    let user;
+    try {
+      user = await getUser(userId as string);
+    } catch (err) {
+      console.error("Redis error while fetching user data:", err);
+      return NextResponse.json(
+        { error: "Authentication service unavailable" },
+        { status: 503 }
+      );
+    }
     if (!user || !user.passwordHash) {
       return NextResponse.json(
         { error: "Invalid email or password" },
@@ -57,7 +76,7 @@ export async function POST(req: NextRequest) {
     // Set session cookie
     await setSessionCookie(
       userId as string,
-      email,
+      normalizedEmail,
       user.isAdmin === true || user.isAdmin === "true"
     );
 
@@ -66,7 +85,7 @@ export async function POST(req: NextRequest) {
         message: "Login successful",
         user: {
           id: userId,
-          email: user.email,
+          email: user.email || normalizedEmail,
           fullName: user.fullName,
           isAdmin: user.isAdmin === true || user.isAdmin === "true",
           accountStatus: user.accountStatus,

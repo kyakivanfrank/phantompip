@@ -1,59 +1,154 @@
 import { Redis } from "@upstash/redis";
+import { normalizeEmail } from "./validation";
 
 let redisClient: Redis | null = null;
 
-export function getRedis(): Redis {
-  if (!redisClient) {
-    redisClient = new Redis({
+function createUpstashClient() {
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    return null;
+  }
+
+  try {
+    return new Redis({
       url: process.env.UPSTASH_REDIS_REST_URL!,
       token: process.env.UPSTASH_REDIS_REST_TOKEN!,
     });
+  } catch (e) {
+    console.error('Failed to create Upstash client', e);
+    return null;
   }
-  return redisClient;
+}
+
+// Simple in-memory fallback store for local development or when Upstash is unreachable.
+const inMemory = (() => {
+  const hashes = new Map<string, Record<string, any>>();
+  const strings = new Map<string, string>();
+  const lists = new Map<string, string[]>();
+
+  return {
+    async get(key: string) {
+      return strings.get(key) ?? null;
+    },
+    async set(key: string, value: string) {
+      strings.set(key, value);
+      return 'OK';
+    },
+    async hset(key: string, data: Record<string, any>) {
+      const cur = hashes.get(key) ?? {};
+      hashes.set(key, { ...cur, ...data });
+      return Object.keys(data).length;
+    },
+    async hgetall(key: string) {
+      return hashes.get(key) ?? {};
+    },
+    async del(key: string) {
+      const had = hashes.delete(key) || strings.delete(key) || lists.delete(key);
+      return had ? 1 : 0;
+    },
+    async keys(pattern: string) {
+      const allKeys = Array.from(new Set([...hashes.keys(), ...strings.keys(), ...lists.keys()]));
+      // very small glob support for prefix
+      if (pattern.endsWith('*')) {
+        const prefix = pattern.slice(0, -1);
+        return allKeys.filter((k) => k.startsWith(prefix));
+      }
+      return allKeys.filter((k) => k === pattern);
+    },
+    async lpush(key: string, value: string) {
+      const arr = lists.get(key) ?? [];
+      arr.unshift(value);
+      lists.set(key, arr);
+      return arr.length;
+    },
+    async lrange(key: string, start: number, stop: number) {
+      const arr = lists.get(key) ?? [];
+      // handle -1
+      const end = stop < 0 ? arr.length - 1 : stop;
+      return arr.slice(start, end + 1);
+    },
+  } as const;
+})();
+
+export function getRedis(): Redis | typeof inMemory {
+  if (redisClient) return redisClient;
+
+  const client = createUpstashClient();
+  if (client) {
+    redisClient = client;
+    return redisClient;
+  }
+
+  // Fall back to the in-memory implementation (useful for local development/offline)
+  return inMemory;
+}
+
+// Helper: run an async operation with timeout and limited retries
+export async function attempt<T>(fn: () => Promise<T>, timeoutMs = 3000, retries = 2): Promise<T> {
+  let lastErr: any;
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const res = await Promise.race([
+        fn(),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs)),
+      ]);
+      return res as T;
+    } catch (err) {
+      lastErr = err;
+      const backoff = 100 * Math.pow(2, i);
+      await new Promise((r) => setTimeout(r, backoff));
+    }
+  }
+  throw lastErr;
+}
+
+function emailKey(email: string) {
+  return `email:${normalizeEmail(email)}`;
 }
 
 // User operations
 export async function createUser(userId: string, userData: any) {
   const redis = getRedis();
-  return await redis.hset(`user:${userId}`, userData);
+  return await attempt(() => (redis as any).hset(`user:${userId}`, userData));
 }
 
 export async function getUser(userId: string) {
   const redis = getRedis();
-  return await redis.hgetall(`user:${userId}`);
+  return await attempt(() => (redis as any).hgetall(`user:${userId}`));
 }
 
 export async function getUserByEmail(email: string) {
   const redis = getRedis();
-  const result = await redis.hgetall(`user:email:${email}`);
-  return result && Object.keys(result).length > 0 ? result : null;
+  const userId = await getUserIdByEmail(email);
+  if (!userId) {
+    return null;
+  }
+
+  return await getUser(userId as string);
 }
 
 export async function getUserIdByEmail(email: string) {
   const redis = getRedis();
-  return await redis.get(`email:${email}`);
+  return await attempt(() => (redis as any).get(emailKey(email)));
 }
 
 export async function setUserByEmail(email: string, userId: string) {
   const redis = getRedis();
-  return await redis.set(`email:${email}`, userId);
+  return await attempt(() => (redis as any).set(emailKey(email), userId));
 }
 
 export async function updateUser(userId: string, updates: any) {
   const redis = getRedis();
-  return await redis.hset(`user:${userId}`, updates);
+  return await attempt(() => (redis as any).hset(`user:${userId}`, updates));
 }
 
 export async function getAllUsers() {
   const redis = getRedis();
-  const keys = await redis.keys("user:*");
-  const userKeys = keys.filter(
-    (k: string) => !k.includes(":email:") && !k.includes(":mt5:") && !k.includes(":payment:")
-  );
+  const keys = await attempt(() => (redis as any).keys("user:*"));
+  const userKeys = keys.filter((k: string) => !k.includes(":mt5:") && !k.includes(":payment:"));
   const users = [];
 
   for (const key of userKeys) {
-    const userData = await redis.hgetall(key);
+    const userData = await attempt(() => (redis as any).hgetall(key));
     if (userData && userData.email) {
       users.push({ id: key.replace("user:", ""), ...userData });
     }
@@ -65,17 +160,17 @@ export async function getAllUsers() {
 // MT5 operations
 export async function setMt5Credentials(userId: string, credentials: any) {
   const redis = getRedis();
-  return await redis.hset(`mt5:${userId}`, credentials);
+  return await attempt(() => (redis as any).hset(`mt5:${userId}`, credentials));
 }
 
 export async function getMt5Credentials(userId: string) {
   const redis = getRedis();
-  return await redis.hgetall(`mt5:${userId}`);
+  return await attempt(() => (redis as any).hgetall(`mt5:${userId}`));
 }
 
 export async function deleteMt5Credentials(userId: string) {
   const redis = getRedis();
-  return await redis.del(`mt5:${userId}`);
+  return await attempt(() => (redis as any).del(`mt5:${userId}`));
 }
 
 // Payment operations
@@ -85,28 +180,28 @@ export async function createPayment(paymentId: string, paymentData: any) {
   const cleanData = Object.fromEntries(
     Object.entries(paymentData).filter(([, value]) => value !== null && value !== undefined)
   );
-  await redis.hset(`payment:${paymentId}`, cleanData);
-  await redis.lpush(`payments:${paymentData.userId}`, paymentId);
+  await attempt(() => (redis as any).hset(`payment:${paymentId}`, cleanData));
+  await attempt(() => (redis as any).lpush(`payments:${paymentData.userId}`, paymentId));
   return paymentId;
 }
 
 export async function getPayment(paymentId: string) {
   const redis = getRedis();
-  return await redis.hgetall(`payment:${paymentId}`);
+  return await attempt(() => (redis as any).hgetall(`payment:${paymentId}`));
 }
 
 export async function updatePayment(paymentId: string, updates: any) {
   const redis = getRedis();
-  return await redis.hset(`payment:${paymentId}`, updates);
+  return await attempt(() => (redis as any).hset(`payment:${paymentId}`, updates));
 }
 
 export async function getUserPayments(userId: string) {
   const redis = getRedis();
-  const paymentIds = (await redis.lrange(`payments:${userId}`, 0, -1)) as string[];
+  const paymentIds = (await attempt(() => (redis as any).lrange(`payments:${userId}`, 0, -1))) as string[];
   const payments = [];
 
   for (const id of paymentIds) {
-    const payment = await redis.hgetall(`payment:${id}`);
+    const payment = await attempt(() => (redis as any).hgetall(`payment:${id}`));
     if (payment) {
       payments.push({ id, ...payment });
     }
@@ -117,11 +212,11 @@ export async function getUserPayments(userId: string) {
 
 export async function getAllPayments() {
   const redis = getRedis();
-  const keys = await redis.keys("payment:*");
+  const keys = await attempt(() => (redis as any).keys("payment:*"));
   const payments = [];
 
   for (const key of keys) {
-    const payment = await redis.hgetall(key);
+    const payment = await attempt(() => (redis as any).hgetall(key));
     if (payment) {
       payments.push({ id: key.replace("payment:", ""), ...payment });
     }
@@ -133,15 +228,15 @@ export async function getAllPayments() {
 // Coupon operations
 export async function getCoupon(code: string) {
   const redis = getRedis();
-  return await redis.hgetall(`coupon:${code}`);
+  return await attempt(() => (redis as any).hgetall(`coupon:${code}`));
 }
 
 export async function createCoupon(code: string, couponData: any) {
   const redis = getRedis();
-  return await redis.hset(`coupon:${code}`, couponData);
+  return await attempt(() => (redis as any).hset(`coupon:${code}`, couponData));
 }
 
 export async function updateCoupon(code: string, updates: any) {
   const redis = getRedis();
-  return await redis.hset(`coupon:${code}`, updates);
+  return await attempt(() => (redis as any).hset(`coupon:${code}`, updates));
 }

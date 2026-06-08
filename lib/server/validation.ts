@@ -4,14 +4,16 @@ export function isValidEmail(email: string): boolean {
   return emailRegex.test(email);
 }
 
-// Password validation
-export function isValidPassword(password: string): boolean {
-  // At least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
-  const passwordRegex =
-    /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-  return passwordRegex.test(password);
+export function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
 }
 
+export function isValidPassword(password: string): boolean {
+  // At least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
+  // Allows a much broader, safer range of special characters
+  const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z0-9\s]).{8,}$/;
+  return passwordRegex.test(password);
+}
 // MT5 Login ID validation (numeric, typically 1-8 digits)
 export function isValidMt5LoginId(loginId: string): boolean {
   return /^\d{1,8}$/.test(loginId);

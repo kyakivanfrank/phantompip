@@ -5,7 +5,16 @@ import { getMt5Credentials } from "@/lib/server/db";
 export async function GET(_req: NextRequest) {
   try {
     const session = await requireAuth();
-    const credentials = await getMt5Credentials(session.userId);
+    let credentials;
+    try {
+      credentials = await getMt5Credentials(session.userId);
+    } catch (error) {
+      console.error("MT5 status DB error:", error);
+      return NextResponse.json(
+        { error: "MT5 service unavailable" },
+        { status: 503 }
+      );
+    }
 
     if (!credentials || Object.keys(credentials).length === 0) {
       return NextResponse.json(

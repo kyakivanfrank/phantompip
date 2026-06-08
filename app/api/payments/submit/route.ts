@@ -42,7 +42,16 @@ export async function POST(req: NextRequest) {
     let discountPercent = 0;
 
     if (couponCode) {
-      const coupon = await getCoupon(couponCode);
+      let coupon;
+      try {
+        coupon = await getCoupon(couponCode);
+      } catch (error) {
+        console.error("Coupon lookup error:", error);
+        return NextResponse.json(
+          { error: "Payment service unavailable" },
+          { status: 503 }
+        );
+      }
       if (!coupon || Object.keys(coupon).length === 0) {
         return NextResponse.json(
           { error: "Invalid coupon code" },

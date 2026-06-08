@@ -5,7 +5,16 @@ import { getUser } from "@/lib/server/db";
 export async function GET(_req: NextRequest) {
   try {
     const session = await requireAuth();
-    const user = await getUser(session.userId);
+    let user;
+    try {
+      user = await getUser(session.userId);
+    } catch (error) {
+      console.error("Auth me DB error:", error);
+      return NextResponse.json(
+        { error: "Authentication service unavailable" },
+        { status: 503 }
+      );
+    }
 
     if (!user) {
       return NextResponse.json(
