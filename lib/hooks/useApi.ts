@@ -7,6 +7,7 @@ interface UseApiOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   headers?: Record<string, string>;
   body?: Record<string, any>;
+  credentials?: RequestCredentials;
 }
 
 interface UseApiState<T> {
@@ -17,7 +18,7 @@ interface UseApiState<T> {
 }
 
 /**
- * Custom hook for making API calls
+ * Custom hook for making API calls with proper error handling and credentials
  */
 export function useApi<T = any>(url: string, options?: UseApiOptions) {
   const [state, setState] = useState<UseApiState<T>>({
@@ -33,8 +34,22 @@ export function useApi<T = any>(url: string, options?: UseApiOptions) {
 
       try {
         const finalOptions = { ...options, ...customOptions };
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || '';
-        const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
+        
+        // Build full URL - handle both relative and absolute URLs
+        let fullUrl = url;
+        if (!url.startsWith('http')) {
+          // Get baseUrl from env var or fallback to window origin
+          let baseUrl = process.env.NEXT_PUBLIC_API_URL;
+          if (!baseUrl && typeof window !== 'undefined') {
+            baseUrl = window.location.origin;
+          }
+          
+          if (!baseUrl) {
+            throw new Error('API_URL not configured. Set NEXT_PUBLIC_API_URL environment variable.');
+          }
+          
+          fullUrl = `${baseUrl}${url.startsWith('/') ? url : '/' + url}`;
+        }
 
         const response = await fetch(fullUrl, {
           method: finalOptions.method || 'GET',
@@ -43,9 +58,34 @@ export function useApi<T = any>(url: string, options?: UseApiOptions) {
             ...finalOptions.headers,
           },
           body: finalOptions.body ? JSON.stringify(finalOptions.body) : undefined,
+          credentials: finalOptions.credentials || 'include', // Include cookies by default for auth
         });
 
-        const responseData: ApiResponse<T> = await response.json();
+        // Handle non-JSON responses
+        const contentType = response.headers.get('content-type');
+        let responseData: ApiResponse<T>;
+        
+        if (contentType?.includes('application/json')) {
+          responseData = await response.json();
+        } else {
+          // If not JSON, create a response object
+          const text = await response.text();
+          responseData = {
+            success: response.ok,
+            data: text as any,
+            status: response.status,
+          };
+        }
+
+        // Ensure response has required fields
+        if (!responseData || typeof responseData !== 'object') {
+          throw new Error('Invalid response format from server');
+        }
+
+        // Normalize response to ensure success field exists
+        if (responseData.success === undefined) {
+          responseData.success = response.ok;
+        }
 
         setState({
           data: responseData.data || null,

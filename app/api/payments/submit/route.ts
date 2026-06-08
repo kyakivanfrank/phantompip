@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { randomUUID } from "crypto";
 import { requireAuth } from "@/lib/server/auth";
 import { createPayment, getCoupon, updateCoupon } from "@/lib/server/db";
@@ -6,6 +6,7 @@ import {
   isValidTransactionId,
   sanitizeInput,
 } from "@/lib/server/validation";
+import { handleApiError, successResponse, errorResponse } from "@/lib/server/api-response";
 
 const BASE_AMOUNT = 50; // $50
 
@@ -17,24 +18,15 @@ export async function POST(req: NextRequest) {
 
     // Validate inputs
     if (!transactionId || !method) {
-      return NextResponse.json(
-        { error: "Transaction ID and method are required" },
-        { status: 400 }
-      );
+      return errorResponse("Transaction ID and method are required", 400);
     }
 
     if (!isValidTransactionId(transactionId)) {
-      return NextResponse.json(
-        { error: "Invalid transaction ID format" },
-        { status: 400 }
-      );
+      return errorResponse("Invalid transaction ID format", 400);
     }
 
     if (!["USDT-TRC20", "MTN-MoMo", "Airtel"].includes(method)) {
-      return NextResponse.json(
-        { error: "Invalid payment method" },
-        { status: 400 }
-      );
+      return errorResponse("Invalid payment method", 400);
     }
 
     // Check coupon if provided
@@ -42,21 +34,9 @@ export async function POST(req: NextRequest) {
     let discountPercent = 0;
 
     if (couponCode) {
-      let coupon;
-      try {
-        coupon = await getCoupon(couponCode);
-      } catch (error) {
-        console.error("Coupon lookup error:", error);
-        return NextResponse.json(
-          { error: "Payment service unavailable" },
-          { status: 503 }
-        );
-      }
+      const coupon = await getCoupon(couponCode);
       if (!coupon || Object.keys(coupon).length === 0) {
-        return NextResponse.json(
-          { error: "Invalid coupon code" },
-          { status: 400 }
-        );
+        return errorResponse("Invalid coupon code", 400);
       }
 
       // Check coupon validity
@@ -65,17 +45,11 @@ export async function POST(req: NextRequest) {
         (coupon as any).isActive !== "true" &&
         parseInt((coupon as any).currentUses as any, 10) >= parseInt((coupon as any).maxUses as any, 10)
       ) {
-        return NextResponse.json(
-          { error: "Coupon expired or limit reached" },
-          { status: 400 }
-        );
+        return errorResponse("Coupon expired or limit reached", 400);
       }
 
       if ((coupon as any).expiresAt < Date.now()) {
-        return NextResponse.json(
-          { error: "Coupon expired" },
-          { status: 400 }
-        );
+        return errorResponse("Coupon expired", 400);
       }
 
       discountPercent = parseInt((coupon as any).discountPercent as any, 10);
@@ -102,22 +76,18 @@ export async function POST(req: NextRequest) {
       originalAmount: couponCode ? BASE_AMOUNT : undefined,
     });
 
-    return NextResponse.json(
+    return successResponse(
       {
-        message: "Payment submitted successfully",
         paymentId,
         amount: finalAmount,
         originalAmount: couponCode ? BASE_AMOUNT : undefined,
         discountPercent,
         status: "Pending",
       },
-      { status: 201 }
+      "Payment submitted successfully",
+      201
     );
   } catch (error) {
-    console.error("Payment submit error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { requireAuth } from "@/lib/server/auth";
 import { setMt5Credentials, updateUser } from "@/lib/server/db";
 import {
@@ -7,6 +7,7 @@ import {
   sanitizeInput,
 } from "@/lib/server/validation";
 import { encryptMt5Password } from "@/lib/server/crypto";
+import { handleApiError, successResponse, errorResponse } from "@/lib/server/api-response";
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,31 +17,19 @@ export async function POST(req: NextRequest) {
 
     // Validate inputs
     if (!mt5LoginId || !mt5Password || !brokerServer || !tradingStyle) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+      return errorResponse("Missing required fields", 400);
     }
 
     if (!isValidMt5LoginId(mt5LoginId)) {
-      return NextResponse.json(
-        { error: "Invalid MT5 Login ID format" },
-        { status: 400 }
-      );
+      return errorResponse("Invalid MT5 Login ID format", 400);
     }
 
     if (!isValidBrokerServer(brokerServer)) {
-      return NextResponse.json(
-        { error: "Invalid broker server format" },
-        { status: 400 }
-      );
+      return errorResponse("Invalid broker server format", 400);
     }
 
     if (!["Scalping", "Conservative", "Aggressive"].includes(tradingStyle)) {
-      return NextResponse.json(
-        { error: "Invalid trading style" },
-        { status: 400 }
-      );
+      return errorResponse("Invalid trading style", 400);
     }
 
     // Encrypt MT5 password
@@ -64,19 +53,16 @@ export async function POST(req: NextRequest) {
       mt5Connected: true,
     });
 
-    return NextResponse.json(
+    return successResponse(
       {
-        message: "MT5 account connected successfully",
         connectionStatus: "Connected",
         tradingStyle,
+        connectedAt: now,
       },
-      { status: 201 }
+      "MT5 account connected successfully",
+      201
     );
   } catch (error) {
-    console.error("MT5 connect error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

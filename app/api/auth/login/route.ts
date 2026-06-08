@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { getUserIdByEmail, getUser } from "@/lib/server/db";
 import { verifyPassword } from "@/lib/server/hashing";
 import { isValidEmail, normalizeEmail } from "@/lib/server/validation";
 import { setSessionCookie } from "@/lib/server/auth";
+import { handleApiError, successResponse, errorResponse } from "@/lib/server/api-response";
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,53 +13,23 @@ export async function POST(req: NextRequest) {
 
     // Validate inputs
     if (!email || !password) {
-      return NextResponse.json(
-        { error: "Email and password are required" },
-        { status: 400 }
-      );
+      return errorResponse("Email and password are required", 400);
     }
 
     if (!isValidEmail(normalizedEmail)) {
-      return NextResponse.json(
-        { error: "Invalid email format" },
-        { status: 400 }
-      );
+      return errorResponse("Invalid email format", 400);
     }
 
     // Get user ID by email
-    let userId;
-    try {
-      userId = await getUserIdByEmail(normalizedEmail);
-    } catch (err) {
-      console.error("Redis error while fetching userId:", err);
-      return NextResponse.json(
-        { error: "Authentication service unavailable" },
-        { status: 503 }
-      );
-    }
+    const userId = await getUserIdByEmail(normalizedEmail);
     if (!userId) {
-      return NextResponse.json(
-        { error: "Invalid email or password" },
-        { status: 401 }
-      );
+      return errorResponse("Invalid email or password", 401);
     }
 
     // Get user data
-    let user;
-    try {
-      user = await getUser(userId as string);
-    } catch (err) {
-      console.error("Redis error while fetching user data:", err);
-      return NextResponse.json(
-        { error: "Authentication service unavailable" },
-        { status: 503 }
-      );
-    }
+    const user = await getUser(userId as string);
     if (!user || !user.passwordHash) {
-      return NextResponse.json(
-        { error: "Invalid email or password" },
-        { status: 401 }
-      );
+      return errorResponse("Invalid email or password", 401);
     }
 
     // Verify password
@@ -67,10 +38,7 @@ export async function POST(req: NextRequest) {
       user.passwordHash as string
     );
     if (!isPasswordValid) {
-      return NextResponse.json(
-        { error: "Invalid email or password" },
-        { status: 401 }
-      );
+      return errorResponse("Invalid email or password", 401);
     }
 
     // Set session cookie
@@ -80,9 +48,8 @@ export async function POST(req: NextRequest) {
       user.isAdmin === true || user.isAdmin === "true"
     );
 
-    return NextResponse.json(
+    return successResponse(
       {
-        message: "Login successful",
         user: {
           id: userId,
           email: user.email || normalizedEmail,
@@ -91,13 +58,10 @@ export async function POST(req: NextRequest) {
           accountStatus: user.accountStatus,
         },
       },
-      { status: 200 }
+      "Login successful",
+      200
     );
   } catch (error) {
-    console.error("Login error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

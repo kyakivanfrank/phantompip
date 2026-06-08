@@ -1,20 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/server/auth";
 import { getAllUsers } from "@/lib/server/db";
+import { handleApiError, successResponse } from "@/lib/server/api-response";
 
 export async function GET(_req: NextRequest) {
   try {
     await requireAdmin();
-    let users;
-    try {
-      users = await getAllUsers();
-    } catch (error) {
-      console.error("Admin users DB error:", error);
-      return NextResponse.json(
-        { error: "User service unavailable" },
-        { status: 503 }
-      );
-    }
+    const users = await getAllUsers();
 
     // Filter out admin user and format data
     const formattedUsers = (users as any[])
@@ -35,17 +27,15 @@ export async function GET(_req: NextRequest) {
         ),
       }));
 
-    return NextResponse.json(
+    return successResponse(
       {
         users: formattedUsers,
         totalUsers: formattedUsers.length,
       },
-      { status: 200 }
+      "Users retrieved",
+      200
     );
   } catch (error) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
+    return handleApiError(error);
   }
 }

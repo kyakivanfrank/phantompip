@@ -1,29 +1,18 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { requireAuth } from "@/lib/server/auth";
 import { getUser } from "@/lib/server/db";
+import { handleApiError, successResponse, errorResponse } from "@/lib/server/api-response";
 
 export async function GET(_req: NextRequest) {
   try {
     const session = await requireAuth();
-    let user;
-    try {
-      user = await getUser(session.userId);
-    } catch (error) {
-      console.error("Auth me DB error:", error);
-      return NextResponse.json(
-        { error: "Authentication service unavailable" },
-        { status: 503 }
-      );
-    }
+    const user = await getUser(session.userId);
 
     if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
+      return errorResponse("User not found", 404);
     }
 
-    return NextResponse.json(
+    return successResponse(
       {
         user: {
           id: session.userId,
@@ -36,12 +25,10 @@ export async function GET(_req: NextRequest) {
           mt5Connected: user.mt5Connected === true || user.mt5Connected === "true",
         },
       },
-      { status: 200 }
+      "User profile retrieved",
+      200
     );
   } catch (error) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
+    return handleApiError(error);
   }
 }

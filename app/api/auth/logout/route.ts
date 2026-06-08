@@ -1,19 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { clearSessionCookie } from "@/lib/server/auth";
+import { handleApiError, successResponse } from "@/lib/server/api-response";
 
 export async function POST(_req: NextRequest) {
   try {
     await clearSessionCookie();
-
-    return NextResponse.json(
-      { message: "Logout successful" },
-      { status: 200 }
-    );
+    return successResponse({ loggedOut: true }, "Logout successful", 200);
   } catch (error) {
-    console.error("Logout error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

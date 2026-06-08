@@ -1,22 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { requireAuth } from "@/lib/server/auth";
 import { getUserPayments } from "@/lib/server/db";
+import { handleApiError, successResponse } from "@/lib/server/api-response";
 
 export async function GET(_req: NextRequest) {
   try {
     const session = await requireAuth();
-    let payments;
-    try {
-      payments = await getUserPayments(session.userId);
-    } catch (error) {
-      console.error("Payments list DB error:", error);
-      return NextResponse.json(
-        { error: "Payment service unavailable" },
-        { status: 503 }
-      );
-    }
+    const payments = await getUserPayments(session.userId);
 
-    return NextResponse.json(
+    return successResponse(
       {
         payments: (payments as any[]).map((p) => ({
           id: p.id,
@@ -30,12 +22,10 @@ export async function GET(_req: NextRequest) {
           originalAmount: p.originalAmount,
         })),
       },
-      { status: 200 }
+      "Payments retrieved",
+      200
     );
   } catch (error) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
+    return handleApiError(error);
   }
 }

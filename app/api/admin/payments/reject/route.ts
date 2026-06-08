@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/server/auth";
 import { getPayment, updatePayment } from "@/lib/server/db";
+import { handleApiError, successResponse, errorResponse } from "@/lib/server/api-response";
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,35 +10,17 @@ export async function POST(req: NextRequest) {
     const { paymentId } = body;
 
     if (!paymentId) {
-      return NextResponse.json(
-        { error: "Payment ID is required" },
-        { status: 400 }
-      );
+      return errorResponse("Payment ID is required", 400);
     }
 
     // Get payment
-    let payment;
-    try {
-      payment = await getPayment(paymentId);
-    } catch (error) {
-      console.error("Reject payment lookup error:", error);
-      return NextResponse.json(
-        { error: "Payment service unavailable" },
-        { status: 503 }
-      );
-    }
+    const payment = await getPayment(paymentId);
     if (!payment || Object.keys(payment).length === 0) {
-      return NextResponse.json(
-        { error: "Payment not found" },
-        { status: 404 }
-      );
+      return errorResponse("Payment not found", 404);
     }
 
-    if (payment.status !== "Pending") {
-      return NextResponse.json(
-        { error: "Payment is not pending" },
-        { status: 400 }
-      );
+    if ((payment as any).status !== "Pending") {
+      return errorResponse("Payment is not pending", 400);
     }
 
     // Reject payment
@@ -45,18 +28,15 @@ export async function POST(req: NextRequest) {
       status: "Rejected",
     });
 
-    return NextResponse.json(
+    return successResponse(
       {
-        message: "Payment rejected successfully",
         paymentId,
+        status: "Rejected",
       },
-      { status: 200 }
+      "Payment rejected successfully",
+      200
     );
   } catch (error) {
-    console.error("Payment reject error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

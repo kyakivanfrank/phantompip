@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/server/auth";
 import { getPayment, updatePayment, updateUser, getUser } from "@/lib/server/db";
+import { handleApiError, successResponse, errorResponse } from "@/lib/server/api-response";
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,39 +10,21 @@ export async function POST(req: NextRequest) {
     const { paymentId } = body;
 
     if (!paymentId) {
-      return NextResponse.json(
-        { error: "Payment ID is required" },
-        { status: 400 }
-      );
+      return errorResponse("Payment ID is required", 400);
     }
 
     // Get payment
-    let payment;
-    try {
-      payment = await getPayment(paymentId);
-    } catch (error) {
-      console.error("Approve payment lookup error:", error);
-      return NextResponse.json(
-        { error: "Payment service unavailable" },
-        { status: 503 }
-      );
-    }
+    const payment = await getPayment(paymentId);
 
     if (!payment || Object.keys(payment).length === 0) {
-      return NextResponse.json(
-        { error: "Payment not found" },
-        { status: 404 }
-      );
+      return errorResponse("Payment not found", 404);
     }
 
     // Safely cast to Record to avoid TypeScript inference errors
     const p = payment as Record<string, any>;
-    
+
     if (p.status !== "Pending") {
-      return NextResponse.json(
-        { error: "Payment is not pending" },
-        { status: 400 }
-      );
+      return errorResponse("Payment is not pending", 400);
     }
 
     // Approve payment
@@ -56,10 +39,10 @@ export async function POST(req: NextRequest) {
     // Update user subscription
     const userId = p.userId as string;
     const userData = await getUser(userId);
-    
+
     // Safely cast userData to access dynamic properties without TS errors
     const ud = userData as Record<string, any> | null;
-    
+
     // Safely parse the current expiry, falling back to 'now' if invalid or missing
     let currentExpiry = now;
     if (ud && ud.subscriptionExpiresAt) {
@@ -76,19 +59,16 @@ export async function POST(req: NextRequest) {
       subscriptionExpiresAt: newExpiry,
     });
 
-    return NextResponse.json(
+    return successResponse(
       {
-        message: "Payment approved successfully",
         paymentId,
         newExpiryDate: newExpiry,
+        status: "Approved",
       },
-      { status: 200 }
+      "Payment approved successfully",
+      200
     );
   } catch (error) {
-    console.error("Payment approve error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

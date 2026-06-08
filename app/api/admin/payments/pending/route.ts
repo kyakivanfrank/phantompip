@@ -1,20 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/server/auth";
 import { getAllPayments, getUser } from "@/lib/server/db";
+import { handleApiError, successResponse } from "@/lib/server/api-response";
 
 export async function GET(_req: NextRequest) {
   try {
     await requireAdmin();
-    let allPayments;
-    try {
-      allPayments = await getAllPayments();
-    } catch (error) {
-      console.error("Pending payments DB error:", error);
-      return NextResponse.json(
-        { error: "Payment service unavailable" },
-        { status: 503 }
-      );
-    }
+    const allPayments = await getAllPayments();
 
     // Filter pending payments and enrich with user info
     const pendingPayments = [];
@@ -34,7 +26,7 @@ export async function GET(_req: NextRequest) {
           couponCode: (payment as any).couponCode,
           status: (payment as any).status,
           createdAt: (payment as any).createdAt,
-          daysOld: Math.floor((Date.now() - ((payment as any).createdAt)) / (24 * 60 * 60 * 1000)),
+          daysOld: Math.floor((Date.now() - (payment as any).createdAt) / (24 * 60 * 60 * 1000)),
         });
       }
     }
@@ -42,17 +34,15 @@ export async function GET(_req: NextRequest) {
     // Sort by most recent first
     pendingPayments.sort((a, b) => b.createdAt - a.createdAt);
 
-    return NextResponse.json(
+    return successResponse(
       {
         pendingPayments,
         totalPending: pendingPayments.length,
       },
-      { status: 200 }
+      "Pending payments retrieved",
+      200
     );
   } catch (error) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
+    return handleApiError(error);
   }
 }

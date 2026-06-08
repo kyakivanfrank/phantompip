@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { randomUUID } from "crypto";
 import { createUser, setUserByEmail, getUserIdByEmail } from "@/lib/server/db";
 import { hashPassword } from "@/lib/server/hashing";
@@ -9,6 +9,7 @@ import {
   normalizeEmail,
 } from "@/lib/server/validation";
 import { setSessionCookie } from "@/lib/server/auth";
+import { handleApiError, successResponse, errorResponse } from "@/lib/server/api-response";
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,49 +18,29 @@ export async function POST(req: NextRequest) {
     const normalizedEmail = normalizeEmail(email || "");
 
     // Validate inputs
-    if (
-      !email ||
-      !password ||
-      !confirmPassword ||
-      !fullName
-    ) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+    if (!email || !password || !confirmPassword || !fullName) {
+      return errorResponse("Missing required fields", 400);
     }
 
     if (!isValidEmail(normalizedEmail)) {
-      return NextResponse.json(
-        { error: "Invalid email format" },
-        { status: 400 }
-      );
+      return errorResponse("Invalid email format", 400);
     }
 
     if (!isValidPassword(password)) {
-      return NextResponse.json(
-        {
-          error:
-            "Password must be at least 8 characters with uppercase, lowercase, number, and special character",
-        },
-        { status: 400 }
+      return errorResponse(
+        "Password must be at least 8 characters with uppercase, lowercase, number, and special character",
+        400
       );
     }
 
     if (password !== confirmPassword) {
-      return NextResponse.json(
-        { error: "Passwords do not match" },
-        { status: 400 }
-      );
+      return errorResponse("Passwords do not match", 400);
     }
 
     // Check if user already exists
     const existingUserId = await getUserIdByEmail(normalizedEmail);
     if (existingUserId) {
-      return NextResponse.json(
-        { error: "User already exists" },
-        { status: 409 }
-      );
+      return errorResponse("User already exists", 409);
     }
 
     // Hash password
@@ -87,22 +68,18 @@ export async function POST(req: NextRequest) {
     // Set session cookie
     await setSessionCookie(userId, normalizedEmail, false);
 
-    return NextResponse.json(
+    return successResponse(
       {
-        message: "Signup successful",
         user: {
           id: userId,
           email: normalizedEmail,
           fullName,
         },
       },
-      { status: 201 }
+      "Signup successful",
+      201
     );
   } catch (error) {
-    console.error("Signup error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

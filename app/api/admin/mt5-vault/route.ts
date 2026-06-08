@@ -1,21 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/server/auth";
 import { getAllUsers, getMt5Credentials } from "@/lib/server/db";
 import { decryptMt5Password } from "@/lib/server/crypto";
+import { handleApiError, successResponse } from "@/lib/server/api-response";
 
 export async function GET(_req: NextRequest) {
   try {
     await requireAdmin();
-    let users;
-    try {
-      users = await getAllUsers();
-    } catch (error) {
-      console.error("Admin MT5 vault DB error:", error);
-      return NextResponse.json(
-        { error: "Vault service unavailable" },
-        { status: 503 }
-      );
-    }
+    const users = await getAllUsers();
 
     // Get only active users with MT5 connected
     const mt5Vault = [];
@@ -73,18 +65,15 @@ export async function GET(_req: NextRequest) {
       });
     }
 
-    return NextResponse.json(
+    return successResponse(
       {
         mt5Vault,
         totalActive: mt5Vault.length,
       },
-      { status: 200 }
+      "MT5 vault retrieved",
+      200
     );
   } catch (error) {
-    console.error("MT5 vault error:", error);
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
+    return handleApiError(error);
   }
 }

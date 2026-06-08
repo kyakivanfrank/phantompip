@@ -2,7 +2,17 @@ import { cookies } from "next/headers";
 import { AuthSession } from "./types";
 
 // Session configuration
-const SESSION_EXPIRY = parseInt(process.env.SESSION_EXPIRY || "86400", 10); // 24 hours default
+const SESSION_EXPIRY_STR = process.env.SESSION_EXPIRY || "86400";
+const SESSION_EXPIRY = (() => {
+  const parsed = parseInt(SESSION_EXPIRY_STR, 10);
+  if (isNaN(parsed) || parsed <= 0) {
+    console.warn(
+      `Invalid SESSION_EXPIRY value: ${SESSION_EXPIRY_STR}, using default 86400 (24 hours)`
+    );
+    return 86400;
+  }
+  return parsed;
+})();
 
 export async function setSessionCookie(
   userId: string,
@@ -29,7 +39,9 @@ export async function setSessionCookie(
     sameSite: "lax",
     maxAge: SESSION_EXPIRY,
     path: "/",
-    ...(process.env.SESSION_COOKIE_DOMAIN ? { domain: process.env.SESSION_COOKIE_DOMAIN } : {}),
+    ...(process.env.SESSION_COOKIE_DOMAIN
+      ? { domain: process.env.SESSION_COOKIE_DOMAIN }
+      : {}),
   });
 }
 
@@ -46,6 +58,16 @@ export async function getSessionCookie(): Promise<AuthSession | null> {
       Buffer.from(sessionCookie.value, "base64").toString("utf-8")
     );
 
+    // Validate decoded session has required fields
+    if (
+      !decoded.userId ||
+      !decoded.email ||
+      typeof decoded.isAdmin !== "boolean"
+    ) {
+      console.warn("Invalid session data structure");
+      return null;
+    }
+
     // Check if session is expired
     if (decoded.expiresAt < Date.now()) {
       return null;
@@ -53,6 +75,7 @@ export async function getSessionCookie(): Promise<AuthSession | null> {
 
     return decoded as AuthSession;
   } catch (error) {
+    console.error("Failed to decode session:", error);
     return null;
   }
 }

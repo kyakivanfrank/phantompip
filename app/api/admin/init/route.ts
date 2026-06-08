@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { randomUUID } from "crypto";
 import { getUserIdByEmail, createUser, setUserByEmail } from "@/lib/server/db";
 import { hashPassword } from "@/lib/server/hashing";
 import { normalizeEmail } from "@/lib/server/validation";
+import { handleApiError, successResponse } from "@/lib/server/api-response";
 
 export async function POST(_req: NextRequest) {
   try {
@@ -12,9 +13,10 @@ export async function POST(_req: NextRequest) {
     // Check if admin already exists
     const existingAdminId = await getUserIdByEmail(adminEmail);
     if (existingAdminId) {
-      return NextResponse.json(
-        { message: "Admin user already exists" },
-        { status: 200 }
+      return successResponse(
+        { adminId: existingAdminId },
+        "Admin user already exists",
+        200
       );
     }
 
@@ -39,19 +41,15 @@ export async function POST(_req: NextRequest) {
     // Map email to admin ID
     await setUserByEmail(adminEmail, adminId);
 
-    return NextResponse.json(
+    return successResponse(
       {
-        message: "Admin user created successfully",
         adminId,
         email: adminEmail,
       },
-      { status: 201 }
+      "Admin user created successfully",
+      201
     );
   } catch (error) {
-    console.error("Admin init error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }
