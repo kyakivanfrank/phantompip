@@ -33,15 +33,20 @@ export async function setSessionCookie(
 
   const encodedSession = Buffer.from(sessionData).toString("base64");
 
+  // Determine domain based on environment
+  // For production (Vercel), use the vercel.app domain
+  // For local dev, omit domain to use current domain only
+  const cookieDomain =
+    process.env.SESSION_COOKIE_DOMAIN ||
+    (process.env.NODE_ENV === "production" ? ".vercel.app" : undefined);
+
   cookieStore.set("phantompip_session", encodedSession, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
     maxAge: SESSION_EXPIRY,
     path: "/",
-    ...(process.env.SESSION_COOKIE_DOMAIN
-      ? { domain: process.env.SESSION_COOKIE_DOMAIN }
-      : {}),
+    ...(cookieDomain ? { domain: cookieDomain } : {}),
   });
 }
 

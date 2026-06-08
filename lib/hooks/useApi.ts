@@ -38,14 +38,17 @@ export function useApi<T = any>(url: string, options?: UseApiOptions) {
         // Build full URL - handle both relative and absolute URLs
         let fullUrl = url;
         if (!url.startsWith('http')) {
-          // Get baseUrl from env var or fallback to window origin
-          let baseUrl = process.env.NEXT_PUBLIC_API_URL;
-          if (!baseUrl && typeof window !== 'undefined') {
-            baseUrl = window.location.origin;
+          // On client-side, use window.location.origin (works on both localhost and Vercel)
+          // Only use NEXT_PUBLIC_API_URL if explicitly set
+          let baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+          
+          if (typeof window === 'undefined' && process.env.NEXT_PUBLIC_API_URL) {
+            // Server-side rendering fallback (rarely used for client hooks)
+            baseUrl = process.env.NEXT_PUBLIC_API_URL;
           }
           
           if (!baseUrl) {
-            throw new Error('API_URL not configured. Set NEXT_PUBLIC_API_URL environment variable.');
+            throw new Error('Unable to determine API URL. Ensure the application is running.');
           }
           
           fullUrl = `${baseUrl}${url.startsWith('/') ? url : '/' + url}`;
