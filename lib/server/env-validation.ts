@@ -3,6 +3,8 @@
  * This should be called on app startup to ensure all required env vars are present
  */
 
+/* eslint-disable no-console */
+
 export interface EnvironmentValidation {
   valid: boolean;
   errors: string[];

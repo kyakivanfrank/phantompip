@@ -16,22 +16,6 @@ export default function UsersPage() {
   }, []);
 
   useEffect(() => {
-    filterUsers();
-  }, [users, searchTerm, filterStatus]);
-
-  const fetchUsers = async () => {
-    try {
-      const res = await fetch('/api/admin/users');
-      const data = await res.json();
-      setUsers(data.users || []);
-      setIsLoading(false);
-    } catch (error) {
-      console.error('Failed to fetch users:', error);
-      setIsLoading(false);
-    }
-  };
-
-  const filterUsers = () => {
     let filtered = users;
 
     // Search filter
@@ -49,7 +33,21 @@ export default function UsersPage() {
     }
 
     setFilteredUsers(filtered);
+  }, [users, searchTerm, filterStatus]);
+
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch('/api/admin/users');
+      const data = await res.json();
+      setUsers(data.users || []);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+      setIsLoading(false);
+    }
   };
+
+  
 
   const getStatusBadge = (status: string) => {
     switch (status) {
