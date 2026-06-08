@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
         { status: 503 }
       );
     }
+
     if (!payment || Object.keys(payment).length === 0) {
       return NextResponse.json(
         { error: "Payment not found" },
@@ -33,7 +34,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (payment.status !== "Pending") {
+    // Safely cast to Record to avoid TypeScript inference errors
+    const p = payment as Record<string, any>;
+    
+    if (p.status !== "Pending") {
       return NextResponse.json(
         { error: "Payment is not pending" },
         { status: 400 }
@@ -50,14 +54,24 @@ export async function POST(req: NextRequest) {
     });
 
     // Update user subscription
-    const userData = await getUser(payment.userId as string);
-    const currentExpiry = parseInt(
-      (userData?.subscriptionExpiresAt as any) || now,
-      10
-    );
+    const userId = p.userId as string;
+    const userData = await getUser(userId);
+    
+    // Safely cast userData to access dynamic properties without TS errors
+    const ud = userData as Record<string, any> | null;
+    
+    // Safely parse the current expiry, falling back to 'now' if invalid or missing
+    let currentExpiry = now;
+    if (ud && ud.subscriptionExpiresAt) {
+      const parsed = parseInt(ud.subscriptionExpiresAt.toString(), 10);
+      if (!isNaN(parsed)) {
+        currentExpiry = parsed;
+      }
+    }
+
     const newExpiry = Math.max(currentExpiry, now) + thirtyDaysMs;
 
-    await updateUser(payment.userId as string, {
+    await updateUser(userId, {
       accountStatus: "Active",
       subscriptionExpiresAt: newExpiry,
     });

@@ -142,6 +142,20 @@ export interface ApiResponse<T = any> {
 }
 
 /**
+ * MT5 Credentials
+ */
+export interface Mt5Credentials {
+  mt5LoginId: string;
+  mt5PasswordEncrypted: string;
+  mt5PasswordIV: string;
+  mt5PasswordAuthTag: string;
+  brokerServer: string;
+  tradingStyle: 'Scalping' | 'Conservative' | 'Aggressive';
+  connectionStatus: 'Connected' | 'Disconnected';
+  connectedAt: number;
+}
+
+/**
  * Paginated response
  */
 export interface PaginatedResponse<T> {

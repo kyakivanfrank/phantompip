@@ -1,5 +1,6 @@
 import { Redis } from "@upstash/redis";
 import { normalizeEmail } from "./validation";
+import { Mt5Credentials } from "@/lib/types";
 
 let redisClient: Redis | null = null;
 
@@ -111,13 +112,13 @@ export async function createUser(userId: string, userData: any) {
   return await attempt(() => (redis as any).hset(`user:${userId}`, userData));
 }
 
-export async function getUser(userId: string) {
+export async function getUser(userId: string): Promise<Record<string, any>> {
   const redis = getRedis();
-  return await attempt(() => (redis as any).hgetall(`user:${userId}`));
+  const res = await attempt(() => (redis as any).hgetall(`user:${userId}`));
+  return res as Record<string, any>;
 }
 
 export async function getUserByEmail(email: string) {
-  const redis = getRedis();
   const userId = await getUserIdByEmail(email);
   if (!userId) {
     return null;
@@ -144,13 +145,14 @@ export async function updateUser(userId: string, updates: any) {
 export async function getAllUsers() {
   const redis = getRedis();
   const keys = await attempt(() => (redis as any).keys("user:*"));
-  const userKeys = keys.filter((k: string) => !k.includes(":mt5:") && !k.includes(":payment:"));
+  const userKeys = (keys as string[]).filter((k: string) => !k.includes(":mt5:") && !k.includes(":payment:"));
   const users = [];
 
   for (const key of userKeys) {
     const userData = await attempt(() => (redis as any).hgetall(key));
-    if (userData && userData.email) {
-      users.push({ id: key.replace("user:", ""), ...userData });
+    const user = userData as Record<string, any>;
+    if (user && user.email) {
+      users.push({ id: key.replace("user:", ""), ...user });
     }
   }
 
@@ -163,7 +165,7 @@ export async function setMt5Credentials(userId: string, credentials: any) {
   return await attempt(() => (redis as any).hset(`mt5:${userId}`, credentials));
 }
 
-export async function getMt5Credentials(userId: string) {
+export async function getMt5Credentials(userId: string): Promise<Partial<Mt5Credentials> | Record<string, never>> {
   const redis = getRedis();
   return await attempt(() => (redis as any).hgetall(`mt5:${userId}`));
 }
@@ -185,9 +187,10 @@ export async function createPayment(paymentId: string, paymentData: any) {
   return paymentId;
 }
 
-export async function getPayment(paymentId: string) {
+export async function getPayment(paymentId: string): Promise<Record<string, any>> {
   const redis = getRedis();
-  return await attempt(() => (redis as any).hgetall(`payment:${paymentId}`));
+  const res = await attempt(() => (redis as any).hgetall(`payment:${paymentId}`));
+  return res as Record<string, any>;
 }
 
 export async function updatePayment(paymentId: string, updates: any) {
@@ -210,15 +213,15 @@ export async function getUserPayments(userId: string) {
   return payments.reverse(); // Most recent first
 }
 
-export async function getAllPayments() {
+export async function getAllPayments(): Promise<Record<string, any>[]> {
   const redis = getRedis();
   const keys = await attempt(() => (redis as any).keys("payment:*"));
-  const payments = [];
+  const payments: Record<string, any>[] = [];
 
-  for (const key of keys) {
+  for (const key of keys as string[]) {
     const payment = await attempt(() => (redis as any).hgetall(key));
     if (payment) {
-      payments.push({ id: key.replace("payment:", ""), ...payment });
+      payments.push({ id: key.replace("payment:", ""), ...(payment as Record<string, any>) });
     }
   }
 
