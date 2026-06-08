@@ -15,7 +15,7 @@ export default function DashboardPage() {
 
   const fetchData = async () => {
     try {
-      const meRes = await fetch('/api/auth/me');
+      const meRes = await fetch('/api/auth/me', { credentials: 'include' });
       const meData = await meRes.json();
       setUserData(meData.user);
       setIsLoading(false);

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest } from "next/server";
 import { randomUUID } from "crypto";
 import { createUser, setUserByEmail, getUserIdByEmail } from "@/lib/server/db";

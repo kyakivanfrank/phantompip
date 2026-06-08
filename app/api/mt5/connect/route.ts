@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest } from "next/server";
 import { requireAuth } from "@/lib/server/auth";
 import { setMt5Credentials, updateUser } from "@/lib/server/db";

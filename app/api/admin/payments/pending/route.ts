@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/server/auth";
 import { getAllPayments, getUser } from "@/lib/server/db";

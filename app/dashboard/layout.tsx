@@ -16,7 +16,7 @@ export default function DashboardLayout({
 
   useEffect(() => {
     // Verify user access
-    fetch('/api/auth/me')
+    fetch('/api/auth/me', { credentials: 'include' })
       .then(res => res.json())
       .then(data => {
         if (data.user?.isAdmin) {
@@ -30,7 +30,7 @@ export default function DashboardLayout({
   }, [router]);
 
   const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
     router.push('/login');
   };
 

@@ -15,7 +15,7 @@ export default function AdminLayout({
 
   useEffect(() => {
     // Verify admin access by fetching current user
-    fetch('/api/auth/me')
+    fetch('/api/auth/me', { credentials: 'include' })
       .then(res => res.json())
       .then(data => {
         if (!data.user?.isAdmin) {
@@ -29,7 +29,7 @@ export default function AdminLayout({
   }, [router]);
 
   const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
     router.push('/login');
   };
 
