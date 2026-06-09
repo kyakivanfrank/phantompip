@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { LogOut, Home, Plug, CreditCard, Settings, Menu, X } from 'lucide-react';
+import { LogOut, Home, Plug, CreditCard, Settings } from 'lucide-react';
+import { MobileBottomNav } from '@/components/MobileBottomNav';
 
 export default function DashboardLayout({
   children,
@@ -12,10 +13,10 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userData, setUserData] = useState<any>(null);
 
   useEffect(() => {
-    // Verify user access
+    // Verify user access and save user data for mobile nav
     fetch('/api/auth/me', { credentials: 'include' })
       .then(res => {
         if (!res.ok) {
@@ -25,9 +26,11 @@ export default function DashboardLayout({
       })
       .then(data => {
         if (data && data.data && data.data.user) {
-          if (data.data.user.isAdmin) {
+          const user = data.data.user;
+          if (user.isAdmin) {
             router.push('/admin');
           } else {
+            setUserData(user);
             setIsLoading(false);
           }
         } else {
@@ -57,20 +60,8 @@ export default function DashboardLayout({
   return (
     // Locked viewport bounds to contain all inner panels neatly
     <div className="flex h-screen w-screen overflow-hidden flex-col md:flex-row bg-dark">
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        className="md:hidden fixed top-4 right-4 z-50 p-2 rounded-lg border border-white/[0.1] bg-dark-secondary/80 text-white backdrop-blur-md"
-      >
-        {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-      </button>
-
-      {/* Sidebar */}
-      <aside
-        className={`${
-          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0 fixed md:relative w-64 h-full border-r border-white/10 bg-dark-secondary/40 backdrop-blur-xl transition-transform duration-300 z-40 flex-shrink-0`}
-      >
+      {/* Desktop Sidebar - visible on md+ screens, hidden on small screens */}
+      <aside className="hidden md:flex fixed md:relative w-64 h-full border-r border-white/10 bg-dark-secondary/40 backdrop-blur-xl z-40 flex-shrink-0">
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="p-6 border-b border-white/10">
@@ -83,7 +74,6 @@ export default function DashboardLayout({
           <nav className="flex-1 space-y-2 p-4 overflow-y-auto custom-scrollbar">
             <Link
               href="/dashboard"
-              onClick={() => setMobileMenuOpen(false)}
               className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-gray-300 hover:bg-cyan-500/10 hover:text-cyan-400 transition-colors"
             >
               <Home className="h-5 w-5" />
@@ -92,7 +82,6 @@ export default function DashboardLayout({
 
             <Link
               href="/dashboard/mt5"
-              onClick={() => setMobileMenuOpen(false)}
               className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-gray-300 hover:bg-cyan-500/10 hover:text-cyan-400 transition-colors"
             >
               <Plug className="h-5 w-5" />
@@ -101,7 +90,6 @@ export default function DashboardLayout({
 
             <Link
               href="/dashboard/subscription"
-              onClick={() => setMobileMenuOpen(false)}
               className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-gray-300 hover:bg-cyan-500/10 hover:text-cyan-400 transition-colors"
             >
               <CreditCard className="h-5 w-5" />
@@ -110,7 +98,6 @@ export default function DashboardLayout({
 
             <Link
               href="/dashboard/settings"
-              onClick={() => setMobileMenuOpen(false)}
               className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-gray-300 hover:bg-cyan-500/10 hover:text-cyan-400 transition-colors"
             >
               <Settings className="h-5 w-5" />
@@ -118,8 +105,16 @@ export default function DashboardLayout({
             </Link>
           </nav>
 
-          {/* Logout */}
-          <div className="border-t border-white/10 p-4">
+          {/* User Profile Section - Desktop only */}
+          <div className="border-t border-white/10 p-4 space-y-3">
+            {userData && (
+              <div className="px-4 py-2 rounded-lg bg-white/5">
+                <p className="text-xs text-gray-400 mb-1">Logged in as:</p>
+                <p className="text-sm font-medium text-white truncate">
+                  {userData.email}
+                </p>
+              </div>
+            )}
             <button
               onClick={handleLogout}
               className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-gray-300 hover:bg-red-500/10 hover:text-red-400 transition-colors"
@@ -131,20 +126,15 @@ export default function DashboardLayout({
         </div>
       </aside>
 
-      {/* Overlay for mobile menu */}
-      {mobileMenuOpen && (
-        <div
-          className="md:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-30"
-          onClick={() => setMobileMenuOpen(false)}
-        />
-      )}
-
-      {/* Smart Content Panel Scroll Layer */}
+      {/* Smart Content Panel - Scroll Layer for both desktop and mobile */}
       <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 h-full p-4 sm:p-6 md:p-8">
         <div className="max-w-7xl mx-auto w-full">
           {children}
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation Component */}
+      <MobileBottomNav userData={userData} onLogout={handleLogout} />
     </div>
   );
 }

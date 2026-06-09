@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { LogOut, Users, CreditCard, Key, TrendingUp } from 'lucide-react';
+import { AdminMobileBottomNav } from '@/components/AdminMobileBottomNav';
 
 export default function AdminLayout({
   children,
@@ -50,9 +51,9 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-dark">
-      {/* Sidebar */}
-      <aside className="w-64 border-r border-white/10 bg-dark-secondary/40 backdrop-blur-xl">
+    <div className="flex h-screen w-screen overflow-hidden flex-col md:flex-row bg-dark">
+      {/* Desktop Sidebar - visible on md+ screens, hidden on small screens */}
+      <aside className="hidden md:flex fixed md:relative w-64 h-full border-r border-white/10 bg-dark-secondary/40 backdrop-blur-xl z-40 flex-shrink-0">
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="p-6 border-b border-white/10">
@@ -62,7 +63,7 @@ export default function AdminLayout({
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 space-y-2 p-4 overflow-y-auto">
+          <nav className="flex-1 space-y-2 p-4 overflow-y-auto custom-scrollbar">
             <Link
               href="/admin"
               className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-gray-300 hover:bg-cyan-500/10 hover:text-cyan-400 transition-colors"
@@ -96,7 +97,7 @@ export default function AdminLayout({
             </Link>
           </nav>
 
-          {/* Logout */}
+          {/* Admin Footer Section - Desktop only */}
           <div className="border-t border-white/10 p-4">
             <button
               onClick={handleLogout}
@@ -109,12 +110,15 @@ export default function AdminLayout({
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto overflow-x-hidden h-screen p-4 sm:p-6 md:p-8 bg-dark">
+      {/* Smart Content Panel - Scroll Layer for both desktop and mobile */}
+      <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 h-full p-4 sm:p-6 md:p-8 bg-dark">
         <div className="max-w-7xl mx-auto w-full">
           {children}
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation Component */}
+      <AdminMobileBottomNav onLogout={handleLogout} />
     </div>
   );
 }
