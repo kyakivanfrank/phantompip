@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Home, Plug, CreditCard, Settings, LogOut } from 'lucide-react';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
 interface MobileBottomNavProps {
   userData?: any;
@@ -10,7 +10,6 @@ interface MobileBottomNavProps {
 }
 
 export function MobileBottomNav({ userData, onLogout }: MobileBottomNavProps) {
-  const router = useRouter();
   const pathname = usePathname();
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
