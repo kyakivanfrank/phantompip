@@ -11,7 +11,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  
+
   // Visibility states
   const [showPassword, setShowPassword] = useState(false);
   const [showForgotMessage, setShowForgotMessage] = useState(false);
@@ -32,13 +32,15 @@ export default function LoginPage() {
 
       const data = await response.json();
 
+      console.log(data)
+
       if (!response.ok) {
         setError(data.error || 'Login failed');
         setIsLoading(false);
         return;
       }
 
-      if (data.user.isAdmin) {
+      if (data.data.user.isAdmin) {
         router.push('/admin');
       } else {
         router.push('/dashboard');
@@ -66,7 +68,7 @@ export default function LoginPage() {
 
         {/* Error Message */}
         {error && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="mt-4 rounded-md border border-red-500/30 bg-red-500/10 p-3"

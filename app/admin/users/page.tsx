@@ -39,7 +39,7 @@ export default function UsersPage() {
     try {
       const res = await fetch('/api/admin/users');
       const data = await res.json();
-      setUsers(data.users || []);
+      setUsers(data.data?.users || []);
       setIsLoading(false);
     } catch (error) {
       console.error('Failed to fetch users:', error);

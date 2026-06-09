@@ -127,9 +127,10 @@ export async function getUserByEmail(email: string) {
   return await getUser(userId as string);
 }
 
-export async function getUserIdByEmail(email: string) {
+export async function getUserIdByEmail(email: string): Promise<string | null> {
   const redis = getRedis();
-  return await attempt(() => (redis as any).get(emailKey(email)));
+  const res = await attempt(() => (redis as any).get(emailKey(email)));
+  return res as string | null;
 }
 
 export async function setUserByEmail(email: string, userId: string) {

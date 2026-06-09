@@ -16,12 +16,18 @@ export default function AdminLayout({
   useEffect(() => {
     // Verify admin access by fetching current user
     fetch('/api/auth/me', { credentials: 'include' })
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) {
+          throw new Error('Not authenticated');
+        }
+        return res.json();
+      })
       .then(data => {
-        if (!data.user?.isAdmin) {
+        if (data && data.data && data.data.user && (data.data.user.isAdmin === true || data.data.user.isAdmin === "true")) {
+          setIsLoading(false);
+        } else {
           router.push('/dashboard');
         }
-        setIsLoading(false);
       })
       .catch(() => {
         router.push('/login');

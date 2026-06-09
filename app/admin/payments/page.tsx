@@ -17,7 +17,7 @@ export default function PaymentsPage() {
     try {
       const res = await fetch('/api/admin/payments/pending');
       const data = await res.json();
-      setPayments(data.pendingPayments || []);
+      setPayments(data.data?.pendingPayments || []);
       setIsLoading(false);
     } catch (error) {
       console.error('Failed to fetch payments:', error);

@@ -28,21 +28,21 @@ export default function AdminDashboard() {
       let activeCount = 0;
       let totalRevenue = 0;
 
-      usersData.users?.forEach((user: any) => {
+      usersData.data?.users?.forEach((user: any) => {
         if (user.accountStatus === 'Active') {
           activeCount++;
         }
       });
 
-      paymentsData.pendingPayments?.forEach((payment: any) => {
+      paymentsData.data?.pendingPayments?.forEach((payment: any) => {
         if (payment.status === 'Approved') {
           totalRevenue += payment.amount;
         }
       });
 
       setStats({
-        totalUsers: usersData.users?.length || 0,
-        pendingPayments: paymentsData.pendingPayments?.length || 0,
+        totalUsers: usersData.data?.users?.length || 0,
+        pendingPayments: paymentsData.data?.pendingPayments?.length || 0,
         activeSubscriptions: activeCount,
         totalRevenue,
       });

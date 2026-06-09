@@ -17,12 +17,22 @@ export default function DashboardLayout({
   useEffect(() => {
     // Verify user access
     fetch('/api/auth/me', { credentials: 'include' })
-      .then(res => res.json())
-      .then(data => {
-        if (data.user?.isAdmin) {
-          router.push('/admin');
+      .then(res => {
+        if (!res.ok) {
+          throw new Error('Not authenticated');
         }
-        setIsLoading(false);
+        return res.json();
+      })
+      .then(data => {
+        if (data && data.data && data.data.user) {
+          if (data.data.user.isAdmin) {
+            router.push('/admin');
+          } else {
+            setIsLoading(false);
+          }
+        } else {
+          router.push('/login');
+        }
       })
       .catch(() => {
         router.push('/login');

@@ -18,7 +18,7 @@ export default function Mt5VaultPage() {
     try {
       const res = await fetch('/api/admin/mt5-vault');
       const data = await res.json();
-      setVault(data.mt5Vault || []);
+      setVault(data.data?.mt5Vault || []);
       setIsLoading(false);
     } catch (error) {
       console.error('Failed to fetch MT5 vault:', error);

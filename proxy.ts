@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { NextMiddleware } from "next/server";
+import { verifySessionToken } from "./lib/server/auth";
 
-export const middleware: NextMiddleware = async (request: NextRequest) => {
+export const proxy: NextMiddleware = async (request: NextRequest) => {
   const { pathname } = request.nextUrl;
 
   // Get session cookie
@@ -20,17 +21,11 @@ export const middleware: NextMiddleware = async (request: NextRequest) => {
   if (publicRoutes.includes(pathname)) {
     // If user is already logged in, redirect from login/signup
     if ((pathname === "/login" || pathname === "/signup") && sessionCookie?.value) {
-      try {
-        const decoded = JSON.parse(
-          Buffer.from(sessionCookie.value, "base64").toString("utf-8")
+      const decoded = await verifySessionToken(sessionCookie.value);
+      if (decoded && decoded.expiresAt > Date.now()) {
+        return NextResponse.redirect(
+          decoded.isAdmin ? new URL("/admin", request.url) : new URL("/dashboard", request.url)
         );
-        if (decoded.expiresAt > Date.now()) {
-          return NextResponse.redirect(
-            decoded.isAdmin ? new URL("/admin", request.url) : new URL("/dashboard", request.url)
-          );
-        }
-      } catch (e) {
-        // Invalid session, continue
       }
     }
     return NextResponse.next();
@@ -42,22 +37,14 @@ export const middleware: NextMiddleware = async (request: NextRequest) => {
       return NextResponse.redirect(new URL("/login", request.url));
     }
 
-    try {
-      const decoded = JSON.parse(
-        Buffer.from(sessionCookie.value, "base64").toString("utf-8")
-      );
-
-      // Check session expiry
-      if (decoded.expiresAt < Date.now()) {
-        return NextResponse.redirect(new URL("/login", request.url));
-      }
-
-      // If admin tries to access user dashboard, redirect to admin
-      if (decoded.isAdmin && pathname.startsWith("/dashboard")) {
-        return NextResponse.redirect(new URL("/admin", request.url));
-      }
-    } catch (e) {
+    const decoded = await verifySessionToken(sessionCookie.value);
+    if (!decoded || decoded.expiresAt < Date.now()) {
       return NextResponse.redirect(new URL("/login", request.url));
+    }
+
+    // If admin tries to access user dashboard, redirect to admin
+    if (decoded.isAdmin && pathname.startsWith("/dashboard")) {
+      return NextResponse.redirect(new URL("/admin", request.url));
     }
   }
 
@@ -67,22 +54,14 @@ export const middleware: NextMiddleware = async (request: NextRequest) => {
       return NextResponse.redirect(new URL("/login", request.url));
     }
 
-    try {
-      const decoded = JSON.parse(
-        Buffer.from(sessionCookie.value, "base64").toString("utf-8")
-      );
-
-      // Check session expiry
-      if (decoded.expiresAt < Date.now()) {
-        return NextResponse.redirect(new URL("/login", request.url));
-      }
-
-      // Check admin status
-      if (!decoded.isAdmin) {
-        return NextResponse.redirect(new URL("/dashboard", request.url));
-      }
-    } catch (e) {
+    const decoded = await verifySessionToken(sessionCookie.value);
+    if (!decoded || decoded.expiresAt < Date.now()) {
       return NextResponse.redirect(new URL("/login", request.url));
+    }
+
+    // Check admin status
+    if (!decoded.isAdmin) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
     }
   }
 
