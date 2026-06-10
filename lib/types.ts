@@ -251,3 +251,31 @@ export interface TradeAlert {
   createdAt: Date;
   triggeredAt?: Date;
 }
+
+/**
+ * Bot configuration settings
+ */
+export interface BotSettings {
+  botId: number;
+  userId: string;
+  enabled: boolean;
+  stopLoss: number;
+  takeProfit: number;
+  maxDrawdown: number;
+  dailyLossLimit: number;
+  lotSize: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
+ * Trading Bot
+ */
+export interface TradingBot {
+  id: number;
+  name: string;
+  strategy: 'Trend Following' | 'Scalping' | 'Grid';
+  risk: 'Low risk' | 'Medium risk' | 'High risk';
+  enabled: boolean;
+  settings?: BotSettings;
+}

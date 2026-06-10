@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Clock, CheckCircle, XCircle } from 'lucide-react';
+import UserDetailsModal from '@/components/UserDetailsModal';
 
 export default function UsersPage() {
   const [users, setUsers] = useState<any[]>([]);
@@ -10,6 +11,8 @@ export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedUser, setSelectedUser] = useState<any | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -151,7 +154,14 @@ export default function UsersPage() {
             <tbody className="divide-y divide-white/[0.1]">
               {filteredUsers.length > 0 ? (
                 filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-white/[0.02] transition-colors">
+                  <tr
+                    key={user.id}
+                    onClick={() => {
+                      setSelectedUser(user);
+                      setIsDetailsModalOpen(true);
+                    }}
+                    className="hover:bg-white/[0.02] transition-colors cursor-pointer"
+                  >
                     <td className="px-6 py-4 font-medium text-white">{user.fullName}</td>
                     <td className="px-6 py-4 text-sm text-gray-400">{user.email}</td>
                     <td className="px-6 py-4">{getStatusBadge(user.accountStatus)}</td>
@@ -194,6 +204,16 @@ export default function UsersPage() {
           <span className="font-semibold text-white">{users.length}</span> users
         </p>
       </motion.div>
+
+      {/* User Details Modal */}
+      <UserDetailsModal
+        user={selectedUser}
+        isOpen={isDetailsModalOpen}
+        onClose={() => {
+          setIsDetailsModalOpen(false);
+          setSelectedUser(null);
+        }}
+      />
     </div>
   );
 }

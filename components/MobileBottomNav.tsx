@@ -24,7 +24,7 @@ export function MobileBottomNav({ userData, onLogout }: MobileBottomNavProps) {
   return (
     <>
       {/* Mobile Bottom Navigation - persistent, visible only on small screens */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-dark-secondary/90 backdrop-blur-lg border-t border-white/10">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-dark-secondary/90 backdrop-blur-lg border-t border-white/10 rounded-t-3xl">
         <div className="w-full px-2 py-2">
           <div className="flex items-center justify-between gap-1">
             {navItems.map((item) => {
@@ -57,13 +57,7 @@ export function MobileBottomNav({ userData, onLogout }: MobileBottomNavProps) {
               );
             })}
 
-            <button
-              onClick={onLogout}
-              className="flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-md transition-colors text-gray-400 hover:text-red-400"
-            >
-              <LogOut className="h-5 w-5" />
-              <span className="text-xs mt-1 font-medium">Exit</span>
-            </button>
+            
           </div>
 
           {/* Mobile User Profile Info - Optional compact display */}

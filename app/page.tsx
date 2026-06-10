@@ -411,8 +411,8 @@ export default function Home() {
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                        <XAxis dataKey="month" stroke="#9ca3af" />
-                        <YAxis stroke="#9ca3af" />
+                        <XAxis dataKey="month" stroke="#9ca3af"  tick={false} />
+                        <YAxis stroke="#9ca3af" tick={false} />
                         <Tooltip
                           contentStyle={{ backgroundColor: '#0f0f0f', border: '1px solid rgba(255,255,255,0.1)' }}
                         />

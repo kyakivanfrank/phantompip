@@ -80,18 +80,7 @@ export default function Mt5Page() {
         transition={{ delay: 0.1 }}
         className="space-y-6"
       >
-        {/* Info Box */}
-        <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-4">
-          <div className="flex gap-3">
-            <AlertCircle className="h-5 w-5 text-cyan-400 shrink-0 mt-0.5" />
-            <div className="text-sm">
-              <p className="font-medium text-cyan-400">Secure Connection</p>
-              <p className="mt-1 text-gray-400">
-                Your MT5 password is encrypted with AES-256-GCM and never transmitted in plaintext. Our admin can only access decrypted credentials server-side.
-              </p>
-            </div>
-          </div>
-        </div>
+    
 
         {/* Success Message */}
         {success && (

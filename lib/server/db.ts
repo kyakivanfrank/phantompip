@@ -244,3 +244,34 @@ export async function updateCoupon(code: string, updates: any) {
   const redis = getRedis();
   return await attempt(() => (redis as any).hset(`coupon:${code}`, updates));
 }
+
+// Bot Settings operations
+export async function setBotSettings(userId: string, botId: number, settings: any) {
+  const redis = getRedis();
+  const cleanData = Object.fromEntries(
+    Object.entries(settings).filter(([, value]) => value !== null && value !== undefined)
+  );
+  return await attempt(() => (redis as any).hset(`bot:${userId}:${botId}`, cleanData));
+}
+
+export async function getBotSettings(userId: string, botId: number): Promise<Record<string, any>> {
+  const redis = getRedis();
+  const res = await attempt(() => (redis as any).hgetall(`bot:${userId}:${botId}`));
+  return res as Record<string, any>;
+}
+
+export async function getAllUserBotSettings(userId: string): Promise<Record<number, Record<string, any>>> {
+  const redis = getRedis();
+  const keys = await attempt(() => (redis as any).keys(`bot:${userId}:*`));
+  const botSettings: Record<number, Record<string, any>> = {};
+
+  for (const key of keys as string[]) {
+    const botId = parseInt(key.split(':')[2]);
+    const settings = await attempt(() => (redis as any).hgetall(key));
+    if (settings) {
+      botSettings[botId] = settings as Record<string, any>;
+    }
+  }
+
+  return botSettings;
+}

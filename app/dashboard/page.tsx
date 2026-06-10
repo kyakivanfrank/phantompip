@@ -39,12 +39,6 @@ export default function DashboardPage() {
     ? Math.ceil((userData.subscriptionExpiresAt - Date.now()) / (24 * 60 * 60 * 1000))
     : 0;
 
-  const statusColor =
-    userData?.accountStatus === 'Active'
-      ? 'text-green-400'
-      : userData?.accountStatus === 'Pending Approval'
-        ? 'text-yellow-400'
-        : 'text-red-400';
 
   return (
     <div className="space-y-6">
@@ -54,12 +48,19 @@ export default function DashboardPage() {
         animate={{ opacity: 1, y: 0 }}
         className="space-y-2"
       >
+       
         <h1 className="text-2xl font-semibold text-white">Welcome back,</h1>
         <h1 className="text-3xl font-semibold text-white">{userData?.fullName}</h1>
         <p className="text-gray-400">
           Manage your MT5 account and subscription below
         </p>
       </motion.div>
+
+       <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium border ${userData?.accountStatus ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'
+                }`}>
+                <span className={`size-2 rounded-full ${userData?.accountStatus ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                {userData?.accountStatus ? 'Active' : 'Inactive'}
+              </div>
 
       {/* Status Cards Grid */}
       <motion.div
@@ -68,61 +69,9 @@ export default function DashboardPage() {
         transition={{ delay: 0.1 }}
         className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
       >
-        {/* Account Status */}
-        <div className="rounded-xl border border-white/[0.1] bg-dark-secondary/40 p-6 backdrop-blur-xl">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-widest text-gray-400">Account Status</p>
-              <p className={`mt-2 text-2xl font-bold ${statusColor}`}>
-                {userData?.accountStatus}
-              </p>
-            </div>
-            <CheckCircle className={`h-8 w-8 ${statusColor}`} />
-          </div>
-        </div>
+   
 
-        {/* Days Remaining */}
-        <div className="rounded-xl border border-white/[0.1] bg-dark-secondary/40 p-6 backdrop-blur-xl">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-widest text-gray-400">Days Remaining</p>
-              <p className={`mt-2 text-2xl font-bold ${
-                daysRemaining > 7 ? 'text-green-400' : daysRemaining > 0 ? 'text-yellow-400' : 'text-red-400'
-              }`}>
-                {daysRemaining > 0 ? daysRemaining : 0}
-              </p>
-            </div>
-            <Calendar className={`h-8 w-8 ${
-              daysRemaining > 7 ? 'text-green-400' : daysRemaining > 0 ? 'text-yellow-400' : 'text-red-400'
-            }`} />
-          </div>
-        </div>
-
-        {/* MT5 Status */}
-        <div className="rounded-xl border border-white/[0.1] bg-dark-secondary/40 p-6 backdrop-blur-xl">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-widest text-gray-400">MT5 Account</p>
-              <p className={`mt-2 text-2xl font-bold ${userData?.mt5Connected ? 'text-green-400' : 'text-gray-400'}`}>
-                {userData?.mt5Connected ? 'Connected' : 'Not Connected'}
-              </p>
-            </div>
-            <Zap className={`h-8 w-8 ${userData?.mt5Connected ? 'text-green-400' : 'text-gray-400'}`} />
-          </div>
-        </div>
-
-        {/* Trading Style */}
-        <div className="rounded-xl border border-white/[0.1] bg-dark-secondary/40 p-6 backdrop-blur-xl">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-widest text-gray-400">Trading Style</p>
-              <p className="mt-2 text-2xl font-bold text-cyan-400">
-                {userData?.tradingStyle || 'Not set'}
-              </p>
-            </div>
-            <TrendingUp className="h-8 w-8 text-cyan-400" />
-          </div>
-        </div>
+      
       </motion.div>
 
       {/* Quick Actions */}
@@ -228,6 +177,7 @@ export default function DashboardPage() {
           </li>
         </ol>
       </motion.div>
+
     </div>
   );
 }

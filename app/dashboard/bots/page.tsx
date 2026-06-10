@@ -1,10 +1,13 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Settings2 } from 'lucide-react';
+import BotConfigModal, { BotConfig } from '@/components/BotConfigModal';
+import { useApi } from '@/lib/hooks/useApi';
 
 export default function BotsPage() {
-  const bots = [
+  const [bots, setBots] = useState<BotConfig[]>([
     {
       id: 1,
       name: 'Neural-X Trend',
@@ -12,11 +15,11 @@ export default function BotsPage() {
       risk: 'Medium risk',
       enabled: true,
       config: {
-        stopLoss: '1.5%',
-        takeProfit: '3%',
-        maxDrawdown: '10%',
-        dailyLossLimit: '5%',
-        lotSize: '0.5',
+        stopLoss: 1.5,
+        takeProfit: 3,
+        maxDrawdown: 10,
+        dailyLossLimit: 5,
+        lotSize: 0.5,
         account: 'IC Markets · 5024188',
       },
     },
@@ -27,11 +30,11 @@ export default function BotsPage() {
       risk: 'High risk',
       enabled: true,
       config: {
-        stopLoss: '0.5%',
-        takeProfit: '1%',
-        maxDrawdown: '8%',
-        dailyLossLimit: '4%',
-        lotSize: '0.2',
+        stopLoss: 0.5,
+        takeProfit: 1,
+        maxDrawdown: 8,
+        dailyLossLimit: 4,
+        lotSize: 0.2,
         account: 'Exness · 8842110',
       },
     },
@@ -42,15 +45,99 @@ export default function BotsPage() {
       risk: 'Low risk',
       enabled: false,
       config: {
-        stopLoss: '2%',
-        takeProfit: '4%',
-        maxDrawdown: '15%',
-        dailyLossLimit: '6%',
-        lotSize: '0.1',
+        stopLoss: 2,
+        takeProfit: 4,
+        maxDrawdown: 15,
+        dailyLossLimit: 6,
+        lotSize: 0.1,
         account: 'IC Markets · 5024188',
       },
     },
-  ];
+  ]);
+
+  const [selectedBot, setSelectedBot] = useState<BotConfig | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const { request: apiRequest } = useApi();
+
+  // Load bot settings on mount
+  useEffect(() => {
+    const loadBotSettings = async () => {
+      try {
+        const updatedBots = await Promise.all(
+          bots.map(async (bot) => {
+            const response = await apiRequest(
+              `/api/bots/settings/${bot.id}`,
+              { method: 'GET' }
+            );
+
+            if (response.success && response.data) {
+              return {
+                ...bot,
+                enabled: response.data.enabled ?? bot.enabled,
+                config: {
+                  ...bot.config,
+                  stopLoss: response.data.stopLoss ?? bot.config.stopLoss,
+                  takeProfit: response.data.takeProfit ?? bot.config.takeProfit,
+                  maxDrawdown: response.data.maxDrawdown ?? bot.config.maxDrawdown,
+                  dailyLossLimit: response.data.dailyLossLimit ?? bot.config.dailyLossLimit,
+                  lotSize: response.data.lotSize ?? bot.config.lotSize,
+                },
+              };
+            }
+            return bot;
+          })
+        );
+        setBots(updatedBots);
+      } catch (error) {
+        console.error('Failed to load bot settings:', error);
+        // Continue with default settings if load fails
+      }
+    };
+
+    loadBotSettings();
+  }, []);
+
+  const handleConfigureClick = (bot: BotConfig) => {
+    setSelectedBot(bot);
+    setIsModalOpen(true);
+  };
+
+  const handleSaveConfig = async (updatedConfig: BotConfig) => {
+    setIsSaving(true);
+    try {
+      const response = await apiRequest(
+        `/api/bots/settings/${updatedConfig.id}`,
+        {
+          method: 'POST',
+          body: {
+            enabled: updatedConfig.enabled,
+            stopLoss: updatedConfig.config.stopLoss,
+            takeProfit: updatedConfig.config.takeProfit,
+            maxDrawdown: updatedConfig.config.maxDrawdown,
+            dailyLossLimit: updatedConfig.config.dailyLossLimit,
+            lotSize: updatedConfig.config.lotSize,
+          },
+        }
+      );
+
+      if (response.success) {
+        setBots((prevBots) =>
+          prevBots.map((b) =>
+            b.id === updatedConfig.id ? updatedConfig : b
+          )
+        );
+        setIsModalOpen(false);
+        setSelectedBot(null);
+      } else {
+        console.error('API error:', response.error || 'Unknown error');
+      }
+    } catch (error) {
+      console.error('Failed to save bot configuration:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-6 lg:p-8">
@@ -105,27 +192,23 @@ export default function BotsPage() {
                 </p>
               </div>
 
-              {/* Toggle Button */}
-              <button
-                className={`relative h-6 w-11 rounded-full transition-colors ${
-                  bot.enabled ? 'bg-cyan-500' : 'bg-gray-600'
-                }`}
-              >
-                <span
-                  className={`absolute top-0.5 size-5 rounded-full bg-white transition-transform ${
-                    bot.enabled ? 'translate-x-5' : 'translate-x-0.5'
-                  }`}
-                ></span>
-              </button>
+              {/* active label */}
+              <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium border ${bot.enabled ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'
+                }`}>
+                <span className={`size-2 rounded-full ${bot.enabled ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                {bot.enabled ? 'Active' : 'Inactive'}
+              </div>
+
+
             </div>
 
             {/* Configuration Grid */}
             <div className="mt-6 grid grid-cols-2 gap-3 text-xs">
               {[
-                { label: 'Stop loss', value: bot.config.stopLoss },
-                { label: 'Take profit', value: bot.config.takeProfit },
-                { label: 'Max drawdown', value: bot.config.maxDrawdown },
-                { label: 'Daily loss limit', value: bot.config.dailyLossLimit },
+                { label: 'Stop loss', value: `${bot.config.stopLoss}%` },
+                { label: 'Take profit', value: `${bot.config.takeProfit}%` },
+                { label: 'Max drawdown', value: `${bot.config.maxDrawdown}%` },
+                { label: 'Daily loss limit', value: `${bot.config.dailyLossLimit}%` },
                 { label: 'Lot size', value: bot.config.lotSize },
                 { label: 'Account', value: bot.config.account },
               ].map((config, idx) => (
@@ -142,13 +225,31 @@ export default function BotsPage() {
             </div>
 
             {/* Configure Button */}
-            <button className="mt-6 inline-flex h-9 w-full items-center justify-center gap-2 rounded-md border border-white/[0.1] bg-dark-tertiary/30 text-xs font-medium text-gray-400 hover:bg-dark-tertiary/50 hover:text-white transition-colors">
+            <button
+              onClick={() => handleConfigureClick(bot)}
+              className="mt-6 inline-flex h-9 w-full items-center justify-center gap-2 rounded-md border border-white/[0.1] bg-dark-tertiary/30 text-xs font-medium text-gray-400 hover:bg-dark-tertiary/50 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isSaving}
+            >
               <Settings2 className="size-3.5" />
               Configure
             </button>
           </motion.div>
         ))}
       </div>
+
+      {/* Bot Configuration Modal */}
+      {selectedBot && (
+        <BotConfigModal
+          bot={selectedBot}
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedBot(null);
+          }}
+          onSave={handleSaveConfig}
+          isSaving={isSaving}
+        />
+      )}
     </div>
   );
 }

@@ -69,65 +69,6 @@ export default function SettingsPage() {
         </div>
       </motion.div>
 
-      {/* Security Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-        className="glass rounded-xl p-6 border border-white/[0.05] bg-dark-secondary/40 backdrop-blur-sm"
-      >
-        <h2 className="text-sm font-semibold uppercase tracking-widest text-gray-400">
-          Security
-        </h2>
-        <div className="mt-5 space-y-4">
-          {/* Current Password */}
-          <label className="block">
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-gray-400">
-              Current password
-            </span>
-            <input
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              className="mt-2 h-10 w-full rounded-md border border-white/[0.1] bg-dark-tertiary/30 px-3 text-sm text-white outline-none focus:border-cyan-500 transition-colors"
-            />
-          </label>
-
-          {/* New Password */}
-          <label className="block">
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-gray-400">
-              New password
-            </span>
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="mt-2 h-10 w-full rounded-md border border-white/[0.1] bg-dark-tertiary/30 px-3 text-sm text-white outline-none focus:border-cyan-500 transition-colors"
-            />
-          </label>
-
-          {/* 2FA Toggle */}
-          <div className="flex items-center justify-between rounded-md border border-white/[0.05] bg-dark-tertiary/30 p-4">
-            <div>
-              <p className="text-sm font-medium text-white">Two-factor authentication</p>
-              <p className="mt-1 text-xs text-gray-400">Require a TOTP code at every login.</p>
-            </div>
-            <button
-              onClick={() => setTwoFactor(!twoFactor)}
-              className={`relative h-6 w-11 rounded-full transition-colors ${
-                twoFactor ? 'bg-cyan-500' : 'bg-gray-600'
-              }`}
-            >
-              <span
-                className={`absolute top-0.5 size-5 rounded-full bg-white transition-transform ${
-                  twoFactor ? 'translate-x-5' : 'translate-x-0.5'
-                }`}
-              ></span>
-            </button>
-          </div>
-        </div>
-      </motion.div>
-
       {/* Session Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
