@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
 import { randomUUID } from "crypto";
-import { createUser, setUserByEmail, getUserIdByEmail } from "@/lib/server/db";
+import { createUser, getUserIdByEmail } from "@/lib/server/db";
 import { hashPassword } from "@/lib/server/hashing";
 import {
   isValidEmail,
@@ -12,6 +12,7 @@ import {
 } from "@/lib/server/validation";
 import { setSessionCookie } from "@/lib/server/auth";
 import { handleApiError, successResponse, errorResponse } from "@/lib/server/api-response";
+import { UserDocument } from "@/lib/types";
 
 export async function POST(req: NextRequest) {
   try {
@@ -48,24 +49,38 @@ export async function POST(req: NextRequest) {
     // Hash password
     const passwordHash = await hashPassword(password);
 
-    // Create user
-    const userId = randomUUID();
-    const now = Date.now();
-    const subscriptionExpiresAt = now + 30 * 24 * 60 * 60 * 1000; // 30 days trial
+    // Create user document according to RedisJSON schema
+    const userId = "usr_" + randomUUID().substring(0, 8);
+    const nowIso = new Date().toISOString();
+    const thirtyDaysLater = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const todayStr = new Date().toISOString().split('T')[0];
 
-    await createUser(userId, {
-      email: normalizedEmail,
-      passwordHash,
-      fullName: sanitizeInput(fullName),
-      accountStatus: "Pending Approval",
-      subscriptionExpiresAt,
-      createdAt: now,
+    const newUser: UserDocument = {
+      userId,
       isAdmin: false,
-      mt5Connected: false,
-    });
+      account: {
+        username: sanitizeInput(fullName),
+        email: normalizedEmail,
+        passwordHash,
+        createdAt: nowIso,
+        lastLoginAt: nowIso,
+      },
+      subscription: {
+        status: "pending",
+        approvalStatus: "pending",
+        planName: "Trial Plan",
+        priceUSD: 0,
+        billingCycle: "monthly",
+        startDate: todayStr,
+        expiryDate: thirtyDaysLater,
+        approvedAt: null,
+        payments: [],
+      },
+      mt5: null,
+      bots: {},
+    };
 
-    // Map email to userId
-    await setUserByEmail(normalizedEmail, userId);
+    await createUser(userId, newUser);
 
     // Set session cookie
     await setSessionCookie(userId, normalizedEmail, false);

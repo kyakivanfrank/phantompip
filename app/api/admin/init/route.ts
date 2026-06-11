@@ -2,16 +2,15 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
 import { randomUUID } from "crypto";
-import { getUserIdByEmail, createUser, setUserByEmail } from "@/lib/server/db";
+import { getUserIdByEmail, createUser, setUserByEmail, resetUserPassword } from "@/lib/server/db";
 import { hashPassword } from "@/lib/server/hashing";
 import { normalizeEmail } from "@/lib/server/validation";
 import { handleApiError, successResponse, errorResponse } from "@/lib/server/api-response";
+import { UserDocument } from "@/lib/types";
 
 export async function POST(_req: NextRequest) {
   try {
     // Prevent accidental public creation of an admin account.
-    // This endpoint only runs when ENABLE_ADMIN_INIT is explicitly set to "true".
-    // Intentionally default to disabled to require manual DB changes for admin creation.
     if (process.env.ENABLE_ADMIN_INIT !== "true") {
       return errorResponse("Admin initialization is disabled on this deployment", 403);
     }
@@ -24,9 +23,7 @@ export async function POST(_req: NextRequest) {
     const existingAdminId = await getUserIdByEmail(adminEmail);
     if (existingAdminId) {
       // Update existing admin password to match current env configuration
-      await createUser(existingAdminId, {
-        passwordHash,
-      });
+      await resetUserPassword(existingAdminId, passwordHash);
 
       return successResponse(
         { adminId: existingAdminId },
@@ -36,21 +33,36 @@ export async function POST(_req: NextRequest) {
     }
 
     // Create admin user
-    const adminId = randomUUID();
-    const now = Date.now();
+    const adminId = "usr_" + randomUUID().substring(0, 8);
+    const nowIso = new Date().toISOString();
+    const todayStr = new Date().toISOString().split('T')[0];
 
-    await createUser(adminId, {
-      email: adminEmail,
-      passwordHash,
-      fullName: "Platform Administrator",
-      accountStatus: "Active",
-      subscriptionExpiresAt: now + 365 * 24 * 60 * 60 * 1000, // 1 year
-      createdAt: now,
+    const adminUser: UserDocument = {
+      userId: adminId,
       isAdmin: true,
-      mt5Connected: false,
-    });
+      account: {
+        username: "Admin",
+        email: adminEmail,
+        passwordHash,
+        createdAt: nowIso,
+        lastLoginAt: nowIso,
+      },
+      subscription: {
+        status: "active",
+        approvalStatus: "approved",
+        planName: "Premium Plan",
+        priceUSD: 0,
+        billingCycle: "lifetime",
+        startDate: todayStr,
+        expiryDate: "2099-01-01",
+        approvedAt: nowIso,
+        payments: [],
+      },
+      mt5: null,
+      bots: {},
+    };
 
-    // Map email to admin ID
+    await createUser(adminId, adminUser);
     await setUserByEmail(adminEmail, adminId);
 
     return successResponse(

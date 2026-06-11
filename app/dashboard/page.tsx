@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { Calendar, TrendingUp, CheckCircle, Clock, Zap } from 'lucide-react';
+import { CheckCircle, Clock, Zap } from 'lucide-react';
 
 export default function DashboardPage() {
   const [userData, setUserData] = useState<any>(null);
@@ -35,9 +35,7 @@ export default function DashboardPage() {
     );
   }
 
-  const daysRemaining = userData
-    ? Math.ceil((userData.subscriptionExpiresAt - Date.now()) / (24 * 60 * 60 * 1000))
-    : 0;
+
 
 
   return (
@@ -48,7 +46,7 @@ export default function DashboardPage() {
         animate={{ opacity: 1, y: 0 }}
         className="space-y-2"
       >
-       
+
         <h1 className="text-2xl font-semibold text-white">Welcome back,</h1>
         <h1 className="text-3xl font-semibold text-white">{userData?.fullName}</h1>
         <p className="text-gray-400">
@@ -56,11 +54,11 @@ export default function DashboardPage() {
         </p>
       </motion.div>
 
-       <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium border ${userData?.accountStatus ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'
-                }`}>
-                <span className={`size-2 rounded-full ${userData?.accountStatus ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-                {userData?.accountStatus ? 'Active' : 'Inactive'}
-              </div>
+      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium border ${userData?.accountStatus ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'
+        }`}>
+        <span className={`size-2 rounded-full ${userData?.accountStatus ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+        {userData?.accountStatus ? 'Active' : 'Inactive'}
+      </div>
 
       {/* Status Cards Grid */}
       <motion.div
@@ -69,9 +67,9 @@ export default function DashboardPage() {
         transition={{ delay: 0.1 }}
         className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
       >
-   
 
-      
+
+
       </motion.div>
 
       {/* Quick Actions */}

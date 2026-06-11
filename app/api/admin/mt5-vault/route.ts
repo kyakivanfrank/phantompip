@@ -3,7 +3,6 @@ export const dynamic = 'force-dynamic';
 import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/server/auth";
 import { getAllUsers, getMt5Credentials } from "@/lib/server/db";
-import { decryptMt5Password } from "@/lib/server/crypto";
 import { handleApiError, successResponse } from "@/lib/server/api-response";
 
 export async function GET(_req: NextRequest) {
@@ -16,54 +15,38 @@ export async function GET(_req: NextRequest) {
 
     for (const user of users) {
       // Skip admin users
-      if ((user as any).isAdmin === true || (user as any).isAdmin === "true") {
+      if (user.isAdmin) {
         continue;
       }
 
       // Only show active subscriptions
-      if (
-        (user as any).accountStatus !== "Active" ||
-        ((user as any).mt5Connected !== true && (user as any).mt5Connected !== "true")
-      ) {
+      if (user.subscriptionStatus !== "active") {
         continue;
       }
 
-      const credentials = await getMt5Credentials((user as any).id);
-      const creds: any = credentials;
-      if (!creds || Object.keys(creds).length === 0) {
+      const creds = await getMt5Credentials(user.userId);
+      if (!creds || !creds.isConnected) {
         continue;
       }
 
-      // Decrypt password only on server-side
-      let decryptedPassword = "";
-      try {
-        decryptedPassword = decryptMt5Password(
-          creds.mt5PasswordEncrypted as string,
-          creds.mt5PasswordIV as string,
-          creds.mt5PasswordAuthTag as string
-        );
-      } catch (e) {
-        console.error(`Failed to decrypt password for user ${user.id}:`, e);
-        decryptedPassword = "[DECRYPTION_FAILED]";
-      }
+      const expiryMs = new Date(user.expiryDate).getTime();
 
       mt5Vault.push({
-        userId: (user as any).id,
-        userEmail: (user as any).email,
-        userFullName: (user as any).fullName,
-        subscriptionExpiresAt: (user as any).subscriptionExpiresAt,
+        userId: user.userId,
+        userEmail: user.email,
+        userFullName: user.username,
+        subscriptionExpiresAt: expiryMs,
         daysRemaining: Math.max(
           0,
           Math.ceil(
-            ((user as any).subscriptionExpiresAt - Date.now()) / (24 * 60 * 60 * 1000)
+            (expiryMs - Date.now()) / (24 * 60 * 60 * 1000)
           )
         ),
-        mt5LoginId: creds.mt5LoginId,
-        mt5Password: decryptedPassword,
+        mt5LoginId: creds.loginId,
+        mt5Password: creds.password, // Plain text intentional
         brokerServer: creds.brokerServer,
-        tradingStyle: creds.tradingStyle,
-        connectionStatus: creds.connectionStatus,
-        connectedAt: creds.connectedAt,
+        connectionStatus: creds.isConnected ? "Connected" : "Disconnected",
+        connectedAt: creds.connectedAt ? new Date(creds.connectedAt).getTime() : null,
       });
     }
 

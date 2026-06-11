@@ -9,6 +9,7 @@ import {
   sanitizeInput,
 } from "@/lib/server/validation";
 import { handleApiError, successResponse, errorResponse } from "@/lib/server/api-response";
+import { Payment } from "@/lib/types";
 
 const BASE_AMOUNT = 50; // $50
 
@@ -64,19 +65,37 @@ export async function POST(req: NextRequest) {
     }
 
     // Create payment record
-    const paymentId = randomUUID();
-    const now = Date.now();
+    const paymentId = "pay_" + randomUUID().substring(0, 8);
+    const now = new Date().toISOString();
 
-    await createPayment(paymentId, {
-      userId: session.userId,
-      method: sanitizeInput(method),
-      transactionId: sanitizeInput(transactionId),
+    let paymentMethod: Payment["method"] = "USDT";
+    let paymentNetwork: Payment["network"] = "TRON (TRC20)";
+
+    if (method === "MTN-MoMo") {
+      paymentMethod = "MTNMobileMoney";
+      paymentNetwork = "MTN";
+    } else if (method === "Airtel") {
+      paymentMethod = "AirtelMoney";
+      paymentNetwork = "Airtel";
+    }
+
+    const newPayment: Payment & { originalAmount?: number; couponCode?: string } = {
+      paymentId,
       amount: finalAmount,
-      status: "Pending",
-      createdAt: now,
-      couponCode: couponCode || undefined,
-      originalAmount: couponCode ? BASE_AMOUNT : undefined,
-    });
+      method: paymentMethod,
+      network: paymentNetwork,
+      transactionRef: sanitizeInput(transactionId),
+      status: "pending",
+      submittedAt: now,
+    };
+    
+    // Attach legacy coupon fields just in case they are still needed by other routes
+    if (couponCode) {
+      newPayment.couponCode = couponCode;
+      newPayment.originalAmount = BASE_AMOUNT;
+    }
+
+    await createPayment(session.userId, newPayment as Payment);
 
     return successResponse(
       {
@@ -84,7 +103,7 @@ export async function POST(req: NextRequest) {
         amount: finalAmount,
         originalAmount: couponCode ? BASE_AMOUNT : undefined,
         discountPercent,
-        status: "Pending",
+        status: "pending",
       },
       "Payment submitted successfully",
       201

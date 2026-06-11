@@ -1,10 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { getSessionCookie } from '@/lib/server/auth';
 import { getAllUserBotSettings } from '@/lib/server/db';
 
 export async function GET(
-  _request: Request,
-  { params }: { params: { userId: string } }
+  _request: NextRequest,
+  context: { params: Promise<{ userId: string }> }
 ) {
   try {
     const session = await getSessionCookie();
@@ -16,16 +16,16 @@ export async function GET(
       );
     }
 
-    // Check if user is admin (you might want to add this check)
-    // For now, we'll allow users to only view their own bot settings
-    if (session.userId !== params.userId) {
+    const { userId } = await context.params;
+
+    if (session.userId !== userId && !session.isAdmin) {
       return NextResponse.json(
         { success: false, error: 'Forbidden' },
         { status: 403 }
       );
     }
 
-    const botSettings = await getAllUserBotSettings(params.userId);
+    const botSettings = await getAllUserBotSettings(userId);
     
     return NextResponse.json({
       success: true,

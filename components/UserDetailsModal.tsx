@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 
 interface BotSettings {
@@ -26,10 +26,13 @@ interface UserDetailsModalProps {
   onClose: () => void;
 }
 
-const BOT_NAMES: Record<number, string> = {
-  1: 'Neural-X Trend',
-  2: 'Scalp Alpha',
-  3: 'Grid Sentinel',
+const BOT_NAMES: Record<string, string> = {
+  neuralXTrend: 'Neural-X Trend',
+  scalpAlpha: 'Scalp Alpha',
+  gridSentinel: 'Grid Sentinel',
+  '1': 'Neural-X Trend',
+  '2': 'Scalp Alpha',
+  '3': 'Grid Sentinel',
 };
 
 export default function UserDetailsModal({
@@ -37,7 +40,7 @@ export default function UserDetailsModal({
   isOpen,
   onClose,
 }: UserDetailsModalProps) {
-  const [botSettings, setBotSettings] = useState<Record<number, BotSettings>>({});
+  const [botSettings, setBotSettings] = useState<Record<string, BotSettings>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,19 +60,19 @@ export default function UserDetailsModal({
       const response = await fetch(`/api/admin/bots/${user.id}`);
       const data = await response.json();
 
-      if (data.success) {
+      if (data.success && data.data) {
         // Enhance with bot names
         const enhanced = Object.entries(data.data).reduce(
           (acc, [botId, settings]: [string, any]) => {
-            const id = parseInt(botId);
-            acc[id] = {
-              botId: id,
-              botName: BOT_NAMES[id] || `Bot ${id}`,
-              ...settings,
+            acc[botId] = {
+              botId: botId as any,
+              botName: BOT_NAMES[botId] || settings.displayName || `Bot ${botId}`,
+              ...(settings.settings || settings), // handle both nested and flat settings
+              enabled: settings.isActive !== undefined ? settings.isActive : settings.enabled
             };
             return acc;
           },
-          {} as Record<number, BotSettings>
+          {} as Record<string, BotSettings>
         );
         setBotSettings(enhanced);
       } else {

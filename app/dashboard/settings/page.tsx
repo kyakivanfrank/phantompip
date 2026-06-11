@@ -7,9 +7,7 @@ import { useState } from 'react';
 export default function SettingsPage() {
   const [username, setUsername] = useState('Mukisamicheal088');
   const [email, setEmail] = useState('Mukisamicheal088@gmail.com');
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [twoFactor, setTwoFactor] = useState(true);
+
 
   return (
     <div className="space-y-6">

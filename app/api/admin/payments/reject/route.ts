@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/server/auth";
-import { getPayment, updatePayment } from "@/lib/server/db";
+import { getPayment, updatePaymentStatus, updateSubscription } from "@/lib/server/db";
 import { handleApiError, successResponse, errorResponse } from "@/lib/server/api-response";
 
 export async function POST(req: NextRequest) {
@@ -17,23 +17,27 @@ export async function POST(req: NextRequest) {
 
     // Get payment
     const payment = await getPayment(paymentId);
-    if (!payment || Object.keys(payment).length === 0) {
+    if (!payment) {
       return errorResponse("Payment not found", 404);
     }
 
-    if ((payment as any).status !== "Pending") {
+    if (payment.status !== "pending") {
       return errorResponse("Payment is not pending", 400);
     }
 
     // Reject payment
-    await updatePayment(paymentId, {
-      status: "Rejected",
+    await updatePaymentStatus(payment.userId, paymentId, "rejected");
+    
+    // Set subscription to inactive/rejected
+    await updateSubscription(payment.userId, {
+      status: "inactive",
+      approvalStatus: "rejected",
     });
 
     return successResponse(
       {
         paymentId,
-        status: "Rejected",
+        status: "rejected",
       },
       "Payment rejected successfully",
       200

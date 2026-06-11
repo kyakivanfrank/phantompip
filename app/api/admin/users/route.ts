@@ -2,32 +2,41 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/server/auth";
-import { getAllUsers } from "@/lib/server/db";
+import { getAllUsers, getUser } from "@/lib/server/db";
 import { handleApiError, successResponse } from "@/lib/server/api-response";
 
 export async function GET(_req: NextRequest) {
   try {
     await requireAdmin();
-    const users = await getAllUsers();
+    const index = await getAllUsers();
+    
+    const userPromises = index
+      .filter(u => !u.isAdmin)
+      .map(u => getUser(u.userId));
+      
+    const fullUsers = await Promise.all(userPromises);
 
-    // Filter out admin user and format data
-    const formattedUsers = (users as any[])
-      .filter((u) => !(u.isAdmin === true || u.isAdmin === "true"))
-      .map((u) => ({
-        id: u.id,
-        email: u.email,
-        fullName: u.fullName,
-        accountStatus: u.accountStatus,
-        subscriptionExpiresAt: u.subscriptionExpiresAt,
-        createdAt: u.createdAt,
-        mt5Connected: u.mt5Connected === true || u.mt5Connected === "true",
-        daysRemaining: Math.max(
-          0,
-          Math.ceil(
-            (u.subscriptionExpiresAt - Date.now()) / (24 * 60 * 60 * 1000)
-          )
-        ),
-      }));
+    // Format data
+    const formattedUsers = fullUsers
+      .filter((u): u is NonNullable<typeof u> => u !== null)
+      .map((u) => {
+        const expiresAt = new Date(u.subscription.expiryDate).getTime();
+        return {
+          id: u.userId,
+          email: u.account.email,
+          fullName: u.account.username,
+          accountStatus: u.subscription.status,
+          subscriptionExpiresAt: expiresAt,
+          createdAt: new Date(u.account.createdAt).getTime(),
+          mt5Connected: u.mt5?.isConnected ?? false,
+          daysRemaining: Math.max(
+            0,
+            Math.ceil(
+              (expiresAt - Date.now()) / (24 * 60 * 60 * 1000)
+            )
+          ),
+        };
+      });
 
     return successResponse(
       {

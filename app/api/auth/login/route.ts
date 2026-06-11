@@ -30,14 +30,14 @@ export async function POST(req: NextRequest) {
 
     // Get user data
     const user = await getUser(userId as string);
-    if (!user || !user.passwordHash) {
+    if (!user || !user.account || !user.account.passwordHash) {
       return errorResponse("Invalid email or password", 401);
     }
 
     // Verify password
     const isPasswordValid = await verifyPassword(
       password,
-      user.passwordHash as string
+      user.account.passwordHash
     );
     if (!isPasswordValid) {
       return errorResponse("Invalid email or password", 401);
@@ -47,17 +47,17 @@ export async function POST(req: NextRequest) {
     await setSessionCookie(
       userId as string,
       normalizedEmail,
-      user.isAdmin === true || user.isAdmin === "true"
+      user.isAdmin
     );
 
     return successResponse(
       {
         user: {
           id: userId,
-          email: user.email || normalizedEmail,
-          fullName: user.fullName,
-          isAdmin: user.isAdmin === true || user.isAdmin === "true",
-          accountStatus: user.accountStatus,
+          email: user.account.email || normalizedEmail,
+          username: user.account.username,
+          isAdmin: user.isAdmin,
+          accountStatus: user.subscription.status,
         },
       },
       "Login successful",

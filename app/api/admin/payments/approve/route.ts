@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/server/auth";
-import { getPayment, updatePayment, updateUser, getUser } from "@/lib/server/db";
+import { getPayment, updatePaymentStatus, updateSubscription, getUser } from "@/lib/server/db";
 import { handleApiError, successResponse, errorResponse } from "@/lib/server/api-response";
 
 export async function POST(req: NextRequest) {
@@ -15,57 +15,49 @@ export async function POST(req: NextRequest) {
       return errorResponse("Payment ID is required", 400);
     }
 
-    // Get payment
+    // Get payment (now nested in user, so getPayment searches across users or needs userId)
     const payment = await getPayment(paymentId);
 
-    if (!payment || Object.keys(payment).length === 0) {
+    if (!payment) {
       return errorResponse("Payment not found", 404);
     }
 
-    // Safely cast to Record to avoid TypeScript inference errors
-    const p = payment as Record<string, any>;
-
-    if (p.status !== "Pending") {
+    if (payment.status !== "pending") {
       return errorResponse("Payment is not pending", 400);
     }
 
-    // Approve payment
-    const now = Date.now();
+    const userId = payment.userId;
+    const now = new Date();
     const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
 
-    await updatePayment(paymentId, {
-      status: "Approved",
-      approvedAt: now,
-    });
+    // Approve payment inside the user's document
+    await updatePaymentStatus(userId, paymentId, "confirmed");
 
     // Update user subscription
-    const userId = p.userId as string;
     const userData = await getUser(userId);
-
-    // Safely cast userData to access dynamic properties without TS errors
-    const ud = userData as Record<string, any> | null;
-
-    // Safely parse the current expiry, falling back to 'now' if invalid or missing
     let currentExpiry = now;
-    if (ud && ud.subscriptionExpiresAt) {
-      const parsed = parseInt(ud.subscriptionExpiresAt.toString(), 10);
-      if (!isNaN(parsed)) {
-        currentExpiry = parsed;
+    if (userData && userData.subscription.expiryDate) {
+      const parsed = new Date(userData.subscription.expiryDate);
+      if (!isNaN(parsed.getTime())) {
+         currentExpiry = parsed;
       }
     }
 
-    const newExpiry = Math.max(currentExpiry, now) + thirtyDaysMs;
+    const newExpiry = new Date(Math.max(currentExpiry.getTime(), now.getTime()) + thirtyDaysMs);
+    const newExpiryIso = newExpiry.toISOString().split('T')[0];
 
-    await updateUser(userId, {
-      accountStatus: "Active",
-      subscriptionExpiresAt: newExpiry,
+    await updateSubscription(userId, {
+      status: "active",
+      approvalStatus: "approved",
+      approvedAt: now.toISOString(),
+      expiryDate: newExpiryIso,
     });
 
     return successResponse(
       {
         paymentId,
-        newExpiryDate: newExpiry,
-        status: "Approved",
+        newExpiryDate: newExpiryIso,
+        status: "confirmed",
       },
       "Payment approved successfully",
       200

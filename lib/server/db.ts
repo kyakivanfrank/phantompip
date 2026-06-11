@@ -1,6 +1,7 @@
 import { Redis } from "@upstash/redis";
 import { normalizeEmail } from "./validation";
-import { Mt5Credentials } from "@/lib/types";
+import { UserDocument, UserIndexEntry, Payment, Bots, Bot } from "@/lib/types";
+import { DEFAULT_BOTS } from "./bot-defaults";
 
 let redisClient: Redis | null = null;
 
@@ -20,11 +21,22 @@ function createUpstashClient() {
   }
 }
 
-// Simple in-memory fallback store for local development or when Upstash is unreachable.
+// Memory mock that partially supports RedisJSON (for fallback)
 const inMemory = (() => {
-  const hashes = new Map<string, Record<string, any>>();
+  const store = new Map<string, any>();
   const strings = new Map<string, string>();
-  const lists = new Map<string, string[]>();
+
+
+  function resolvePath(obj: any, path: string) {
+    if (path === '$') return { parent: null, key: null, target: obj };
+    const parts = path.replace('$.', '').split('.');
+    let current = obj;
+    for (let i = 0; i < parts.length - 1; i++) {
+      if (!current[parts[i]]) current[parts[i]] = {};
+      current = current[parts[i]];
+    }
+    return { parent: current, key: parts[parts.length - 1], target: current[parts[parts.length - 1]] };
+  }
 
   return {
     async get(key: string) {
@@ -34,40 +46,50 @@ const inMemory = (() => {
       strings.set(key, value);
       return 'OK';
     },
+    async del(key: string) {
+      const had1 = store.delete(key);
+      const had2 = strings.delete(key);
+      return had1 || had2 ? 1 : 0;
+    },
     async hset(key: string, data: Record<string, any>) {
-      const cur = hashes.get(key) ?? {};
-      hashes.set(key, { ...cur, ...data });
+      const cur = store.get(key) ?? {};
+      store.set(key, { ...cur, ...data });
       return Object.keys(data).length;
     },
     async hgetall(key: string) {
-      return hashes.get(key) ?? {};
+      return store.get(key) ?? {};
     },
-    async del(key: string) {
-      const had = hashes.delete(key) || strings.delete(key) || lists.delete(key);
-      return had ? 1 : 0;
-    },
-    async keys(pattern: string) {
-      const allKeys = Array.from(new Set([...hashes.keys(), ...strings.keys(), ...lists.keys()]));
-      // very small glob support for prefix
-      if (pattern.endsWith('*')) {
-        const prefix = pattern.slice(0, -1);
-        return allKeys.filter((k) => k.startsWith(prefix));
+    json: {
+      async get(key: string, options?: { path: string }) {
+        const obj = store.get(key);
+        if (!obj) return null;
+        if (!options || !options.path || options.path === '$') return obj;
+        const { target } = resolvePath(obj, options.path);
+        return target ?? null;
+      },
+      async set(key: string, path: string, value: any) {
+        if (!store.has(key)) store.set(key, {});
+        const obj = store.get(key);
+        if (path === '$') {
+          store.set(key, value);
+        } else {
+          const { parent, key: lastKey } = resolvePath(obj, path);
+          parent[lastKey!] = value;
+        }
+        return 'OK';
+      },
+      async arrappend(key: string, path: string, ...values: any[]) {
+        const obj = store.get(key);
+        if (!obj) return 0;
+        const { parent, key: lastKey, target } = resolvePath(obj, path);
+        if (!Array.isArray(target)) {
+          parent[lastKey!] = [];
+        }
+        parent[lastKey!].push(...values);
+        return parent[lastKey!].length;
       }
-      return allKeys.filter((k) => k === pattern);
-    },
-    async lpush(key: string, value: string) {
-      const arr = lists.get(key) ?? [];
-      arr.unshift(value);
-      lists.set(key, arr);
-      return arr.length;
-    },
-    async lrange(key: string, start: number, stop: number) {
-      const arr = lists.get(key) ?? [];
-      // handle -1
-      const end = stop < 0 ? arr.length - 1 : stop;
-      return arr.slice(start, end + 1);
-    },
-  } as const;
+    }
+  } as any;
 })();
 
 export function getRedis(): Redis | typeof inMemory {
@@ -79,11 +101,9 @@ export function getRedis(): Redis | typeof inMemory {
     return redisClient;
   }
 
-  // Fall back to the in-memory implementation (useful for local development/offline)
   return inMemory;
 }
 
-// Helper: run an async operation with timeout and limited retries
 export async function attempt<T>(fn: () => Promise<T>, timeoutMs = 3000, retries = 2): Promise<T> {
   let lastErr: any;
   for (let i = 0; i <= retries; i++) {
@@ -106,130 +126,281 @@ function emailKey(email: string) {
   return `email:${normalizeEmail(email)}`;
 }
 
-// User operations
-export async function createUser(userId: string, userData: any) {
-  const redis = getRedis();
-  return await attempt(() => (redis as any).hset(`user:${userId}`, userData));
-}
+// -----------------------------------------------------------------------------
+// USER OPERATIONS
+// -----------------------------------------------------------------------------
 
-export async function getUser(userId: string): Promise<Record<string, any>> {
+export async function createUser(userId: string, userData: UserDocument) {
   const redis = getRedis();
-  const res = await attempt(() => (redis as any).hgetall(`user:${userId}`));
-  return res as Record<string, any>;
-}
+  
+  // Create user document
+  await attempt(() => (redis.json as any).set(`user:${userId}`, "$", userData));
+  
+  // Set email lookup mapping (since redis json doesn't support secondary indexing easily)
+  await attempt(() => redis.set(emailKey(userData.account.email), userId));
 
-export async function getUserByEmail(email: string) {
-  const userId = await getUserIdByEmail(email);
-  if (!userId) {
-    return null;
+  // Add to lightweight index
+  const indexEntry: UserIndexEntry = {
+    userId: userData.userId,
+    username: userData.account.username,
+    email: userData.account.email,
+    subscriptionStatus: userData.subscription.status,
+    approvalStatus: userData.subscription.approvalStatus,
+    expiryDate: userData.subscription.expiryDate,
+    isAdmin: userData.isAdmin
+  };
+
+  const index = await attempt(() => (redis.json as any).get("users:index"));
+  if (!index) {
+    await attempt(() => (redis.json as any).set("users:index", "$", [indexEntry]));
+  } else {
+    await attempt(() => (redis.json as any).arrappend("users:index", "$", indexEntry));
   }
 
-  return await getUser(userId as string);
+  return userData;
+}
+
+export async function getUser(userId: string): Promise<UserDocument | null> {
+  const redis = getRedis();
+  const res = await attempt(() => (redis.json as any).get(`user:${userId}`));
+  if (Array.isArray(res)) return res[0] as UserDocument | null; // Redis upstash driver sometimes wraps in array
+  return res as UserDocument | null;
 }
 
 export async function getUserIdByEmail(email: string): Promise<string | null> {
   const redis = getRedis();
-  const res = await attempt(() => (redis as any).get(emailKey(email)));
+  const res = await attempt(() => redis.get(emailKey(email)));
   return res as string | null;
+}
+
+export async function getUserByEmail(email: string): Promise<UserDocument | null> {
+  const userId = await getUserIdByEmail(email);
+  if (!userId) return null;
+  return await getUser(userId);
 }
 
 export async function setUserByEmail(email: string, userId: string) {
   const redis = getRedis();
-  return await attempt(() => (redis as any).set(emailKey(email), userId));
+  return await attempt(() => redis.set(emailKey(email), userId));
 }
 
-export async function updateUser(userId: string, updates: any) {
+export async function deleteUser(userId: string) {
   const redis = getRedis();
-  return await attempt(() => (redis as any).hset(`user:${userId}`, updates));
+  const user = await getUser(userId);
+  if (user) {
+    await attempt(() => redis.del(emailKey(user.account.email)));
+  }
+
+  // Delete document
+  await attempt(() => redis.del(`user:${userId}`));
+
+  // Remove from index
+  const index = (await attempt(() => (redis.json as any).get("users:index"))) as UserIndexEntry[] || [];
+  let unwrappedIndex = Array.isArray(index) && Array.isArray(index[0]) ? index[0] : index;
+  if (!Array.isArray(unwrappedIndex)) unwrappedIndex = [];
+  
+  const updated = unwrappedIndex.filter((u: UserIndexEntry) => u.userId !== userId);
+  await attempt(() => (redis.json as any).set("users:index", "$", updated));
 }
 
-export async function getAllUsers() {
+export async function getAllUsers(): Promise<UserIndexEntry[]> {
   const redis = getRedis();
-  const keys = await attempt(() => (redis as any).keys("user:*"));
-  const userKeys = (keys as string[]).filter((k: string) => !k.includes(":mt5:") && !k.includes(":payment:"));
-  const users = [];
+  const index = await attempt(() => (redis.json as any).get("users:index"));
+  
+  if (!index) return [];
+  // Handle upstash returning array of array for JSON.GET
+  if (Array.isArray(index) && Array.isArray(index[0])) return index[0];
+  if (Array.isArray(index)) return index;
+  
+  return [];
+}
 
-  for (const key of userKeys) {
-    const userData = await attempt(() => (redis as any).hgetall(key));
-    const user = userData as Record<string, any>;
-    if (user && user.email) {
-      users.push({ id: key.replace("user:", ""), ...user });
+export async function updateUserDetails(userId: string, updates: { username?: string, email?: string }) {
+  const redis = getRedis();
+  const user = await getUser(userId);
+  if (!user) return;
+
+  if (updates.username) {
+    await attempt(() => (redis.json as any).set(`user:${userId}`, "$.account.username", updates.username));
+  }
+  
+  if (updates.email && updates.email !== user.account.email) {
+    await attempt(() => redis.del(emailKey(user.account.email)));
+    await attempt(() => redis.set(emailKey(updates.email!), userId));
+    await attempt(() => (redis.json as any).set(`user:${userId}`, "$.account.email", updates.email));
+  }
+
+  // Sync index
+  if (updates.username || updates.email) {
+    const index = await getAllUsers();
+    const i = index.findIndex(u => u.userId === userId);
+    if (i !== -1) {
+      if (updates.username) index[i].username = updates.username;
+      if (updates.email) index[i].email = updates.email;
+      await attempt(() => (redis.json as any).set("users:index", "$", index));
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
+// ADMIN / SUBSCRIPTION OPERATIONS
+// -----------------------------------------------------------------------------
+
+export async function resetUserPassword(userId: string, newPasswordHash: string) {
+  const redis = getRedis();
+  return await attempt(() => (redis.json as any).set(`user:${userId}`, "$.account.passwordHash", newPasswordHash));
+}
+
+export async function updateSubscription(userId: string, updates: Partial<UserDocument["subscription"]>) {
+  const redis = getRedis();
+  for (const [key, value] of Object.entries(updates)) {
+    if (key !== 'payments') {
+      await attempt(() => (redis.json as any).set(`user:${userId}`, `$.subscription.${key}`, value));
     }
   }
 
-  return users;
+  // Sync index
+  const index = await getAllUsers();
+  const i = index.findIndex(u => u.userId === userId);
+  if (i !== -1) {
+    if (updates.status) index[i].subscriptionStatus = updates.status;
+    if (updates.approvalStatus) index[i].approvalStatus = updates.approvalStatus;
+    if (updates.expiryDate) index[i].expiryDate = updates.expiryDate;
+    await attempt(() => (redis.json as any).set("users:index", "$", index));
+  }
 }
 
-// MT5 operations
-export async function setMt5Credentials(userId: string, credentials: any) {
+// -----------------------------------------------------------------------------
+// PAYMENT OPERATIONS
+// -----------------------------------------------------------------------------
+
+export async function createPayment(userId: string, payment: Payment) {
   const redis = getRedis();
-  return await attempt(() => (redis as any).hset(`mt5:${userId}`, credentials));
+  return await attempt(() => (redis.json as any).arrappend(`user:${userId}`, "$.subscription.payments", payment));
 }
 
-export async function getMt5Credentials(userId: string): Promise<Partial<Mt5Credentials> | Record<string, never>> {
+export async function getUserPayments(userId: string): Promise<Payment[]> {
+  const user = await getUser(userId);
+  if (!user || !user.subscription || !user.subscription.payments) return [];
+  return [...user.subscription.payments].reverse();
+}
+
+export async function getAllPayments() {
+  const index = await getAllUsers();
+  const allPayments: any[] = [];
+  
+  for (const entry of index) {
+    const user = await getUser(entry.userId);
+    if (user && user.subscription && Array.isArray(user.subscription.payments)) {
+       for (const p of user.subscription.payments) {
+          allPayments.push({ ...p, userId: user.userId, userEmail: user.account.email, username: user.account.username });
+       }
+    }
+  }
+  
+  return allPayments.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+}
+
+export async function getPayment(paymentId: string) {
+  const allPayments = await getAllPayments();
+  return allPayments.find(p => p.paymentId === paymentId) || null;
+}
+
+export async function updatePaymentStatus(userId: string, paymentId: string, status: string, additionalUpdates?: any) {
   const redis = getRedis();
-  return await attempt(() => (redis as any).hgetall(`mt5:${userId}`));
+  const user = await getUser(userId);
+  if (!user || !user.subscription || !user.subscription.payments) return;
+  
+  const pIndex = user.subscription.payments.findIndex(p => p.paymentId === paymentId);
+  if (pIndex !== -1) {
+    await attempt(() => (redis.json as any).set(`user:${userId}`, `$.subscription.payments[${pIndex}].status`, status));
+    
+    if (additionalUpdates) {
+      for (const [key, value] of Object.entries(additionalUpdates)) {
+        await attempt(() => (redis.json as any).set(`user:${userId}`, `$.subscription.payments[${pIndex}].${key}`, value));
+      }
+    }
+  }
 }
 
-export async function deleteMt5Credentials(userId: string) {
-  const redis = getRedis();
-  return await attempt(() => (redis as any).del(`mt5:${userId}`));
-}
-
-// Payment operations
-export async function createPayment(paymentId: string, paymentData: any) {
-  const redis = getRedis();
-  // Filter out null and undefined values since Upstash Redis doesn't support them
-  const cleanData = Object.fromEntries(
-    Object.entries(paymentData).filter(([, value]) => value !== null && value !== undefined)
-  );
-  await attempt(() => (redis as any).hset(`payment:${paymentId}`, cleanData));
-  await attempt(() => (redis as any).lpush(`payments:${paymentData.userId}`, paymentId));
-  return paymentId;
-}
-
-export async function getPayment(paymentId: string): Promise<Record<string, any>> {
-  const redis = getRedis();
-  const res = await attempt(() => (redis as any).hgetall(`payment:${paymentId}`));
-  return res as Record<string, any>;
-}
-
+// Support older wrapper APIs (for legacy routes that might still exist)
 export async function updatePayment(paymentId: string, updates: any) {
-  const redis = getRedis();
-  return await attempt(() => (redis as any).hset(`payment:${paymentId}`, updates));
+  const payment = await getPayment(paymentId);
+  if (payment) {
+    await updatePaymentStatus(payment.userId, paymentId, updates.status || payment.status, updates);
+  }
 }
 
-export async function getUserPayments(userId: string) {
-  const redis = getRedis();
-  const paymentIds = (await attempt(() => (redis as any).lrange(`payments:${userId}`, 0, -1))) as string[];
-  const payments = [];
+// -----------------------------------------------------------------------------
+// MT5 OPERATIONS
+// -----------------------------------------------------------------------------
 
-  for (const id of paymentIds) {
-    const payment = await attempt(() => (redis as any).hgetall(`payment:${id}`));
-    if (payment) {
-      payments.push({ id, ...payment });
-    }
+export async function setMt5Credentials(userId: string, credentials: UserDocument["mt5"]) {
+  const redis = getRedis();
+  return await attempt(() => (redis.json as any).set(`user:${userId}`, "$.mt5", credentials));
+}
+
+export async function getMt5Credentials(userId: string): Promise<UserDocument["mt5"] | null> {
+  const redis = getRedis();
+  const res = await attempt(() => (redis.json as any).get(`user:${userId}`, { path: "$.mt5" }));
+  if (Array.isArray(res)) return res[0] as UserDocument["mt5"] | null;
+  return res as UserDocument["mt5"] | null;
+}
+
+// -----------------------------------------------------------------------------
+// BOT OPERATIONS
+// -----------------------------------------------------------------------------
+
+export async function toggleBotActive(userId: string, botKey: keyof Bots, isActive: boolean) {
+  const redis = getRedis();
+  
+  const userBots = await attempt(() => (redis.json as any).get(`user:${userId}`, { path: "$.bots" }));
+  const botsObj = Array.isArray(userBots) ? userBots[0] : userBots;
+  
+  if (!botsObj || !botsObj[botKey]) {
+    const newBot = { ...DEFAULT_BOTS[botKey], isActive };
+    await attempt(() => (redis.json as any).set(`user:${userId}`, `$.bots.${botKey}`, newBot));
+    return 'OK';
   }
 
-  return payments.reverse(); // Most recent first
+  return await attempt(() => (redis.json as any).set(`user:${userId}`, `$.bots.${botKey}.isActive`, isActive));
 }
 
-export async function getAllPayments(): Promise<Record<string, any>[]> {
+export async function updateBotSettings(userId: string, botKey: keyof Bots, settings: Partial<Bot["settings"]>) {
   const redis = getRedis();
-  const keys = await attempt(() => (redis as any).keys("payment:*"));
-  const payments: Record<string, any>[] = [];
-
-  for (const key of keys as string[]) {
-    const payment = await attempt(() => (redis as any).hgetall(key));
-    if (payment) {
-      payments.push({ id: key.replace("payment:", ""), ...(payment as Record<string, any>) });
-    }
+  
+  const userBots = await attempt(() => (redis.json as any).get(`user:${userId}`, { path: "$.bots" }));
+  const botsObj = Array.isArray(userBots) ? userBots[0] : userBots;
+  
+  if (!botsObj || !botsObj[botKey]) {
+     const newBot = { ...DEFAULT_BOTS[botKey], settings: { ...DEFAULT_BOTS[botKey].settings, ...settings as any } };
+     await attempt(() => (redis.json as any).set(`user:${userId}`, `$.bots.${botKey}`, newBot));
+     return;
   }
 
-  return payments;
+  for (const [key, value] of Object.entries(settings)) {
+    await attempt(() => (redis.json as any).set(`user:${userId}`, `$.bots.${botKey}.settings.${key}`, value));
+  }
 }
 
-// Coupon operations
+export async function getBotSettings(userId: string, botKey: keyof Bots) {
+  const redis = getRedis();
+  const res = await attempt(() => (redis.json as any).get(`user:${userId}`, { path: `$.bots.${botKey}.settings` }));
+  if (Array.isArray(res)) return res[0];
+  return res;
+}
+
+export async function getAllUserBotSettings(userId: string) {
+  const redis = getRedis();
+  const res = await attempt(() => (redis.json as any).get(`user:${userId}`, { path: "$.bots" }));
+  if (Array.isArray(res)) return res[0];
+  return res;
+}
+
+// -----------------------------------------------------------------------------
+// COUPON OPERATIONS (Legacy Hash Maps)
+// -----------------------------------------------------------------------------
+
 export async function getCoupon(code: string) {
   const redis = getRedis();
   return await attempt(() => (redis as any).hgetall(`coupon:${code}`));
@@ -243,35 +414,4 @@ export async function createCoupon(code: string, couponData: any) {
 export async function updateCoupon(code: string, updates: any) {
   const redis = getRedis();
   return await attempt(() => (redis as any).hset(`coupon:${code}`, updates));
-}
-
-// Bot Settings operations
-export async function setBotSettings(userId: string, botId: number, settings: any) {
-  const redis = getRedis();
-  const cleanData = Object.fromEntries(
-    Object.entries(settings).filter(([, value]) => value !== null && value !== undefined)
-  );
-  return await attempt(() => (redis as any).hset(`bot:${userId}:${botId}`, cleanData));
-}
-
-export async function getBotSettings(userId: string, botId: number): Promise<Record<string, any>> {
-  const redis = getRedis();
-  const res = await attempt(() => (redis as any).hgetall(`bot:${userId}:${botId}`));
-  return res as Record<string, any>;
-}
-
-export async function getAllUserBotSettings(userId: string): Promise<Record<number, Record<string, any>>> {
-  const redis = getRedis();
-  const keys = await attempt(() => (redis as any).keys(`bot:${userId}:*`));
-  const botSettings: Record<number, Record<string, any>> = {};
-
-  for (const key of keys as string[]) {
-    const botId = parseInt(key.split(':')[2]);
-    const settings = await attempt(() => (redis as any).hgetall(key));
-    if (settings) {
-      botSettings[botId] = settings as Record<string, any>;
-    }
-  }
-
-  return botSettings;
 }

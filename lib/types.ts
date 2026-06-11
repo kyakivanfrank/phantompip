@@ -2,137 +2,106 @@
  * Common types used throughout the application
  */
 
-/**
- * User type
- */
-export interface User {
-  id: string;
+// -----------------------------------------------------------------------------
+// REDIS JSON SCHEMA TYPES
+// -----------------------------------------------------------------------------
+
+export interface Payment {
+  paymentId: string;
+  amount: number;
+  method: "USDT" | "AirtelMoney" | "MTNMobileMoney";
+  network: "TRON (TRC20)" | "MTN" | "Airtel" | string;
+  transactionRef: string;
+  status: "pending" | "confirmed" | "rejected";
+  submittedAt: string; // ISO datetime
+}
+
+export interface Subscription {
+  status: "active" | "expired" | "pending" | "inactive";
+  approvalStatus: "approved" | "pending" | "rejected";
+  planName: string;
+  priceUSD: number;
+  billingCycle: "monthly" | "lifetime";
+  startDate: string; // YYYY-MM-DD
+  expiryDate: string; // YYYY-MM-DD
+  approvedAt: string | null; // ISO datetime
+  payments: Payment[];
+}
+
+export interface Account {
+  username: string;
   email: string;
-  fullName: string;
-  avatar?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  passwordHash: string; // bcrypt hash - NEVER plain text
+  createdAt: string; // ISO datetime
+  lastLoginAt: string; // ISO datetime
+}
+
+export interface Mt5Details {
+  loginId: string; // plain text account number
+  password: string; // plain text (admin needs this)
+  brokerServer: string;
+  connectedAt: string | null; // ISO datetime
+  isConnected: boolean;
+}
+
+export interface BotSettingsDetails {
+  stopLossPercent: number;
+  takeProfitPercent: number;
+  maxDrawdownPercent: number;
+  dailyLossLimitPercent: number;
+  lotSize: number;
+}
+
+export interface Bot {
+  displayName: string; // fixed, never change
+  style: string; // fixed, never change
+  riskLevel: string; // fixed, never change
+  isActive: boolean; // ONLY field user controls
+  settings: BotSettingsDetails;
+  activatedAt: string | null;
+}
+
+export interface Bots {
+  neuralXTrend: Bot;
+  scalpAlpha: Bot;
+  gridSentinel: Bot;
 }
 
 /**
- * Auth tokens
+ * The unified User document structure (`user:{userId}`)
  */
+export interface UserDocument {
+  userId: string;
+  isAdmin: boolean;
+  account: Account;
+  subscription: Subscription;
+  mt5: Mt5Details | null;
+  bots: Partial<Bots>;
+}
+
+/**
+ * Lightweight index object for `users:index`
+ */
+export interface UserIndexEntry {
+  userId: string;
+  username: string;
+  email: string;
+  subscriptionStatus: "active" | "expired" | "pending" | "inactive";
+  approvalStatus: "approved" | "pending" | "rejected";
+  expiryDate: string;
+  isAdmin: boolean;
+}
+
+// -----------------------------------------------------------------------------
+// LEGACY / OTHER TYPES
+// -----------------------------------------------------------------------------
+
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
   expiresIn: number;
 }
 
-/**
- * Trading symbol
- */
-export interface TradingSymbol {
-  symbol: string;
-  name: string;
-  bid: number;
-  ask: number;
-  change: number;
-  changePercent: number;
-  high: number;
-  low: number;
-  open: number;
-  close: number;
-  volume: number;
-}
-
-/**
- * Chart data point
- */
-export interface ChartDataPoint {
-  time: string;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume?: number;
-}
-
-/**
- * Order
- */
-export interface Order {
-  id: string;
-  symbol: string;
-  type: 'buy' | 'sell';
-  orderType: 'market' | 'limit' | 'stop' | 'stop_limit';
-  quantity: number;
-  price: number;
-  limitPrice?: number;
-  stopPrice?: number;
-  status: 'pending' | 'filled' | 'partially_filled' | 'cancelled' | 'rejected';
-  createdAt: Date;
-  filledAt?: Date;
-  cancelledAt?: Date;
-}
-
-/**
- * Position
- */
-export interface Position {
-  id: string;
-  symbol: string;
-  type: 'buy' | 'sell';
-  quantity: number;
-  entryPrice: number;
-  currentPrice: number;
-  stopLoss?: number;
-  takeProfit?: number;
-  pnl: number;
-  pnlPercent: number;
-  openedAt: Date;
-  status: 'open' | 'closed' | 'pending_close';
-}
-
-/**
- * Trade (closed position)
- */
-export interface Trade extends Position {
-  exitPrice: number;
-  closedAt: Date;
-  duration: number; // in milliseconds
-}
-
-/**
- * Account balance
- */
-export interface AccountBalance {
-  totalBalance: number;
-  availableBalance: number;
-  usedMargin: number;
-  freeMargin: number;
-  marginLevel: number;
-  openPositions: number;
-}
-
-/**
- * Portfolio statistics
- */
-export interface PortfolioStats {
-  totalProfit: number;
-  totalProfitPercent: number;
-  winRate: number;
-  totalTrades: number;
-  winningTrades: number;
-  losingTrades: number;
-  averageWin: number;
-  averageLoss: number;
-  profitFactor: number;
-  largestWin: number;
-  largestLoss: number;
-  consecutiveWins: number;
-  consecutiveLosses: number;
-  maxDrawdown: number;
-  maxDrawdownPercent: number;
-}
-
-/**
- * API Response
- */
 export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
@@ -141,23 +110,6 @@ export interface ApiResponse<T = any> {
   status: number;
 }
 
-/**
- * MT5 Credentials
- */
-export interface Mt5Credentials {
-  mt5LoginId: string;
-  mt5PasswordEncrypted: string;
-  mt5PasswordIV: string;
-  mt5PasswordAuthTag: string;
-  brokerServer: string;
-  tradingStyle: 'Scalping' | 'Conservative' | 'Aggressive';
-  connectionStatus: 'Connected' | 'Disconnected';
-  connectedAt: number;
-}
-
-/**
- * Paginated response
- */
 export interface PaginatedResponse<T> {
   data: T[];
   total: number;
@@ -166,31 +118,12 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
-/**
- * Filter options
- */
-export interface FilterOptions {
-  symbol?: string;
-  type?: 'buy' | 'sell';
-  status?: string;
-  startDate?: Date;
-  endDate?: Date;
-  sortBy?: 'date' | 'profit' | 'symbol';
-  sortOrder?: 'asc' | 'desc';
-}
-
-/**
- * UI State
- */
 export interface UiState {
   isLoading: boolean;
   error?: string;
   success?: string;
 }
 
-/**
- * Notification
- */
 export interface Notification {
   id: string;
   type: 'info' | 'success' | 'warning' | 'error';
@@ -199,9 +132,6 @@ export interface Notification {
   read: boolean;
 }
 
-/**
- * User preferences
- */
 export interface UserPreferences {
   theme: 'dark' | 'light';
   language: string;
@@ -212,70 +142,4 @@ export interface UserPreferences {
   };
   defaultTimeframe: string;
   defaultSymbols: string[];
-}
-
-/**
- * Market data
- */
-export interface MarketData {
-  symbol: string;
-  timestamp: Date;
-  price: number;
-  bid: number;
-  ask: number;
-  volume: number;
-  change: number;
-  changePercent: number;
-}
-
-/**
- * Risk parameters
- */
-export interface RiskParameters {
-  stopLoss: number;
-  takeProfit: number;
-  riskRewardRatio: number;
-  positionSize: number;
-}
-
-/**
- * Trade alert
- */
-export interface TradeAlert {
-  id: string;
-  symbol: string;
-  type: 'price' | 'technical' | 'news';
-  condition: string;
-  price?: number;
-  triggered: boolean;
-  createdAt: Date;
-  triggeredAt?: Date;
-}
-
-/**
- * Bot configuration settings
- */
-export interface BotSettings {
-  botId: number;
-  userId: string;
-  enabled: boolean;
-  stopLoss: number;
-  takeProfit: number;
-  maxDrawdown: number;
-  dailyLossLimit: number;
-  lotSize: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-/**
- * Trading Bot
- */
-export interface TradingBot {
-  id: number;
-  name: string;
-  strategy: 'Trend Following' | 'Scalping' | 'Grid';
-  risk: 'Low risk' | 'Medium risk' | 'High risk';
-  enabled: boolean;
-  settings?: BotSettings;
 }
