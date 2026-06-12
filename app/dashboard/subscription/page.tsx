@@ -15,14 +15,14 @@ export default function Page() {
       label: 'MTN Mobile Money',
       amount: `USD ${MOUNT_PAYABLE} (pay the equivalent of $${MOUNT_PAYABLE})`,
       address: process.env.MTN_MOMO_NUMBER ?? '+256 770 000 000',
-      accountName: 'Account Name: PHANTOMPIP TRADING',
+      accountName: `Account Name: ${process.env.MTN_MOMO_NUMBER_ACCOUNT_NAME ?? 'PHANTOMPIP TRADING'}`,
       helperText: 'Send the exact USD-equivalent amount to the mobile number above. Verify the account name matches before sending.',
     },
     'Airtel-Money': {
       label: 'Airtel Money',
       amount: `USD ${MOUNT_PAYABLE} (pay the equivalent of $${MOUNT_PAYABLE})`,
       address: process.env.AIRTEL_MONEY_NUMBER ?? '+256 700 000 000',
-      accountName: 'Account Name: PHANTOMPIP TRADING',
+      accountName: `Account Name: ${process.env.AIRTEL_MONEY_NUMBER_ACCOUNT_NAME ?? 'PHANTOMPIP TRADING'}`,
       helperText: 'Send the exact USD-equivalent amount to the mobile number above. Verify the account name matches before sending.',
     },
   } as const;
