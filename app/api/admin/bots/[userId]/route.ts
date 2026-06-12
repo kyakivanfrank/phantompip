@@ -2,6 +2,8 @@ import { NextResponse, NextRequest } from 'next/server';
 import { getSessionCookie } from '@/lib/server/auth';
 import { getAllUserBotSettings } from '@/lib/server/db';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   _request: NextRequest,
   context: { params: Promise<{ userId: string }> }

@@ -1,15 +1,23 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { getSessionCookie } from '@/lib/server/auth';
-import { getBotSettings, updateBotSettings, toggleBotActive } from '@/lib/server/db';
-import { Bots } from '@/lib/types';
 
-import { DEFAULT_BOTS } from '@/lib/server/bot-defaults';
+export const dynamic = 'force-dynamic';
+import { getAllUserBotSettings, updateBotSettings } from '@/lib/server/db';
+import { Bot, Bots } from '@/lib/types';
 
 function mapBotIdToKey(botId: string): keyof Bots | null {
   if (botId === '1' || botId === 'neuralXTrend') return 'neuralXTrend';
   if (botId === '2' || botId === 'scalpAlpha') return 'scalpAlpha';
   if (botId === '3' || botId === 'gridSentinel') return 'gridSentinel';
   return null;
+}
+
+function serializeBot(botKey: keyof Bots, bot: Bot) {
+  return {
+    botKey,
+    ...bot,
+    isEnabled: bot.isEnabled ?? false,
+  };
 }
 
 export async function GET(
@@ -36,11 +44,12 @@ export async function GET(
       );
     }
 
-    const settings = await getBotSettings(session.userId, botKey);
+    const allBots = await getAllUserBotSettings(session.userId);
+    const bot = allBots[botKey];
     
     return NextResponse.json({
       success: true,
-      data: settings || DEFAULT_BOTS[botKey].settings,
+      data: serializeBot(botKey, bot),
     });
   } catch (error) {
     console.error('Error fetching bot settings:', error);
@@ -76,48 +85,51 @@ export async function POST(
 
     const body = await request.json();
 
-    // Map old frontend keys to new backend schema if old keys are sent
-    const stopLossPercent = body.stopLoss !== undefined ? parseFloat(body.stopLoss) : parseFloat(body.stopLossPercent);
-    const takeProfitPercent = body.takeProfit !== undefined ? parseFloat(body.takeProfit) : parseFloat(body.takeProfitPercent);
-    const maxDrawdownPercent = body.maxDrawdown !== undefined ? parseFloat(body.maxDrawdown) : parseFloat(body.maxDrawdownPercent);
-    const dailyLossLimitPercent = body.dailyLossLimit !== undefined ? parseFloat(body.dailyLossLimit) : parseFloat(body.dailyLossLimitPercent);
+    // Map keys to simplified backend schema
+    const stopLoss = body.stopLoss !== undefined ? parseFloat(body.stopLoss) : parseFloat(body.stopLossPercent);
+    const takeProfit = body.takeProfit !== undefined ? parseFloat(body.takeProfit) : parseFloat(body.takeProfitPercent);
+    const maxDrawdown = body.maxDrawdown !== undefined ? parseFloat(body.maxDrawdown) : parseFloat(body.maxDrawdownPercent);
+    const dailyLossLimit = body.dailyLossLimit !== undefined ? parseFloat(body.dailyLossLimit) : parseFloat(body.dailyLossLimitPercent);
     const lotSize = parseFloat(body.lotSize);
     
     // Validate value ranges (1-100% for all percentages)
-    if (stopLossPercent < 0.1 || stopLossPercent > 100) {
+    if (!Number.isFinite(stopLoss) || stopLoss < 0.1 || stopLoss > 100) {
       return NextResponse.json({ success: false, error: 'Stop Loss must be between 0.1% and 100%' }, { status: 400 });
     }
-    if (takeProfitPercent < 0.1 || takeProfitPercent > 100) {
+    if (!Number.isFinite(takeProfit) || takeProfit < 0.1 || takeProfit > 100) {
       return NextResponse.json({ success: false, error: 'Take Profit must be between 0.1% and 100%' }, { status: 400 });
     }
-    if (maxDrawdownPercent < 0.1 || maxDrawdownPercent > 100) {
+    if (!Number.isFinite(maxDrawdown) || maxDrawdown < 0.1 || maxDrawdown > 100) {
       return NextResponse.json({ success: false, error: 'Max Drawdown must be between 0.1% and 100%' }, { status: 400 });
     }
-    if (dailyLossLimitPercent < 0.1 || dailyLossLimitPercent > 100) {
+    if (!Number.isFinite(dailyLossLimit) || dailyLossLimit < 0.1 || dailyLossLimit > 100) {
       return NextResponse.json({ success: false, error: 'Daily Loss Limit must be between 0.1% and 100%' }, { status: 400 });
     }
-    if (lotSize < 0.01 || lotSize > 100) {
+    if (!Number.isFinite(lotSize) || lotSize < 0.01 || lotSize > 100) {
       return NextResponse.json({ success: false, error: 'Lot Size must be between 0.01 and 100' }, { status: 400 });
     }
 
     const settings = {
-      stopLossPercent,
-      takeProfitPercent,
-      maxDrawdownPercent,
-      dailyLossLimitPercent,
+      stopLoss,
+      takeProfit,
+      maxDrawdown,
+      dailyLossLimit,
       lotSize,
     };
 
-    await updateBotSettings(session.userId, botKey, settings);
+    const allBots = await getAllUserBotSettings(session.userId);
+    const currentBot = allBots[botKey];
+    const rawEnabled = body.isEnabled;
+    const isEnabled =
+      rawEnabled === undefined
+        ? currentBot.isEnabled
+        : rawEnabled === true || rawEnabled === 'true';
 
-    if (body.enabled !== undefined || body.isActive !== undefined) {
-      const isActive = body.enabled !== undefined ? Boolean(body.enabled) : Boolean(body.isActive);
-      await toggleBotActive(session.userId, botKey, isActive);
-    }
+    const savedBot = await updateBotSettings(session.userId, botKey, settings, isEnabled);
 
     return NextResponse.json({
       success: true,
-      data: settings,
+      data: serializeBot(botKey, savedBot),
       message: 'Bot settings saved successfully',
     });
   } catch (error) {

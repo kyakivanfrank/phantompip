@@ -133,11 +133,24 @@ function emailKey(email: string) {
 export async function createUser(userId: string, userData: UserDocument) {
   const redis = getRedis();
   
+  // Force MT5 placeholders and Bot defaults
+  const normalizedUserData = {
+    ...userData,
+    mt5: userData.mt5 || {
+      loginId: "",
+      password: "",
+      brokerServer: "",
+      connectedAt: null,
+      isConnected: false,
+    },
+    bots: Object.keys(userData.bots || {}).length === 0 ? DEFAULT_BOTS : userData.bots,
+  };
+
   // Create user document
-  await attempt(() => (redis.json as any).set(`user:${userId}`, "$", userData));
+  await attempt(() => (redis.json as any).set(`user:${userId}`, "$", normalizedUserData));
   
   // Set email lookup mapping (since redis json doesn't support secondary indexing easily)
-  await attempt(() => redis.set(emailKey(userData.account.email), userId));
+  await attempt(() => redis.set(emailKey(normalizedUserData.account.email), userId));
 
   // Add to lightweight index
   const indexEntry: UserIndexEntry = {
@@ -343,44 +356,106 @@ export async function setMt5Credentials(userId: string, credentials: UserDocumen
 export async function getMt5Credentials(userId: string): Promise<UserDocument["mt5"] | null> {
   const redis = getRedis();
   const res = await attempt(() => (redis.json as any).get(`user:${userId}`, { path: "$.mt5" }));
-  if (Array.isArray(res)) return res[0] as UserDocument["mt5"] | null;
-  return res as UserDocument["mt5"] | null;
+  const credentials = Array.isArray(res) ? res[0] : res;
+  
+  if (!credentials) {
+    const placeholder = {
+      loginId: "",
+      password: "",
+      brokerServer: "",
+      connectedAt: null,
+      isConnected: false,
+    };
+    await attempt(() => (redis.json as any).set(`user:${userId}`, "$.mt5", placeholder));
+    return placeholder;
+  }
+  
+  return credentials as UserDocument["mt5"] | null;
 }
 
 // -----------------------------------------------------------------------------
 // BOT OPERATIONS
 // -----------------------------------------------------------------------------
 
-export async function toggleBotActive(userId: string, botKey: keyof Bots, isActive: boolean) {
-  const redis = getRedis();
-  
-  const userBots = await attempt(() => (redis.json as any).get(`user:${userId}`, { path: "$.bots" }));
-  const botsObj = Array.isArray(userBots) ? userBots[0] : userBots;
-  
-  if (!botsObj || !botsObj[botKey]) {
-    const newBot = { ...DEFAULT_BOTS[botKey], isActive };
-    await attempt(() => (redis.json as any).set(`user:${userId}`, `$.bots.${botKey}`, newBot));
-    return 'OK';
+function mergeUserBots(existingBots: Partial<Bots> | undefined | null): Bots {
+  const merged = {} as Bots;
+
+  for (const key of Object.keys(DEFAULT_BOTS) as (keyof Bots)[]) {
+    const defaultBot = DEFAULT_BOTS[key];
+    const userBot = existingBots && existingBots[key] ? existingBots[key] : null;
+    const userSettings =
+      userBot?.settings && typeof userBot.settings === "object" ? userBot.settings : {};
+
+    merged[key] = {
+      ...defaultBot,
+      ...(userBot || {}),
+      settings: {
+        ...defaultBot.settings,
+        ...userSettings,
+      },
+    };
   }
 
-  return await attempt(() => (redis.json as any).set(`user:${userId}`, `$.bots.${botKey}.isActive`, isActive));
+  return merged;
 }
 
-export async function updateBotSettings(userId: string, botKey: keyof Bots, settings: Partial<Bot["settings"]>) {
+async function writeMergedBot(
+  userId: string,
+  botKey: keyof Bots,
+  updates: {
+    settings?: Partial<Bot["settings"]>;
+    isEnabled?: boolean;
+  } = {}
+): Promise<Bot> {
   const redis = getRedis();
-  
-  const userBots = await attempt(() => (redis.json as any).get(`user:${userId}`, { path: "$.bots" }));
-  const botsObj = Array.isArray(userBots) ? userBots[0] : userBots;
-  
-  if (!botsObj || !botsObj[botKey]) {
-     const newBot = { ...DEFAULT_BOTS[botKey], settings: { ...DEFAULT_BOTS[botKey].settings, ...settings as any } };
-     await attempt(() => (redis.json as any).set(`user:${userId}`, `$.bots.${botKey}`, newBot));
-     return;
+  const user = await getUser(userId);
+
+  if (!user) {
+    throw new Error(`User not found: ${userId}`);
   }
 
-  for (const [key, value] of Object.entries(settings)) {
-    await attempt(() => (redis.json as any).set(`user:${userId}`, `$.bots.${botKey}.settings.${key}`, value));
-  }
+  const botsObj = mergeUserBots(user.bots);
+  const existingBot = botsObj && botsObj[botKey] ? botsObj[botKey] : null;
+  const defaultBot = DEFAULT_BOTS[botKey];
+  const existingSettings =
+    existingBot?.settings && typeof existingBot.settings === "object" ? existingBot.settings : {};
+
+  const mergedBot: Bot = {
+    ...defaultBot,
+    ...(existingBot || {}),
+    isEnabled: updates.isEnabled ?? existingBot?.isEnabled ?? defaultBot.isEnabled,
+    settings: {
+      ...defaultBot.settings,
+      ...existingSettings,
+      ...(updates.settings || {}),
+    },
+  };
+
+  const nextUser: UserDocument = {
+    ...user,
+    bots: {
+      ...botsObj,
+      [botKey]: mergedBot,
+    },
+  };
+
+  await attempt(() => (redis.json as any).set(`user:${userId}`, "$", nextUser));
+
+  return mergedBot;
+}
+
+export async function toggleBotActive(userId: string, botKey: keyof Bots, isEnabled: boolean) {
+  await writeMergedBot(userId, botKey, { isEnabled });
+  return 'OK';
+}
+
+export async function updateBotSettings(
+  userId: string,
+  botKey: keyof Bots,
+  settings: Partial<Bot["settings"]>,
+  isEnabled?: boolean
+) {
+  return await writeMergedBot(userId, botKey, { settings, isEnabled });
 }
 
 export async function getBotSettings(userId: string, botKey: keyof Bots) {
@@ -390,11 +465,44 @@ export async function getBotSettings(userId: string, botKey: keyof Bots) {
   return res;
 }
 
-export async function getAllUserBotSettings(userId: string) {
+export async function getBot(userId: string, botKey: keyof Bots) {
   const redis = getRedis();
-  const res = await attempt(() => (redis.json as any).get(`user:${userId}`, { path: "$.bots" }));
+  const res = await attempt(() => (redis.json as any).get(`user:${userId}`, { path: `$.bots.${botKey}` }));
   if (Array.isArray(res)) return res[0];
   return res;
+}
+
+export async function getAllUserBotSettings(userId: string) {
+  const redis = getRedis();
+  const user = await getUser(userId);
+
+  if (!user) {
+    throw new Error(`User not found: ${userId}`);
+  }
+
+  const mergedBots = mergeUserBots(user.bots);
+
+  if (!user.bots || JSON.stringify(user.bots) !== JSON.stringify(mergedBots)) {
+    const nextUser: UserDocument = {
+      ...user,
+      bots: mergedBots,
+    };
+
+    await attempt(() => (redis.json as any).set(`user:${userId}`, "$", nextUser));
+  }
+
+  return mergedBots;
+}
+
+export async function deleteBot(userId: string, botKey: keyof Bots) {
+  const redis = getRedis();
+  const userBots = await attempt(() => (redis.json as any).get(`user:${userId}`, { path: "$.bots" }));
+  const botsObj = Array.isArray(userBots) ? userBots[0] : userBots;
+  
+  if (botsObj && botsObj[botKey]) {
+    delete botsObj[botKey];
+    await attempt(() => (redis.json as any).set(`user:${userId}`, "$.bots", botsObj));
+  }
 }
 
 // -----------------------------------------------------------------------------

@@ -45,10 +45,10 @@ export interface Mt5Details {
 }
 
 export interface BotSettingsDetails {
-  stopLossPercent: number;
-  takeProfitPercent: number;
-  maxDrawdownPercent: number;
-  dailyLossLimitPercent: number;
+  stopLoss: number;
+  takeProfit: number;
+  maxDrawdown: number;
+  dailyLossLimit: number;
   lotSize: number;
 }
 
@@ -56,7 +56,7 @@ export interface Bot {
   displayName: string; // fixed, never change
   style: string; // fixed, never change
   riskLevel: string; // fixed, never change
-  isActive: boolean; // ONLY field user controls
+  isEnabled: boolean; // ONLY field user controls
   settings: BotSettingsDetails;
   activatedAt: string | null;
 }

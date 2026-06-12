@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Plug, Check, AlertCircle } from 'lucide-react';
 
 export default function Mt5Page() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     mt5LoginId: '',
     mt5Password: '',
@@ -13,8 +15,37 @@ export default function Mt5Page() {
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingAccess, setIsCheckingAccess] = useState(true);
+  const [canConnect, setCanConnect] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const checkAccess = async () => {
+      try {
+        const response = await fetch('/api/auth/me', {
+          credentials: 'include',
+          cache: 'no-store',
+        });
+
+        const data = await response.json();
+        const isActive = data?.data?.user?.subscription?.isActive === true;
+
+        if (!isActive) {
+          router.replace('/dashboard/subscription');
+          return;
+        }
+
+        setCanConnect(true);
+      } catch (_error) {
+        setError('Unable to verify subscription status');
+      } finally {
+        setIsCheckingAccess(false);
+      }
+    };
+
+    checkAccess();
+  }, [router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -26,6 +57,12 @@ export default function Mt5Page() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!canConnect) {
+      router.replace('/dashboard/subscription');
+      return;
+    }
+
     setIsLoading(true);
     setError('');
 
@@ -48,6 +85,10 @@ export default function Mt5Page() {
         });
         setTimeout(() => setSuccess(false), 5000);
       } else {
+        if (res.status === 403 && data?.details?.redirectTo) {
+          router.replace(data.details.redirectTo);
+          return;
+        }
         setError(data.error || 'Failed to connect MT5 account');
       }
     } catch (_err) {
@@ -56,6 +97,16 @@ export default function Mt5Page() {
       setIsLoading(false);
     }
   };
+
+  if (isCheckingAccess) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="animate-spin">
+          <div className="h-10 w-10 rounded-full border-4 border-cyan-500 border-t-transparent"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -70,7 +121,7 @@ export default function Mt5Page() {
           <h1 className="text-3xl font-semibold text-white">Connect MT5 Account</h1>
         </div>
         <p className="text-gray-400">
-          Enter your MetaTrader 5 credentials to connect your trading account
+          Enter your MetaTrader 5 credentials to connect your trading account after subscription activation
         </p>
       </motion.div>
 

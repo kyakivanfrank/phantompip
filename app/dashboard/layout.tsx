@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { LogOut, Home, Plug, CreditCard, Settings, User, CheckCircle, ChevronDown } from 'lucide-react';
+import { LogOut, Home, Plug, CreditCard, Settings, User, CheckCircle, ChevronDown, MicrowaveIcon } from 'lucide-react';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
 
 export default function DashboardLayout({
@@ -19,7 +19,7 @@ export default function DashboardLayout({
 
   useEffect(() => {
     // Verify user access and save user data for mobile/top nav
-    fetch('/api/auth/me', { credentials: 'include' })
+    fetch('/api/auth/me', { credentials: 'include', cache: 'no-store' })
       .then(res => {
         if (!res.ok) {
           throw new Error('Not authenticated');
@@ -99,7 +99,7 @@ export default function DashboardLayout({
               href="/dashboard/bots"
               className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-gray-300 hover:bg-cyan-500/10 hover:text-cyan-400 transition-colors"
             >
-              <Plug className="h-5 w-5" />
+              <MicrowaveIcon className="h-5 w-5" />
               Bots
             </Link>
 

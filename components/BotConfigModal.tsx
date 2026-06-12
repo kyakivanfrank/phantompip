@@ -12,7 +12,7 @@ export interface BotConfig {
   name: string;
   strategy: string;
   risk: string;
-  enabled: boolean;
+  isEnabled: boolean;
   config: {
     stopLoss: number;
     takeProfit: number;
@@ -82,9 +82,9 @@ export default function BotConfigModal({
                 </p>
               </div>
               <Toggle
-                checked={config.enabled}
+                checked={config.isEnabled}
                 onCheckedChange={(checked) =>
-                  setConfig({ ...config, enabled: checked })
+                  setConfig({ ...config, isEnabled: checked })
                 }
               />
             </div>

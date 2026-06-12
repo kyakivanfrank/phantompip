@@ -1,14 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { TrendingUp, Users, CreditCard, Key, LogOut } from 'lucide-react';
+import { TrendingUp, Users, CreditCard, Key } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
-interface AdminMobileBottomNavProps {
-  onLogout: () => void;
-}
-
-export function AdminMobileBottomNav({ onLogout }: AdminMobileBottomNavProps) {
+export function AdminMobileBottomNav() {
   const pathname = usePathname();
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
@@ -56,13 +52,7 @@ export function AdminMobileBottomNav({ onLogout }: AdminMobileBottomNavProps) {
               );
             })}
 
-            <button
-              onClick={onLogout}
-              className="flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-md transition-colors text-gray-400 hover:text-red-400"
-            >
-              <LogOut className="h-5 w-5" />
-              <span className="text-xs mt-1 font-medium">Exit</span>
-            </button>
+            {/* Logout moved to top-bar dropdown; mobile bottom nav no longer shows logout */}
           </div>
         </div>
       </nav>

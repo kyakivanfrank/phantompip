@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
 import { requireAuth } from "@/lib/server/auth";
-import { setMt5Credentials } from "@/lib/server/db";
+import { getUser, setMt5Credentials } from "@/lib/server/db";
 import {
   isValidMt5LoginId,
   isValidBrokerServer,
@@ -13,6 +13,26 @@ import { handleApiError, successResponse, errorResponse } from "@/lib/server/api
 export async function POST(req: NextRequest) {
   try {
     const session = await requireAuth();
+    const user = await getUser(session.userId);
+
+    if (!user) {
+      return errorResponse("User not found", 404);
+    }
+
+    const expiryTimestamp = new Date(user.subscription.expiryDate).getTime();
+    const hasActiveSubscription =
+      user.subscription.status === "active" &&
+      user.subscription.approvalStatus === "approved" &&
+      expiryTimestamp > Date.now();
+
+    if (!hasActiveSubscription) {
+      return errorResponse(
+        "Active subscription required before connecting MT5",
+        403,
+        { redirectTo: "/dashboard/subscription" }
+      );
+    }
+
     const body = await req.json();
     const { mt5LoginId, mt5Password, brokerServer } = body;
 

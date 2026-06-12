@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Key, Copy, Eye, EyeOff, Clock } from 'lucide-react';
@@ -16,7 +17,7 @@ export default function Mt5VaultPage() {
 
   const fetchVault = async () => {
     try {
-      const res = await fetch('/api/admin/mt5-vault');
+      const res = await fetch('/api/admin/mt5-vault', { cache: 'no-store' });
       const data = await res.json();
       setVault(data.data?.mt5Vault || []);
       setIsLoading(false);
@@ -92,7 +93,15 @@ export default function Mt5VaultPage() {
             >
               {/* User Info */}
               <div className="mb-6 border-b border-white/[0.1] pb-4">
-                <h3 className="text-lg font-semibold text-white">{item.userFullName}</h3>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">{item.userFullName}</h3>
+                    <p className="mt-2 text-xs text-gray-400">{item.userId}</p>
+                  </div>
+                  <Link href={`/admin/users?userId=${item.userId}`} className="rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-sm font-medium text-cyan-300 hover:bg-cyan-500/20 transition-colors">
+                    Open User Workspace
+                  </Link>
+                </div>
                 <div className="mt-2 grid gap-4 sm:grid-cols-2">
                   <div>
                     <p className="text-xs text-gray-400">Email</p>
@@ -183,11 +192,11 @@ export default function Mt5VaultPage() {
                   </div>
                 </div>
 
-                {/* Trading Style */}
+                {/* Connection Status */}
                 <div>
-                  <p className="text-xs uppercase tracking-widest text-gray-400">Trading Style</p>
+                  <p className="text-xs uppercase tracking-widest text-gray-400">Connection Status</p>
                   <div className="mt-2 rounded-lg border border-white/[0.1] bg-dark-tertiary/50 p-3">
-                    <p className="font-mono text-sm text-white">{item.tradingStyle}</p>
+                    <p className="font-mono text-sm text-white">{item.connectionStatus}</p>
                   </div>
                 </div>
               </div>

@@ -57,6 +57,7 @@ async function makeApiRequest<T = any>(
     },
     body,
     credentials: options?.credentials || 'include',
+    cache: 'no-store',
   });
 
   // Handle non-JSON responses

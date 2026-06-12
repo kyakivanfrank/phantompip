@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Home, Plug, CreditCard, Settings } from 'lucide-react';
+import { Home, Plug, CreditCard, MicrowaveIcon } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
 interface MobileBottomNavProps {
@@ -17,8 +17,8 @@ export function MobileBottomNav({ userData }: MobileBottomNavProps) {
   const navItems = [
     { href: '/dashboard', label: 'Home', icon: Home },
     { href: '/dashboard/mt5', label: 'MT5', icon: Plug },
+    { href: '/dashboard/bots', label: 'Bots', icon: MicrowaveIcon },
     { href: '/dashboard/subscription', label: 'Sub', icon: CreditCard },
-    { href: '/dashboard/settings', label: 'Settings', icon: Settings },
   ];
 
   return (
@@ -38,18 +38,16 @@ export function MobileBottomNav({ userData }: MobileBottomNavProps) {
                   className="flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-md transition-colors"
                 >
                   <Icon
-                    className={`h-5 w-5 transition-colors ${
-                      active
-                        ? 'text-cyan-400'
-                        : 'text-gray-400 hover:text-gray-300'
-                    }`}
+                    className={`h-5 w-5 transition-colors ${active
+                      ? 'text-cyan-400'
+                      : 'text-gray-400 hover:text-gray-300'
+                      }`}
                   />
                   <span
-                    className={`text-xs mt-1 font-medium transition-colors ${
-                      active
-                        ? 'text-cyan-400'
-                        : 'text-gray-400 hover:text-gray-300'
-                    }`}
+                    className={`text-xs mt-1 font-medium transition-colors ${active
+                      ? 'text-cyan-400'
+                      : 'text-gray-400 hover:text-gray-300'
+                      }`}
                   >
                     {item.label}
                   </span>
@@ -57,7 +55,7 @@ export function MobileBottomNav({ userData }: MobileBottomNavProps) {
               );
             })}
 
-            
+
           </div>
 
           {/* Mobile User Profile Info - Optional compact display */}

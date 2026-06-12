@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle, XCircle, Clock, RefreshCw } from 'lucide-react';
@@ -15,7 +16,7 @@ export default function PaymentsPage() {
 
   const fetchPayments = async () => {
     try {
-      const res = await fetch('/api/admin/payments/pending');
+      const res = await fetch('/api/admin/payments/pending', { cache: 'no-store' });
       const data = await res.json();
       setPayments(data.data?.pendingPayments || []);
       setIsLoading(false);
@@ -155,6 +156,12 @@ export default function PaymentsPage() {
 
               {/* Actions */}
               <div className="mt-6 flex gap-3 border-t border-white/[0.1] pt-4">
+                <Link
+                  href={`/admin/users?userId=${payment.userId}`}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-300 hover:bg-cyan-500/20 transition-colors"
+                >
+                  Open User Workspace
+                </Link>
                 <button
                   onClick={() => handleApprove(payment.id)}
                   disabled={actionLoading === payment.id}

@@ -1,11 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Search, Clock, CheckCircle, XCircle } from 'lucide-react';
 import UserDetailsModal from '@/components/UserDetailsModal';
 
 export default function UsersPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [users, setUsers] = useState<any[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -17,6 +20,24 @@ export default function UsersPage() {
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  useEffect(() => {
+    const userId = searchParams.get('userId');
+
+    if (!userId || users.length === 0) {
+      return;
+    }
+
+    if (selectedUser?.id === userId && isDetailsModalOpen) {
+      return;
+    }
+
+    const matchedUser = users.find((entry) => entry.id === userId);
+    if (matchedUser) {
+      setSelectedUser(matchedUser);
+      setIsDetailsModalOpen(true);
+    }
+  }, [users, searchParams, selectedUser, isDetailsModalOpen]);
 
   useEffect(() => {
     let filtered = users;
@@ -40,7 +61,7 @@ export default function UsersPage() {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch('/api/admin/users');
+      const res = await fetch('/api/admin/users', { cache: 'no-store' });
       const data = await res.json();
       setUsers(data.data?.users || []);
       setIsLoading(false);
@@ -50,7 +71,17 @@ export default function UsersPage() {
     }
   };
 
-  
+  const openUserWorkspace = (user: any) => {
+    setSelectedUser(user);
+    setIsDetailsModalOpen(true);
+    router.replace(`/admin/users?userId=${user.id}`);
+  };
+
+  const closeUserWorkspace = () => {
+    setIsDetailsModalOpen(false);
+    setSelectedUser(null);
+    router.replace('/admin/users');
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -60,8 +91,10 @@ export default function UsersPage() {
         return <span className="inline-flex items-center gap-1 rounded-full bg-yellow-500/10 px-3 py-1 text-xs font-medium text-yellow-400"><Clock className="h-3 w-3" />Pending</span>;
       case 'Expired':
         return <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-3 py-1 text-xs font-medium text-red-400"><XCircle className="h-3 w-3" />Expired</span>;
+      case 'Rejected':
+        return <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/10 px-3 py-1 text-xs font-medium text-rose-400"><XCircle className="h-3 w-3" />Rejected</span>;
       default:
-        return status;
+        return <span className="inline-flex items-center gap-1 rounded-full bg-gray-500/10 px-3 py-1 text-xs font-medium text-gray-300">{status}</span>;
     }
   };
 
@@ -116,7 +149,7 @@ export default function UsersPage() {
 
         {/* Status Filter */}
         <div className="flex gap-2">
-          {['all', 'Active', 'Pending Approval', 'Expired'].map((status) => (
+          {['all', 'Active', 'Pending Approval', 'Expired', 'Rejected', 'Inactive'].map((status) => (
             <button
               key={status}
               onClick={() => setFilterStatus(status)}
@@ -146,9 +179,10 @@ export default function UsersPage() {
                 <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Name</th>
                 <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Email</th>
                 <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Status</th>
+                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Paid</th>
                 <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Days Remaining</th>
                 <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-400">MT5</th>
-                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Joined</th>
+                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Latest Payment</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.1]">
@@ -156,15 +190,13 @@ export default function UsersPage() {
                 filteredUsers.map((user) => (
                   <tr
                     key={user.id}
-                    onClick={() => {
-                      setSelectedUser(user);
-                      setIsDetailsModalOpen(true);
-                    }}
+                    onClick={() => openUserWorkspace(user)}
                     className="hover:bg-white/[0.02] transition-colors cursor-pointer"
                   >
                     <td className="px-6 py-4 font-medium text-white">{user.fullName}</td>
                     <td className="px-6 py-4 text-sm text-gray-400">{user.email}</td>
                     <td className="px-6 py-4">{getStatusBadge(user.accountStatus)}</td>
+                    <td className="px-6 py-4 text-sm text-white">${(user.paidAmount || 0).toFixed(2)}</td>
                     <td className="px-6 py-4 text-sm">
                       <span className={user.daysRemaining > 7 ? 'text-green-400' : user.daysRemaining > 0 ? 'text-yellow-400' : 'text-red-400'}>
                         {getDaysRemaining(user.subscriptionExpiresAt)}
@@ -176,13 +208,13 @@ export default function UsersPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-xs text-gray-400">
-                      {new Date(user.createdAt).toLocaleDateString()}
+                      {user.latestPaymentStatus || 'No payments'}
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
+                  <td colSpan={7} className="px-6 py-8 text-center text-gray-400">
                     No users found
                   </td>
                 </tr>
@@ -209,10 +241,8 @@ export default function UsersPage() {
       <UserDetailsModal
         user={selectedUser}
         isOpen={isDetailsModalOpen}
-        onClose={() => {
-          setIsDetailsModalOpen(false);
-          setSelectedUser(null);
-        }}
+        onClose={closeUserWorkspace}
+        onUserUpdated={fetchUsers}
       />
     </div>
   );

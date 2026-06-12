@@ -61,9 +61,9 @@ export default function SettingsPage() {
           </label>
 
           {/* Save Button */}
-          <button className="h-10 rounded-md bg-cyan-500 px-4 text-sm font-medium text-white hover:opacity-90 transition-opacity">
+          {/* <button className="h-10 rounded-md bg-cyan-500 px-4 text-sm font-medium text-white hover:opacity-90 transition-opacity">
             Save changes
-          </button>
+          </button> */}
         </div>
       </motion.div>
 
