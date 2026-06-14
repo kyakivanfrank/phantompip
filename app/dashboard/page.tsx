@@ -105,38 +105,36 @@ export default function DashboardPage() {
         animate={{ opacity: 1, y: 0 }}
         className="space-y-4"
       >
-        <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-300">
-          <ShieldCheck className="h-3.5 w-3.5" />
-          Trader Control Centre
-        </div>
-
         <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
           <div className="space-y-2">
-            <h1 className="text-lg font-semibold text-white">Welcome back,</h1>
-            <h1 className="text-3xl font-semibold text-white">{userData?.username}</h1>
+            <h1 className="text-2xl font-semibold text-white">
+              {`Hi, ${userData?.username ? userData.username.split(' ')[0] : 'Guest'}`}
+            </h1>
             <p className="max-w-2xl text-gray-400">
-              Monitor your premium status, MT5 trading channel, and account readiness from one trader-focused workspace.
+              Prep MT5, sync your account, and hit the markets from one workspace.
             </p>
           </div>
+        </div>
+      </motion.div>
 
-          <div className="rounded-2xl border border-white/[0.08] bg-[radial-gradient(circle_at_top_right,_rgba(34,211,238,0.18),_transparent_45%),linear-gradient(135deg,rgba(15,23,42,0.95),rgba(17,24,39,0.75))] p-5">
-            <p className="text-xs uppercase tracking-[0.22em] text-cyan-300/80">Account Posture</p>
-            <div className="mt-4 flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-400">Subscription</p>
-                <p className="mt-1 text-xl font-semibold text-white">{subscriptionLabel}</p>
-              </div>
-              <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${isSubscriptionActive ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-amber-500/30 bg-amber-500/10 text-amber-300'}`}>
-                <span className={`size-2 rounded-full ${isSubscriptionActive ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-                {isSubscriptionActive ? 'Premium' : 'Action Needed'}
-              </div>
+      <motion.div>
+        <div className="rounded-2xl border border-white/[0.08] bg-[radial-gradient(circle_at_top_right,_rgba(34,211,238,0.18),_transparent_45%),linear-gradient(135deg,rgba(15,23,42,0.95),rgba(17,24,39,0.75))] p-5">
+          <p className="text-xs uppercase tracking-[0.22em] text-cyan-300/80">Account Posture</p>
+          <div className="mt-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-400">Subscription</p>
+              <p className="mt-1 text-xl font-semibold text-white">{subscriptionLabel}</p>
             </div>
-            <p className="mt-4 text-sm text-gray-400">
-              {isSubscriptionActive
-                ? `${userData?.subscription?.remainingDays ?? 0} day(s) remain before renewal.`
-                : 'Subscription activation is required before MT5 credentials can be stored.'}
-            </p>
+            <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${isSubscriptionActive ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-amber-500/30 bg-amber-500/10 text-amber-300'}`}>
+              <span className={`size-2 rounded-full ${isSubscriptionActive ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+              {isSubscriptionActive ? 'Premium' : 'Action Needed'}
+            </div>
           </div>
+          <p className="mt-4 text-sm text-gray-400">
+            {isSubscriptionActive
+              ? `${userData?.subscription?.remainingDays ?? 0} day(s) remain before renewal.`
+              : 'Subscription activation is required before MT5 credentials can be stored.'}
+          </p>
         </div>
       </motion.div>
 

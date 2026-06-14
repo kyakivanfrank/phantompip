@@ -50,7 +50,7 @@ export async function POST(_req: NextRequest) {
       subscription: {
         status: "active",
         approvalStatus: "approved",
-        planName: "Premium Plan",
+        planName: "Starter Plan",
         priceUSD: 0,
         billingCycle: "lifetime",
         startDate: todayStr,

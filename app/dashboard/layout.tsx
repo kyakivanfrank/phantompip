@@ -166,15 +166,11 @@ export default function DashboardLayout({
 
               {/* Status Badges (Hidden on micro-screens, styled for response layout) */}
               <div className="hidden sm:flex items-center gap-2">
-                {/* Account Status */}
-                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  <CheckCircle className="h-3.5 w-3.5" />
-                  Approved
-                </span>
+
 
                 {/* Current Subscription */}
                 <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                  {userData?.subscriptionType || 'Premium Plan'}
+                  {userData?.subscriptionType || 'Starter Plan'}
                 </span>
               </div>
             </div>
@@ -200,7 +196,7 @@ export default function DashboardLayout({
                   {/* User Username/Email display */}
                   <div className="hidden sm:block max-w-[120px]">
                     <p className="text-xs font-medium text-white truncate">
-                      {userData?.username || userData?.email?.split('@')[0] || 'User'}
+                      {(userData?.username || userData?.email?.split('@')[0] || 'User').split(' ')[0]}
                     </p>
                   </div>
                   <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform hidden sm:block ${isDropdownOpen ? 'rotate-180' : ''}`} />
