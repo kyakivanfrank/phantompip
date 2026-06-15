@@ -4,9 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import {
-  BadgeDollarSign,
-  CalendarClock,
-  CheckCircle,
+  BadgeDollarSign, 
   Clock,
   CreditCard,
   ShieldCheck,
@@ -43,20 +41,7 @@ type DashboardUser = {
   };
 };
 
-function formatMoney(amount: number) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-  }).format(amount || 0);
-}
 
-function formatDate(value: string | number | null) {
-  if (!value) return 'Not available';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Not available';
-  return date.toLocaleString();
-}
 
 export default function DashboardPage() {
   const [userData, setUserData] = useState<DashboardUser | null>(null);
@@ -90,7 +75,6 @@ export default function DashboardPage() {
   }
 
   const isSubscriptionActive = userData?.subscription?.isActive === true;
-  const showConnectMt5 = !userData?.mt5?.isConnected;
   const mt5ActionHref = isSubscriptionActive ? '/dashboard/mt5' : '/dashboard/subscription';
   const subscriptionLabel = isSubscriptionActive ? 'Premium Access' : userData?.subscription?.approvalStatus === 'pending' ? 'Awaiting Approval' : 'Subscription Required';
 
