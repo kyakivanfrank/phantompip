@@ -9,9 +9,10 @@ import { ToastProvider } from '@/components/Toast';
 
 const NAV_LINKS = [
   { href: '/admin', label: 'Dashboard', icon: TrendingUp, exact: true },
-  { href: '/admin/users', label: 'Users', icon: Users },
-  { href: '/admin/payments', label: 'Subscriptions', icon: CreditCard },
   { href: '/admin/mt5-vault', label: 'MT5 Vault', icon: Key },
+  { href: '/admin/payments', label: 'Subscriptions', icon: CreditCard },
+  { href: '/admin/users', label: 'Users', icon: Users }
+
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
