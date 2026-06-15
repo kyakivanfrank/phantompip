@@ -166,7 +166,7 @@ export default function AdminDashboard() {
               </h3>
               <div className="space-y-2">
                 {queues.pendingUsers.length > 0 ? queues.pendingUsers.map((user: any) => (
-                  <Link key={user.userId || user.id} href={`/admin/users/${user.userId || user.id}`} className="block rounded-lg border border-white/[0.05] bg-white/[0.02] p-3 hover:bg-white/[0.05] transition-colors">
+                  <Link key={user.userId || user.id} href={`/admin/payments`} className="block rounded-lg border border-white/[0.05] bg-white/[0.02] p-3 hover:bg-white/[0.05] transition-colors">
                     <p className="text-sm font-medium text-white">{user.fullName || user.username}</p>
                     <p className="text-xs text-gray-400">{user.email}</p>
                   </Link>

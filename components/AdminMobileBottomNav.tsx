@@ -13,7 +13,7 @@ export function AdminMobileBottomNav() {
     { href: '/admin', label: 'Dashboard', icon: TrendingUp },
     { href: '/admin/mt5-vault', label: 'MT5', icon: Key },
     { href: '/admin/users', label: 'Users', icon: Users },
-    { href: '/admin/payments', label: 'Pay', icon: CreditCard },
+    { href: '/admin/payments', label: 'Subscriptions', icon: CreditCard },
   ];
 
   return (
