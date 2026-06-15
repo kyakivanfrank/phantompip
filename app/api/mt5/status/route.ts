@@ -10,10 +10,15 @@ export async function GET(_req: NextRequest) {
     const session = await requireAuth();
     const credentials = await getMt5Credentials(session.userId);
 
-    // Determine if has credentials by checking required fields
-    const hasCredentials = !!(credentials?.loginId?.trim() && credentials?.password?.trim() && credentials?.brokerServer?.trim());
+    // 1. Safe-check with optional chaining to prevent runtime crashes
+    const hasCredentials = !!(
+      credentials?.loginId?.trim() && 
+      credentials?.password?.trim() && 
+      credentials?.brokerServer?.trim()
+    );
 
-    if (!hasCredentials) {
+    // 2. CRITICAL: If empty OR explicitly null, return disconnected early
+    if (!credentials || !hasCredentials) {
       return successResponse(
         {
           connected: false,
@@ -23,6 +28,7 @@ export async function GET(_req: NextRequest) {
       );
     }
 
+    // 3. TypeScript is happy now because we proved `credentials` is not null!
     return successResponse(
       {
         connected: credentials.isConnected,
