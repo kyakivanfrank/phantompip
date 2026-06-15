@@ -57,7 +57,8 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
 
     // Revenue calculation (sum of paid amounts)
     const paidAmount = fullUser.subscription.payments?.reduce((sum, payment) => {
-      if (payment.status === "approved") {
+      // FIX: Changed from "approved" to "confirmed" to match your Payment status type
+      if (payment.status === "confirmed") {
         return sum + (payment.amount || 0);
       }
       return sum;
