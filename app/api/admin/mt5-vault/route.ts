@@ -2,12 +2,11 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/server/auth";
-import { getAllUsers, getUser, getMt5Credentials } from "@/lib/server/db";
+import { getAllUsers, getUser } from "@/lib/server/db"; // Removed getMt5Credentials
 import { handleApiError, successResponse } from "@/lib/server/api-response";
 
 // Helper function to check if credentials have actual user input
 function hasCredentials(mt5: any): boolean {
-  // Checks if the properties exist and aren't just empty placeholder strings
   return !!(mt5?.loginId?.trim() && mt5?.password?.trim() && mt5?.brokerServer?.trim());
 }
 
@@ -25,12 +24,12 @@ export async function GET(_req: NextRequest) {
       // 2. Filter out non-approved users based on index structure
       if (user.approvalStatus !== "approved") continue;
 
-      // 3. Fetch the full user document for deeply nested values
+      // 3. Fetch the full user document. This ALREADY contains the full nested mt5 object!
       const fullUser = await getUser(user.userId);
       if (!fullUser) continue;
 
-      // 4. Safely fetch MT5 details (will return placeholder if empty)
-      const creds = await getMt5Credentials(user.userId);
+      // 4. THE FIX: Grab the MT5 credentials directly from the user document we just fetched
+      const creds = fullUser.mt5;
       
       // 5. Calculate remaining subscription days using correct nesting
       const expiryMs = new Date(user.expiryDate || "2099-01-01").getTime();
@@ -39,7 +38,7 @@ export async function GET(_req: NextRequest) {
         Math.ceil((expiryMs - Date.now()) / (24 * 60 * 60 * 1000))
       );
 
-      // 6. Build base user object mapping to account/subscription objects
+      // 6. Build base user object
       const base = {
         userId: user.userId,
         userEmail: user.email,
@@ -49,7 +48,7 @@ export async function GET(_req: NextRequest) {
         subscriptionStatus: user.subscriptionStatus,
       };
 
-      // 7. Check if credentials contain actual data or just placeholders
+      // 7. Check if credentials contain actual data
       if (creds && hasCredentials(creds)) {
         users_data.push({
           ...base,

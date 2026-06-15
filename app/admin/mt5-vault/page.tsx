@@ -84,9 +84,7 @@ export default function Mt5VaultPage() {
             <h3 className="text-lg font-semibold text-white">{item.userFullName}</h3>
             <p className="mt-2 text-xs text-gray-400">{item.userId}</p>
           </div>
-          <Link href={`/admin/users?userId=${item.userId}`} className="rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-sm font-medium text-cyan-300 hover:bg-cyan-500/20 transition-colors">
-            Open User Workspace
-          </Link>
+      
         </div>
         <div className="mt-2 grid gap-4 sm:grid-cols-2">
           <div>

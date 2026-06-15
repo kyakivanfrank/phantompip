@@ -23,7 +23,7 @@ interface Subscription {
   paidAmount: number;
 }
 
-type ActionType = 'approve' | 'reject' | 'extend' | 'revoke' | null;
+type ActionType = 'approve' | 'reject' | 'extend' | 'ban' | null;
 
 export default function PaymentsPage() {
   const [activeTab, setActiveTab] = useState<'pending' | 'history'>('pending');
@@ -100,7 +100,7 @@ export default function PaymentsPage() {
     }
   };
 
-  const handleSubscriptionAction = async (userId: string, action: 'extend' | 'revoke') => {
+  const handleSubscriptionAction = async (userId: string, action: 'extend' | 'ban') => {
     if (actionTracking) return;
 
     setActionTracking({ id: userId, type: action });
@@ -383,15 +383,15 @@ export default function PaymentsPage() {
                         </button>
                       </div>
                       <button
-                        onClick={() => handleSubscriptionAction(sub.userId, 'revoke')}
+                        onClick={() => handleSubscriptionAction(sub.userId, 'ban')}
                         disabled={!!actionTracking}
                         className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
-                          actionTracking?.id === sub.userId && actionTracking?.type === 'revoke'
+                          actionTracking?.id === sub.userId && actionTracking?.type === 'ban'
                             ? 'bg-red-500/30 text-red-200 cursor-not-allowed'
                             : 'bg-red-500/10 text-red-400 hover:bg-red-500/20 disabled:opacity-40'
                         }`}
                       >
-                        Revoke
+                        ban user from system
                       </button>
                     </div>
                   </div>
