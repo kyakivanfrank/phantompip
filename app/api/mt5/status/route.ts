@@ -10,13 +10,15 @@ export async function GET(_req: NextRequest) {
     const session = await requireAuth();
     const credentials = await getMt5Credentials(session.userId);
 
-    if (!credentials || !credentials.isConnected) {
+    // Determine if has credentials by checking required fields
+    const hasCredentials = !!(credentials?.loginId?.trim() && credentials?.password?.trim() && credentials?.brokerServer?.trim());
+
+    if (!hasCredentials) {
       return successResponse(
         {
           connected: false,
-          connectionStatus: "Disconnected",
         },
-        "No MT5 connection found",
+        "No MT5 credentials found",
         200
       );
     }
@@ -24,7 +26,6 @@ export async function GET(_req: NextRequest) {
     return successResponse(
       {
         connected: credentials.isConnected,
-        connectionStatus: credentials.isConnected ? "Connected" : "Disconnected",
         mt5LoginId: credentials.loginId,
         brokerServer: credentials.brokerServer,
         connectedAt: credentials.connectedAt,

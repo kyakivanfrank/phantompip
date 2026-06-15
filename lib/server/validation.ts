@@ -19,10 +19,12 @@ export function isValidMt5LoginId(loginId: string): boolean {
   return /^\d{1,8}$/.test(loginId);
 }
 
-// Transaction hash validation (for crypto or reference codes)
+// Transaction hash validation (for crypto or mobile money reference codes)
+// Accepts: TRC20 hashes (64 hex chars), MTN refs (10+ digits), Airtel refs (alphanumeric with dashes/slashes)
 export function isValidTransactionId(txId: string): boolean {
-  // Allow alphanumeric, hyphens, underscores - between 10 and 100 chars
-  return /^[a-zA-Z0-9\-_]{10,100}$/.test(txId);
+  const trimmed = txId.trim();
+  // Must be 5–200 characters, allow alphanumeric, hyphens, underscores, slashes, dots, spaces
+  return /^[\w\-\.\/\s]{5,200}$/.test(trimmed) && trimmed.length >= 5;
 }
 
 // Sanitize input to prevent XSS

@@ -132,7 +132,7 @@ function emailKey(email: string) {
 
 export async function createUser(userId: string, userData: UserDocument) {
   const redis = getRedis();
-  
+
   // Force MT5 placeholders and Bot defaults
   const normalizedUserData = {
     ...userData,
@@ -148,7 +148,7 @@ export async function createUser(userId: string, userData: UserDocument) {
 
   // Create user document
   await attempt(() => (redis.json as any).set(`user:${userId}`, "$", normalizedUserData));
-  
+
   // Set email lookup mapping (since redis json doesn't support secondary indexing easily)
   await attempt(() => redis.set(emailKey(normalizedUserData.account.email), userId));
 
@@ -211,7 +211,7 @@ export async function deleteUser(userId: string) {
   const index = (await attempt(() => (redis.json as any).get("users:index"))) as UserIndexEntry[] || [];
   let unwrappedIndex = Array.isArray(index) && Array.isArray(index[0]) ? index[0] : index;
   if (!Array.isArray(unwrappedIndex)) unwrappedIndex = [];
-  
+
   const updated = unwrappedIndex.filter((u: UserIndexEntry) => u.userId !== userId);
   await attempt(() => (redis.json as any).set("users:index", "$", updated));
 }
@@ -219,12 +219,12 @@ export async function deleteUser(userId: string) {
 export async function getAllUsers(): Promise<UserIndexEntry[]> {
   const redis = getRedis();
   const index = await attempt(() => (redis.json as any).get("users:index"));
-  
+
   if (!index) return [];
   // Handle upstash returning array of array for JSON.GET
   if (Array.isArray(index) && Array.isArray(index[0])) return index[0];
   if (Array.isArray(index)) return index;
-  
+
   return [];
 }
 
@@ -236,7 +236,7 @@ export async function updateUserDetails(userId: string, updates: { username?: st
   if (updates.username) {
     await attempt(() => (redis.json as any).set(`user:${userId}`, "$.account.username", updates.username));
   }
-  
+
   if (updates.email && updates.email !== user.account.email) {
     await attempt(() => redis.del(emailKey(user.account.email)));
     await attempt(() => redis.set(emailKey(updates.email!), userId));
@@ -268,7 +268,8 @@ export async function updateSubscription(userId: string, updates: Partial<UserDo
   const redis = getRedis();
   for (const [key, value] of Object.entries(updates)) {
     if (key !== 'payments') {
-      await attempt(() => (redis.json as any).set(`user:${userId}`, `$.subscription.${key}`, value));
+      // CRITICAL FIX: Explicitly stringify values to prevent JSON parsing crashes on strings
+      await attempt(() => (redis.json as any).set(`user:${userId}`, `$.subscription.${key}`, JSON.stringify(value)));
     }
   }
 
@@ -282,16 +283,31 @@ export async function updateSubscription(userId: string, updates: Partial<UserDo
     await attempt(() => (redis.json as any).set("users:index", "$", index));
   }
 }
-
 // -----------------------------------------------------------------------------
 // PAYMENT OPERATIONS
 // -----------------------------------------------------------------------------
 
 export async function createPayment(userId: string, payment: Payment) {
   const redis = getRedis();
+
+  // 1. Fetch current user to check existing payments
+  const user = await getUser(userId);
+  if (!user || !user.subscription) return null;
+
+  // 2. Ensure the payments array exists
+  const existingPayments = user.subscription.payments || [];
+
+  // 3. Deduplication Check: Prevent double-click submissions
+  const isDuplicate = existingPayments.some(p => p.paymentId === payment.paymentId);
+
+  if (isDuplicate) {
+    console.log(`Duplicate payment ${payment.paymentId} prevented for user ${userId}`);
+    return "DUPLICATE_PREVENTED";
+  }
+
+  // 4. Safe to append
   return await attempt(() => (redis.json as any).arrappend(`user:${userId}`, "$.subscription.payments", payment));
 }
-
 export async function getUserPayments(userId: string): Promise<Payment[]> {
   const user = await getUser(userId);
   if (!user || !user.subscription || !user.subscription.payments) return [];
@@ -301,16 +317,28 @@ export async function getUserPayments(userId: string): Promise<Payment[]> {
 export async function getAllPayments() {
   const index = await getAllUsers();
   const allPayments: any[] = [];
-  
+  const seenPaymentIds = new Set<string>(); // Tracker to eliminate duplicates
+
   for (const entry of index) {
     const user = await getUser(entry.userId);
     if (user && user.subscription && Array.isArray(user.subscription.payments)) {
-       for (const p of user.subscription.payments) {
-          allPayments.push({ ...p, userId: user.userId, userEmail: user.account.email, username: user.account.username });
-       }
+      for (const p of user.subscription.payments) {
+
+        // Only process this payment if we haven't seen its ID before
+        if (!seenPaymentIds.has(p.paymentId)) {
+          seenPaymentIds.add(p.paymentId);
+          allPayments.push({
+            ...p,
+            userId: user.userId,
+            userEmail: user.account.email,
+            username: user.account.username
+          });
+        }
+
+      }
     }
   }
-  
+
   return allPayments.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
 }
 
@@ -324,17 +352,22 @@ export async function updatePaymentStatus(userId: string, paymentId: string, sta
   const user = await getUser(userId);
   if (!user || !user.subscription || !user.subscription.payments) return;
   
-  const pIndex = user.subscription.payments.findIndex(p => p.paymentId === paymentId);
-  if (pIndex !== -1) {
-    await attempt(() => (redis.json as any).set(`user:${userId}`, `$.subscription.payments[${pIndex}].status`, status));
-    
-    if (additionalUpdates) {
-      for (const [key, value] of Object.entries(additionalUpdates)) {
-        await attempt(() => (redis.json as any).set(`user:${userId}`, `$.subscription.payments[${pIndex}].${key}`, value));
+  for (let i = 0; i < user.subscription.payments.length; i++) {
+    if (user.subscription.payments[i].paymentId === paymentId) {
+      
+      // CRITICAL FIX: Explicitly stringify the plain string value for Upstash
+      await attempt(() => (redis.json as any).set(`user:${userId}`, `$.subscription.payments[${i}].status`, JSON.stringify(status)));
+      
+      if (additionalUpdates) {
+        for (const [key, value] of Object.entries(additionalUpdates)) {
+          await attempt(() => (redis.json as any).set(`user:${userId}`, `$.subscription.payments[${i}].${key}`, JSON.stringify(value)));
+        }
       }
+      
     }
   }
 }
+
 
 // Support older wrapper APIs (for legacy routes that might still exist)
 export async function updatePayment(paymentId: string, updates: any) {
@@ -357,7 +390,7 @@ export async function getMt5Credentials(userId: string): Promise<UserDocument["m
   const redis = getRedis();
   const res = await attempt(() => (redis.json as any).get(`user:${userId}`, { path: "$.mt5" }));
   const credentials = Array.isArray(res) ? res[0] : res;
-  
+
   if (!credentials) {
     const placeholder = {
       loginId: "",
@@ -369,7 +402,7 @@ export async function getMt5Credentials(userId: string): Promise<UserDocument["m
     await attempt(() => (redis.json as any).set(`user:${userId}`, "$.mt5", placeholder));
     return placeholder;
   }
-  
+
   return credentials as UserDocument["mt5"] | null;
 }
 
@@ -498,7 +531,7 @@ export async function deleteBot(userId: string, botKey: keyof Bots) {
   const redis = getRedis();
   const userBots = await attempt(() => (redis.json as any).get(`user:${userId}`, { path: "$.bots" }));
   const botsObj = Array.isArray(userBots) ? userBots[0] : userBots;
-  
+
   if (botsObj && botsObj[botKey]) {
     delete botsObj[botKey];
     await attempt(() => (redis.json as any).set(`user:${userId}`, "$.bots", botsObj));
@@ -506,20 +539,4 @@ export async function deleteBot(userId: string, botKey: keyof Bots) {
 }
 
 // -----------------------------------------------------------------------------
-// COUPON OPERATIONS (Legacy Hash Maps)
-// -----------------------------------------------------------------------------
 
-export async function getCoupon(code: string) {
-  const redis = getRedis();
-  return await attempt(() => (redis as any).hgetall(`coupon:${code}`));
-}
-
-export async function createCoupon(code: string, couponData: any) {
-  const redis = getRedis();
-  return await attempt(() => (redis as any).hset(`coupon:${code}`, couponData));
-}
-
-export async function updateCoupon(code: string, updates: any) {
-  const redis = getRedis();
-  return await attempt(() => (redis as any).hset(`coupon:${code}`, updates));
-}

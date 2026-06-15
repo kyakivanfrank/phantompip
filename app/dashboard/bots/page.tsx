@@ -286,11 +286,11 @@ export default function BotsPage() {
               < div className="mt-6 grid grid-cols-2 gap-3 text-xs" >
                 {
                   [
+                    { label: 'Lot size', value: bot.config.lotSize },
                     { label: 'Stop loss', value: `${bot.config.stopLoss}%` },
                     { label: 'Take profit', value: `${bot.config.takeProfit}%` },
                     { label: 'Max drawdown', value: `${bot.config.maxDrawdown}%` },
                     { label: 'Daily loss limit', value: `${bot.config.dailyLossLimit}%` },
-                    { label: 'Lot size', value: bot.config.lotSize },
                   ].map((config, idx) => (
                     <div
                       key={idx}

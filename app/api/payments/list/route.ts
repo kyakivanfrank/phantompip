@@ -20,8 +20,6 @@ export async function GET(_req: NextRequest) {
           status: p.status,
           createdAt: p.createdAt,
           approvedAt: p.approvedAt,
-          couponCode: p.couponCode,
-          originalAmount: p.originalAmount,
         })),
       },
       "Payments retrieved",

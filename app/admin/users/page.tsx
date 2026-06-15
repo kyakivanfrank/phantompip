@@ -1,43 +1,31 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { Search, Clock, CheckCircle, XCircle } from 'lucide-react';
-import UserDetailsModal from '@/components/UserDetailsModal';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Search, ChevronDown, Trash2, AlertCircle } from 'lucide-react';
+
+interface User {
+  id: string;
+  fullName: string;
+  email: string;
+  accountStatus: 'Active' | 'Pending Approval' | 'Expired' | 'Rejected' | 'Inactive';
+  createdAt: number;
+}
 
 export default function UsersPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [users, setUsers] = useState<any[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedUser, setSelectedUser] = useState<any | null>(null);
-  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   useEffect(() => {
     fetchUsers();
   }, []);
-
-  useEffect(() => {
-    const userId = searchParams.get('userId');
-
-    if (!userId || users.length === 0) {
-      return;
-    }
-
-    if (selectedUser?.id === userId && isDetailsModalOpen) {
-      return;
-    }
-
-    const matchedUser = users.find((entry) => entry.id === userId);
-    if (matchedUser) {
-      setSelectedUser(matchedUser);
-      setIsDetailsModalOpen(true);
-    }
-  }, [users, searchParams, selectedUser, isDetailsModalOpen]);
 
   useEffect(() => {
     let filtered = users;
@@ -71,39 +59,56 @@ export default function UsersPage() {
     }
   };
 
-  const openUserWorkspace = (user: any) => {
-    setSelectedUser(user);
-    setIsDetailsModalOpen(true);
-    router.replace(`/admin/users?userId=${user.id}`);
-  };
-
-  const closeUserWorkspace = () => {
-    setIsDetailsModalOpen(false);
-    setSelectedUser(null);
-    router.replace('/admin/users');
-  };
-
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'Active':
-        return <span className="inline-flex items-center gap-1 rounded-full bg-green-500/10 px-3 py-1 text-xs font-medium text-green-400"><CheckCircle className="h-3 w-3" />Active</span>;
-      case 'Pending Approval':
-        return <span className="inline-flex items-center gap-1 rounded-full bg-yellow-500/10 px-3 py-1 text-xs font-medium text-yellow-400"><Clock className="h-3 w-3" />Pending</span>;
-      case 'Expired':
-        return <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-3 py-1 text-xs font-medium text-red-400"><XCircle className="h-3 w-3" />Expired</span>;
-      case 'Rejected':
-        return <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/10 px-3 py-1 text-xs font-medium text-rose-400"><XCircle className="h-3 w-3" />Rejected</span>;
-      default:
-        return <span className="inline-flex items-center gap-1 rounded-full bg-gray-500/10 px-3 py-1 text-xs font-medium text-gray-300">{status}</span>;
-    }
+    const styles: Record<string, { border: string; bg: string; text: string }> = {
+      'Active': { border: 'border-green-500/30', bg: 'bg-green-500/10', text: 'text-green-400' },
+      'Pending Approval': { border: 'border-yellow-500/30', bg: 'bg-yellow-500/10', text: 'text-yellow-400' },
+      'Expired': { border: 'border-red-500/30', bg: 'bg-red-500/10', text: 'text-red-400' },
+      'Rejected': { border: 'border-rose-500/30', bg: 'bg-rose-500/10', text: 'text-rose-400' },
+      'Inactive': { border: 'border-gray-500/30', bg: 'bg-gray-500/10', text: 'text-gray-400' },
+    };
+
+    const style = styles[status] || styles['Inactive'];
+    return (
+      <span className={`inline-flex items-center rounded-full border ${style.border} ${style.bg} px-2.5 py-1 text-xs font-medium ${style.text}`}>
+        {status}
+      </span>
+    );
   };
 
-  const getDaysRemaining = (expiryTime: number) => {
-    const days = Math.ceil((expiryTime - Date.now()) / (24 * 60 * 60 * 1000));
-    if (days < 0) return '0 days';
-    if (days === 0) return 'Today';
-    if (days === 1) return '1 day';
-    return `${days} days`;
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const handleDeleteClick = (userId: string) => {
+    setDeletingUserId(userId);
+    setDeleteModalOpen(true);
+    setDeleteError('');
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingUserId) return;
+
+    try {
+      const res = await fetch(`/api/admin/users/${deletingUserId}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        setUsers(users.filter(u => u.id !== deletingUserId));
+        setDeleteModalOpen(false);
+        setDeletingUserId(null);
+      } else {
+        const data = await res.json();
+        setDeleteError(data.error || 'Failed to delete user');
+      }
+    } catch (error) {
+      setDeleteError('Error deleting user');
+    }
   };
 
   if (isLoading) {
@@ -125,7 +130,7 @@ export default function UsersPage() {
         className="space-y-2"
       >
         <h1 className="text-3xl font-semibold text-white">Users Management</h1>
-        <p className="text-gray-400">Manage platform users and their subscriptions</p>
+        <p className="text-gray-400">Manage platform users</p>
       </motion.div>
 
       {/* Filters */}
@@ -148,7 +153,7 @@ export default function UsersPage() {
         </div>
 
         {/* Status Filter */}
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {['all', 'Active', 'Pending Approval', 'Expired', 'Rejected', 'Inactive'].map((status) => (
             <button
               key={status}
@@ -165,63 +170,80 @@ export default function UsersPage() {
         </div>
       </motion.div>
 
-      {/* Users Table */}
+      {/* Users Accordion */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="rounded-2xl border border-white/[0.1] bg-dark-secondary/40 backdrop-blur-xl overflow-hidden"
+        className="space-y-2 rounded-2xl border border-white/[0.1] bg-dark-secondary/40 backdrop-blur-xl overflow-hidden"
       >
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-white/[0.1]">
-                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Name</th>
-                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Email</th>
-                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Status</th>
-                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Paid</th>
-                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Days Remaining</th>
-                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-400">MT5</th>
-                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Latest Payment</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/[0.1]">
-              {filteredUsers.length > 0 ? (
-                filteredUsers.map((user) => (
-                  <tr
-                    key={user.id}
-                    onClick={() => openUserWorkspace(user)}
-                    className="hover:bg-white/[0.02] transition-colors cursor-pointer"
-                  >
-                    <td className="px-6 py-4 font-medium text-white">{user.fullName}</td>
-                    <td className="px-6 py-4 text-sm text-gray-400">{user.email}</td>
-                    <td className="px-6 py-4">{getStatusBadge(user.accountStatus)}</td>
-                    <td className="px-6 py-4 text-sm text-white">${(user.paidAmount || 0).toFixed(2)}</td>
-                    <td className="px-6 py-4 text-sm">
-                      <span className={user.daysRemaining > 7 ? 'text-green-400' : user.daysRemaining > 0 ? 'text-yellow-400' : 'text-red-400'}>
-                        {getDaysRemaining(user.subscriptionExpiresAt)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={user.mt5Connected ? 'text-green-400' : 'text-gray-400'}>
-                        {user.mt5Connected ? '✓ Connected' : '✗ No'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-xs text-gray-400">
-                      {user.latestPaymentStatus || 'No payments'}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-gray-400">
-                    No users found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <AnimatePresence mode="popLayout">
+          {filteredUsers.length > 0 ? (
+            filteredUsers.map((user) => (
+              <motion.div
+                key={user.id}
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="border-b border-white/[0.1] last:border-b-0"
+              >
+                {/* Accordion Header */}
+                <button
+                  onClick={() => setExpandedUserId(expandedUserId === user.id ? null : user.id)}
+                  className="w-full px-6 py-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors"
+                >
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className="text-left">
+                      <p className="font-medium text-white">{user.fullName}</p>
+                      <p className="text-sm text-gray-400">{user.email}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {getStatusBadge(user.accountStatus)}
+                    <ChevronDown
+                      className={`h-5 w-5 text-gray-400 transition-transform ${
+                        expandedUserId === user.id ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </div>
+                </button>
+
+                {/* Accordion Content */}
+                <AnimatePresence>
+                  {expandedUserId === user.id && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="border-t border-white/[0.1] bg-white/[0.02] px-6 py-4"
+                    >
+                      <div className="space-y-4">
+                        {/* Joined Date */}
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Joined</p>
+                          <p className="mt-1 text-sm text-gray-300">{formatDate(user.createdAt)}</p>
+                        </div>
+
+                        {/* Delete Button */}
+                        <button
+                          onClick={() => handleDeleteClick(user.id)}
+                          className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/20 transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Delete Account
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            ))
+          ) : (
+            <div className="px-6 py-8 text-center text-gray-400">
+              No users found
+            </div>
+          )}
+        </AnimatePresence>
       </motion.div>
 
       {/* Summary */}
@@ -237,13 +259,56 @@ export default function UsersPage() {
         </p>
       </motion.div>
 
-      {/* User Details Modal */}
-      <UserDetailsModal
-        user={selectedUser}
-        isOpen={isDetailsModalOpen}
-        onClose={closeUserWorkspace}
-        onUserUpdated={fetchUsers}
-      />
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="rounded-xl border border-white/[0.1] bg-dark-secondary p-6 max-w-sm mx-4"
+            >
+              <div className="flex items-start gap-4">
+                <AlertCircle className="h-6 w-6 text-red-400 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-white">Delete User Account?</h3>
+                  <p className="mt-2 text-sm text-gray-400">
+                    This action cannot be undone. The user account and all associated data will be permanently deleted.
+                  </p>
+                  {deleteError && (
+                    <p className="mt-2 text-sm text-red-400">{deleteError}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-6 flex gap-3">
+                <button
+                  onClick={() => {
+                    setDeleteModalOpen(false);
+                    setDeletingUserId(null);
+                    setDeleteError('');
+                  }}
+                  className="flex-1 rounded-lg border border-white/[0.1] bg-white/[0.05] px-4 py-2 font-medium text-gray-300 hover:bg-white/[0.1] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="flex-1 rounded-lg bg-red-600 px-4 py-2 font-medium text-white hover:bg-red-700 transition-colors"
+                >
+                  Delete
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

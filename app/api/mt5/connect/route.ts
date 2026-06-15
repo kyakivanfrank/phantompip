@@ -61,8 +61,10 @@ export async function POST(req: NextRequest) {
 
     return successResponse(
       {
-        connectionStatus: "Connected",
+        isConnected: true,
         connectedAt: now,
+        mt5LoginId: sanitizeInput(mt5LoginId),
+        brokerServer: sanitizeInput(brokerServer),
       },
       "MT5 account connected successfully",
       201

@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/server/auth";
 import { buildAdminUserDetails } from "@/lib/server/admin-user";
-import { getUser, setMt5Credentials, updateSubscription } from "@/lib/server/db";
+import { getUser, deleteUser, setMt5Credentials, updateSubscription } from "@/lib/server/db";
 import { handleApiError, successResponse, errorResponse } from "@/lib/server/api-response";
 
 function toExpiryDateIso(timestamp: number) {
@@ -78,10 +78,36 @@ export async function PATCH(
     const details = await buildAdminUserDetails(userId);
 
     if (!details) {
-      return errorResponse("User not found", 404);
+      return errorResponse("User not found after update", 404);
     }
 
     return successResponse({ user: details }, "Admin action completed", 200);
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  context: { params: Promise<{ userId: string }> }
+) {
+  try {
+    await requireAdmin();
+    const { userId } = await context.params;
+
+    const user = await getUser(userId);
+    if (!user) {
+      return errorResponse("User not found", 404);
+    }
+
+    // Safety: prevent deleting admin accounts via this endpoint
+    if (user.isAdmin) {
+      return errorResponse("Cannot delete admin accounts", 403);
+    }
+
+    await deleteUser(userId);
+
+    return successResponse({ userId }, "User account permanently deleted", 200);
   } catch (error) {
     return handleApiError(error);
   }
