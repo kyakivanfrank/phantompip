@@ -4,12 +4,16 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import {
-  BadgeDollarSign, 
   Clock,
   CreditCard,
   ShieldCheck,
-  TimerReset,
-  Zap,
+  Activity,
+  UserCircle,
+  CalendarDays,
+  KeyRound,
+  Server,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 
 type DashboardUser = {
@@ -41,8 +45,6 @@ type DashboardUser = {
   };
 };
 
-
-
 export default function DashboardPage() {
   const [userData, setUserData] = useState<DashboardUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -63,203 +65,210 @@ export default function DashboardPage() {
     }
   };
 
-
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin">
-          <div className="h-12 w-12 rounded-full border-4 border-cyan-500 border-t-transparent"></div>
-        </div>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-cyan-500 border-t-transparent"></div>
       </div>
     );
   }
 
   const isSubscriptionActive = userData?.subscription?.isActive === true;
-  const mt5ActionHref = isSubscriptionActive ? '/dashboard/mt5' : '/dashboard/subscription';
-  const subscriptionLabel = isSubscriptionActive ? 'Premium Access' : userData?.subscription?.approvalStatus === 'pending' ? 'Awaiting Approval' : 'Subscription Required';
-
-
-
+  const isPending = userData?.subscription?.approvalStatus === 'pending';
+  const hasMt5 = userData?.mt5?.isConnected && userData?.mt5?.loginId;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-8 max-w-6xl mx-auto">
+      
+      {/* 1. Personalized Header Banner */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="space-y-4"
+        className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/[0.1] pb-6"
       >
-        <div className="space-y-2">
-          <h1 className="text-3xl font-semibold text-white">
-            {`Welcome, ${userData?.username ? userData.username.split(' ')[0] : 'Trader'}`}
-          </h1>
-          <p className="text-gray-400">
-            Manage your subscription and MT5 account settings
-          </p>
+        <div className="flex items-center gap-4">
+          <div className="h-16 w-16 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30">
+            <UserCircle className="h-8 w-8 text-cyan-400" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-semibold text-white">
+              {userData?.username ? userData.username : 'Trader'}
+            </h1>
+            <p className="text-gray-400 text-sm mt-1">{userData?.email}</p>
+          </div>
+        </div>
+
+        {/* Master Account Status Badge */}
+        <div className="flex items-center gap-2">
+          {isSubscriptionActive ? (
+            <span className="flex items-center gap-2 bg-green-500/10 border border-green-500/20 text-green-400 px-4 py-2 rounded-full text-sm font-medium">
+              <CheckCircle2 className="h-4 w-4" /> Premium Access Active
+            </span>
+          ) : isPending ? (
+            <span className="flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 px-4 py-2 rounded-full text-sm font-medium">
+              <Clock className="h-4 w-4" /> Awaiting Admin Approval
+            </span>
+          ) : (
+            <span className="flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 text-orange-400 px-4 py-2 rounded-full text-sm font-medium">
+              <ShieldCheck className="h-4 w-4" /> Subscription Required
+            </span>
+          )}
         </div>
       </motion.div>
 
-      {/* Status Cards Grid */}
-      <div className="grid gap-6">
-        {/* Subscription Status Card - Full Width */}
+      <div className="grid gap-8 md:grid-cols-12">
+        
+        {/* 2. Personal Board (Subscription & Info Panel) */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1 }}
-          className="rounded-xl border border-white/[0.1] bg-dark-secondary/40 p-6 backdrop-blur-xl md:col-span-2"
+          className="md:col-span-7 space-y-6"
         >
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <div className="flex items-start gap-3">
-              {isSubscriptionActive ? (
-                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-green-500/20">
-                  <BadgeDollarSign className="h-5 w-5 text-green-400" />
-                </div>
+          <div>
+            <h2 className="text-lg font-medium text-white mb-4">Account Overview</h2>
+            
+            <div className="bg-dark-secondary/20 border border-white/[0.05] rounded-2xl p-6 space-y-6">
+              {userData?.subscription ? (
+                <>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Current Plan</p>
+                      <p className="text-base font-medium text-white flex items-center gap-2">
+                        <CreditCard className="h-4 w-4 text-cyan-400" /> {userData.subscription.planName}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Billing Cycle</p>
+                      <p className="text-base font-medium text-white capitalize">{userData.subscription.billingCycle}</p>
+                    </div>
+                  </div>
+
+                  <div className="h-px w-full bg-white/[0.05]" />
+
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Expiry Date</p>
+                      <p className="text-base font-medium text-white flex items-center gap-2">
+                        <CalendarDays className="h-4 w-4 text-gray-400" /> {userData.subscription.expiryDate}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Time Remaining</p>
+                      <p className={`text-base font-medium ${
+                        userData.subscription.remainingDays > 7 ? 'text-green-400' : 
+                        userData.subscription.remainingDays > 0 ? 'text-yellow-400' : 'text-red-400'
+                      }`}>
+                        {userData.subscription.remainingDays} Days
+                      </p>
+                    </div>
+                  </div>
+                </>
               ) : (
-                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-yellow-500/20">
-                  <Clock className="h-5 w-5 text-yellow-400" />
-                </div>
+                <p className="text-sm text-gray-400">No subscription record found. Please activate your account.</p>
               )}
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-                  Subscription Status
-                </p>
-                <p className="mt-1 text-lg font-semibold text-white">
-                  {subscriptionLabel}
-                </p>
+
+              <div className="pt-2">
+                <Link
+                  href="/dashboard/subscription"
+                  className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors flex items-center gap-1"
+                >
+                  Manage Subscription →
+                </Link>
               </div>
             </div>
           </div>
-
-          {isSubscriptionActive && userData?.subscription && (
-            <div className="space-y-3 border-t border-white/[0.1] pt-4">
-              <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
-                <div>
-                  <p className="text-xs text-gray-400 mb-1">Plan</p>
-                  <p className="text-sm font-semibold text-green-300">{userData.subscription.planName}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 mb-1">Billing Cycle</p>
-                  <p className="text-sm font-semibold text-green-300 capitalize">{userData.subscription.billingCycle}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 mb-1">Expires</p>
-                  <p className="text-sm font-semibold text-green-300">{userData.subscription.expiryDate}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 mb-1">Days Remaining</p>
-                  <p className={`text-sm font-semibold ${userData.subscription.remainingDays > 7 ? 'text-green-300' : userData.subscription.remainingDays > 0 ? 'text-yellow-300' : 'text-red-300'}`}>
-                    {userData.subscription.remainingDays} days
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <Link
-            href="/dashboard/subscription"
-            className="mt-4 inline-flex items-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-sm font-medium text-cyan-300 hover:bg-cyan-500/20 transition-colors"
-          >
-            {isSubscriptionActive ? 'Manage' : 'View Details'}
-          </Link>
         </motion.div>
 
-        {/* MT5 Account Card */}
+        {/* 3. Live Trading Engine Card (MT5) */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2 }}
-          className="rounded-xl border border-white/[0.1] bg-dark-secondary/40 p-6 backdrop-blur-xl"
+          className="md:col-span-5"
         >
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-start gap-3">
-              {userData?.mt5?.isConnected ? (
-                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-green-500/20">
-                  <Zap className="h-5 w-5 text-green-400" />
+          <h2 className="text-lg font-medium text-white mb-4">Trading Engine</h2>
+          
+          <div className="relative overflow-hidden rounded-2xl border border-white/[0.1] bg-dark-secondary/40 p-6 backdrop-blur-xl">
+            {/* Background glowing effect if active */}
+            {hasMt5 && (
+              <div className="absolute top-0 right-0 -mr-8 -mt-8 h-32 w-32 rounded-full bg-green-500/10 blur-3xl" />
+            )}
+
+            <div className="relative z-10 space-y-6">
+              
+              {/* Header / Status */}
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="text-base font-medium text-white">MT5 Connection</h3>
+                  {hasMt5 ? (
+                    <div className="mt-2 flex items-center gap-2 text-sm text-green-400 font-medium">
+                      <span className="relative flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                      </span>
+                      System is actively trading
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-sm text-gray-400">Engine currently offline</p>
+                  )}
+                </div>
+                <Activity className={`h-6 w-6 ${hasMt5 ? 'text-green-400' : 'text-gray-500'}`} />
+              </div>
+
+              {/* Credentials Block */}
+              {hasMt5 ? (
+                <div className="space-y-4 rounded-xl bg-black/20 p-4 border border-white/[0.05]">
+                  <div className="flex items-center gap-3">
+                    <KeyRound className="h-4 w-4 text-cyan-400" />
+                    <div>
+                      <p className="text-xs text-gray-500">Login ID</p>
+                      <p className="text-sm font-mono text-white">{userData.mt5.loginId}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <Server className="h-4 w-4 text-cyan-400" />
+                    <div>
+                      <p className="text-xs text-gray-500">Broker Server</p>
+                      <p className="text-sm text-white uppercase">{userData.mt5.brokerServer}</p>
+                    </div>
+                  </div>
                 </div>
               ) : (
-                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-orange-500/20">
-                  <ShieldCheck className="h-5 w-5 text-orange-400" />
+                <div className="rounded-xl border border-dashed border-gray-600 p-6 text-center">
+                  <AlertCircle className="h-6 w-6 text-gray-500 mx-auto mb-2" />
+                  <p className="text-sm text-gray-400 mb-4">No credentials provided.</p>
+                  {isSubscriptionActive ? (
+                    <Link
+                      href="/dashboard/mt5"
+                      className="inline-block bg-cyan-500 hover:bg-cyan-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+                    >
+                      Connect MT5 Account
+                    </Link>
+                  ) : (
+                    <p className="text-xs text-orange-400">Activate subscription to connect MT5.</p>
+                  )}
                 </div>
               )}
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-                  MT5 Account
-                </p>
-                <p className="mt-1 text-lg font-semibold text-white">
-                  {userData?.mt5?.isConnected ? 'Connected' : 'Not Connected'}
-                </p>
-              </div>
+
+              {/* Footer Action */}
+              {hasMt5 && (
+                <div className="pt-2">
+                  <Link
+                    href="/dashboard/mt5"
+                    className="text-sm text-gray-400 hover:text-white transition-colors"
+                  >
+                    Update credentials
+                  </Link>
+                </div>
+              )}
+
             </div>
           </div>
-
-          {userData?.mt5?.isConnected && userData?.mt5?.loginId && (
-            <div className="mt-4 space-y-2 border-t border-white/[0.1] pt-4">
-              <div className="flex justify-between items-center">
-                <p className="text-sm text-gray-400">Login ID</p>
-                <p className="text-sm font-medium font-mono text-green-400">{userData.mt5.loginId}</p>
-              </div>
-              <div className="flex justify-between items-center">
-                <p className="text-sm text-gray-400">Server</p>
-                <p className="text-sm font-medium text-green-400">{userData.mt5.brokerServer}</p>
-              </div>
-            </div>
-          )}
-
-          <Link
-            href={mt5ActionHref}
-            className="mt-4 inline-flex items-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-sm font-medium text-cyan-300 hover:bg-cyan-500/20 transition-colors"
-          >
-            {userData?.mt5?.isConnected ? 'Update' : isSubscriptionActive ? 'Connect' : 'Set Up Subscription'}
-          </Link>
         </motion.div>
+
       </div>
-
-      {/* Quick Action Suggestions */}
-      {(!isSubscriptionActive || !userData?.mt5?.isConnected) && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-6 backdrop-blur-xl"
-        >
-          <h3 className="font-semibold text-white mb-4">Next Steps</h3>
-          <div className="space-y-3">
-            {!isSubscriptionActive && (
-              <Link
-                href="/dashboard/subscription"
-                className="block p-3 rounded-lg border border-cyan-500/20 hover:bg-cyan-500/10 transition-colors text-cyan-300"
-              >
-                <div className="flex items-center gap-3">
-                  <CreditCard className="h-4 w-4" />
-                  <span className="text-sm">Activate your subscription to get started</span>
-                </div>
-              </Link>
-            )}
-            {isSubscriptionActive && !userData?.mt5?.isConnected && (
-              <Link
-                href="/dashboard/mt5"
-                className="block p-3 rounded-lg border border-cyan-500/20 hover:bg-cyan-500/10 transition-colors text-cyan-300"
-              >
-                <div className="flex items-center gap-3">
-                  <Zap className="h-4 w-4" />
-                  <span className="text-sm">Connect your MT5 account to start trading</span>
-                </div>
-              </Link>
-            )}
-            {isSubscriptionActive && userData?.mt5?.isConnected && (
-              <Link
-                href="/dashboard/bots"
-                className="block p-3 rounded-lg border border-cyan-500/20 hover:bg-cyan-500/10 transition-colors text-cyan-300"
-              >
-                <div className="flex items-center gap-3">
-                  <TimerReset className="h-4 w-4" />
-                  <span className="text-sm">Configure your trading bots</span>
-                </div>
-              </Link>
-            )}
-          </div>
-        </motion.div>
-      )}
     </div>
   );
 }
