@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { 
-  Users, CreditCard, TrendingUp, AlertCircle, 
-  ShieldCheck, TimerReset, KeyRound, ArrowRight, Activity 
+import {
+  Users, CreditCard, AlertCircle,
+  TimerReset, KeyRound, ArrowRight, Activity
 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -57,7 +57,7 @@ export default function AdminDashboard() {
       setQueues({
         pendingUsers: users.filter((u: any) => u.accountStatus === 'Pending Approval').slice(0, 4),
         expiringUsers: users.filter((u: any) => u.accountStatus === 'Active' && u.daysRemaining <= 7)
-                            .sort((a: any, b: any) => a.daysRemaining - b.daysRemaining).slice(0, 4),
+          .sort((a: any, b: any) => a.daysRemaining - b.daysRemaining).slice(0, 4),
         pendingPayments: pendingPayments.slice(0, 4),
         mt5Channels: mt5Vault.filter((u: any) => u.hasCredentials).slice(0, 4),
       });
@@ -96,8 +96,8 @@ export default function AdminDashboard() {
       {/* Domain-Driven Grid */}
       <div className="grid gap-6 lg:grid-cols-3">
 
-         {/* 1. MT5 VAULT & INFRASTRUCTURE BLOCK */}
-        <motion.div 
+        {/* 1. MT5 VAULT & INFRASTRUCTURE BLOCK */}
+        <motion.div
           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
           className="flex flex-col overflow-hidden rounded-2xl border border-white/[0.1] bg-dark-secondary/40 backdrop-blur-xl"
         >
@@ -136,9 +136,9 @@ export default function AdminDashboard() {
           </div>
         </motion.div>
 
-        
+
         {/* 2. USERS & ACCOUNTS BLOCK */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
           className="flex flex-col overflow-hidden rounded-2xl border border-white/[0.1] bg-dark-secondary/40 backdrop-blur-xl"
         >
@@ -151,7 +151,7 @@ export default function AdminDashboard() {
               View All <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
-          
+
           <div className="p-5 flex-1 space-y-6">
             <div className="grid grid-cols-2 gap-3">
               <MiniStat label="Total Users" value={stats.totalUsers} colorClass="text-white" />
@@ -177,7 +177,7 @@ export default function AdminDashboard() {
         </motion.div>
 
         {/* 3. REVENUE & PAYMENTS BLOCK */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
           className="flex flex-col overflow-hidden rounded-2xl border border-white/[0.1] bg-dark-secondary/40 backdrop-blur-xl"
         >
@@ -216,7 +216,7 @@ export default function AdminDashboard() {
           </div>
         </motion.div>
 
-       
+
       </div>
     </div>
   );
