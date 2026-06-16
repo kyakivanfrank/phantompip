@@ -16,7 +16,7 @@ export function isValidPassword(password: string): boolean {
 }
 // MT5 Login ID validation (numeric, typically 1-8 digits)
 export function isValidMt5LoginId(loginId: string): boolean {
-  return /^\d{1,8}$/.test(loginId);
+  return /^\d{1,12}$/.test(loginId);
 }
 
 // Transaction hash validation (for crypto or mobile money reference codes)
