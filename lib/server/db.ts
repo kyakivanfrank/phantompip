@@ -3,23 +3,39 @@ import { normalizeEmail } from "./validation";
 import { UserDocument, UserIndexEntry, Payment, Bots, Bot } from "@/lib/types";
 import { DEFAULT_BOTS } from "./bot-defaults";
 
-let redisClient: Redis | null = null;
-
-function createUpstashClient() {
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+function createUpstashClient(url?: string, token?: string) {
+  if (!url || !token) {
     return null;
   }
 
   try {
     return new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL!,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+      url,
+      token,
     });
-  } catch (e) {
-    console.error('Failed to create Upstash client', e);
+  } catch {
     return null;
   }
 }
+
+export const primaryDb = createUpstashClient(
+  process.env.UPSTASH_REDIS_REST_URL,
+  process.env.UPSTASH_REDIS_REST_TOKEN
+);
+
+export const backupDb = createUpstashClient(
+  process.env.UPSTASH_REDIS_BACKUP_DB_REST_URL,
+  process.env.UPSTASH_REDIS_BACKUP_DB_REST_TOKEN
+);
+
+const backupHoursFromEnv = Number.parseInt(process.env.BACKUPNUMBEROFHOURS || "4", 10);
+const backupIntervalHours = Number.isFinite(backupHoursFromEnv) && backupHoursFromEnv > 0 ? backupHoursFromEnv : 4;
+const backupIntervalSeconds = backupIntervalHours * 60 * 60;
+const TIMEOUT_KEY = "system:last_backup_time";
+const JSON_BACKED_KEY_PREFIXES = ["user:"];
+
+let redisClient: Redis | null = primaryDb;
+let optimisticBackupInFlight = false;
 
 // Memory mock that partially supports RedisJSON (for fallback)
 const inMemory = (() => {
@@ -92,14 +108,100 @@ const inMemory = (() => {
   } as any;
 })();
 
+export function triggerOptimisticBackup() {
+  if (!primaryDb || !backupDb || optimisticBackupInFlight) {
+    return;
+  }
+
+  optimisticBackupInFlight = true;
+
+  primaryDb
+    .set(TIMEOUT_KEY, String(Date.now()), {
+      nx: true,
+      ex: backupIntervalSeconds,
+    })
+    .then(async (lockResult) => {
+      if (lockResult !== "OK") {
+        return null;
+      }
+
+      const allKeys = await primaryDb.keys("*");
+      const targetKeys = allKeys.filter((key) => key !== TIMEOUT_KEY);
+
+      if (targetKeys.length === 0) {
+        return null;
+      }
+
+      // 1. Separate keys by their Redis data type
+      const jsonKeys = targetKeys.filter(isJsonBackedKey);
+      const stringKeys = targetKeys.filter((k) => !isJsonBackedKey(k));
+
+      const scalarPayload: Record<string, string | number> = {};
+      const jsonPayload: Array<{ key: string; value: any }> = [];
+
+      // 2. Fetch standard String keys using standard MGET
+      if (stringKeys.length > 0) {
+        const stringValues = await primaryDb.mget(...stringKeys);
+        stringKeys.forEach((key, index) => {
+          if (stringValues[index] !== null && stringValues[index] !== undefined) {
+            scalarPayload[key] = stringValues[index] as string | number;
+          }
+        });
+      }
+
+      // 3. Fetch JSON keys using the specialized JSON.MGET command
+      if (jsonKeys.length > 0) {
+        // JSON.MGET takes the keys array, and the path "$" as the final argument
+        const jsonValues = await (primaryDb.json as any).mget(...jsonKeys, "$");
+        
+        jsonKeys.forEach((key, index) => {
+          if (jsonValues[index] !== null && jsonValues[index] !== undefined) {
+            // Upstash JSON.MGET returns an array for the "$" path match (e.g., [ { userObj } ])
+            let parsedVal = jsonValues[index];
+            if (Array.isArray(parsedVal)) {
+              parsedVal = parsedVal[0];
+            }
+            jsonPayload.push({ key, value: parsedVal });
+          }
+        });
+      }
+
+      // 4. Batch write to the backup database
+      const writes: Promise<any>[] = [];
+
+      // Write strings in a single MSET command
+      if (Object.keys(scalarPayload).length > 0) {
+        writes.push(backupDb.mset(scalarPayload as any));
+      }
+
+      // Redis does not have a JSON.MSET command.
+      // We push them into Promise.all which leverages the Upstash SDK auto-pipelining.
+      for (const entry of jsonPayload) {
+        writes.push((backupDb.json as any).set(entry.key, "$", entry.value));
+      }
+
+      if (writes.length === 0) {
+        return null;
+      }
+
+      return Promise.all(writes);
+    })
+    .catch((err) => {
+      // Keep it silent for the user, but log it to the server console for you
+      console.error("[Optimistic Backup Engine Error]:", err);
+      return undefined;
+    })
+    .finally(() => {
+      optimisticBackupInFlight = false;
+    });
+}
+
+function isJsonBackedKey(key: string) {
+  return key === "users:index" || JSON_BACKED_KEY_PREFIXES.some((prefix) => key.startsWith(prefix));
+}
+
 export function getRedis(): Redis | typeof inMemory {
   if (redisClient) return redisClient;
-
-  const client = createUpstashClient();
-  if (client) {
-    redisClient = client;
-    return redisClient;
-  }
 
   return inMemory;
 }

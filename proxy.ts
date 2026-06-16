@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { NextMiddleware } from "next/server";
 import { verifySessionToken } from "./lib/server/auth";
+import { triggerOptimisticBackup } from "./lib/server/db";
 
 export const proxy: NextMiddleware = async (request: NextRequest) => {
+  void triggerOptimisticBackup();
+
   const { pathname } = request.nextUrl;
 
   // Get session cookie
