@@ -202,8 +202,8 @@ export default function AdminDashboard() {
                 <TimerReset className="h-4 w-4 text-purple-400" /> Pending Payments
               </h3>
               <div className="space-y-2">
-                {queues.pendingPayments.length > 0 ? queues.pendingPayments.map((payment: any) => (
-                  <Link key={payment.paymentId} href={`/admin/payments?highlight=${payment.paymentId}`} className="flex justify-between items-center rounded-lg border border-white/[0.05] bg-white/[0.02] p-3 hover:bg-white/[0.05] transition-colors">
+                {queues.pendingPayments.length > 0 ? queues.pendingPayments.map((payment: any, index: number) => (
+                  <Link key={index} href={`/admin/payments?highlight=${payment.paymentId}`} className="flex justify-between items-center rounded-lg border border-white/[0.05] bg-white/[0.02] p-3 hover:bg-white/[0.05] transition-colors">
                     <div>
                       <p className="text-sm font-medium text-white">{payment.username || 'Unknown User'}</p>
                       <p className="text-xs text-gray-400">{payment.method}</p>
