@@ -125,77 +125,81 @@ export function triggerOptimisticBackup() {
         return null;
       }
 
-      const allKeys = await primaryDb.keys("*");
-      const targetKeys = allKeys.filter((key) => key !== TIMEOUT_KEY);
+      try {
+        const allKeys = await primaryDb.keys("*");
+        const targetKeys = allKeys.filter((key) => key !== TIMEOUT_KEY);
 
-      if (targetKeys.length === 0) {
-        return null;
-      }
+        if (targetKeys.length === 0) {
+          return null;
+        }
 
-      // 1. Separate keys by their Redis data type
-      const jsonKeys = targetKeys.filter(isJsonBackedKey);
-      const stringKeys = targetKeys.filter((k) => !isJsonBackedKey(k));
+        // Separate keys by their Redis data type
+        const jsonKeys = targetKeys.filter(isJsonBackedKey);
+        const stringKeys = targetKeys.filter((k) => !isJsonBackedKey(k));
 
-      const scalarPayload: Record<string, string | number> = {};
-      const jsonPayload: Array<{ key: string; value: any }> = [];
+        const scalarPayload: Record<string, string | number> = {};
+        const jsonPayload: Array<{ key: string; value: any }> = [];
 
-      // 2. Fetch standard String keys using standard MGET
-      if (stringKeys.length > 0) {
-        const stringValues = await primaryDb.mget(...stringKeys);
-        stringKeys.forEach((key, index) => {
-          if (stringValues[index] !== null && stringValues[index] !== undefined) {
-            scalarPayload[key] = stringValues[index] as string | number;
-          }
-        });
-      }
-
-      // 3. Fetch JSON keys using the specialized JSON.MGET command
-      if (jsonKeys.length > 0) {
-        // JSON.MGET takes the keys array, and the path "$" as the final argument
-        const jsonValues = await (primaryDb.json as any).mget(...jsonKeys, "$");
-        
-        jsonKeys.forEach((key, index) => {
-          if (jsonValues[index] !== null && jsonValues[index] !== undefined) {
-            // Upstash JSON.MGET returns an array for the "$" path match (e.g., [ { userObj } ])
-            let parsedVal = jsonValues[index];
-            if (Array.isArray(parsedVal)) {
-              parsedVal = parsedVal[0];
+        // 1. Fetch all standard strings in one single direct command
+        if (stringKeys.length > 0) {
+          const stringValues = await primaryDb.mget(...stringKeys);
+          stringKeys.forEach((key, index) => {
+            if (stringValues[index] !== null && stringValues[index] !== undefined) {
+              scalarPayload[key] = stringValues[index] as string | number;
             }
-            jsonPayload.push({ key, value: parsedVal });
+          });
+        }
+
+        // 2. Fetch all JSON objects in one single direct command using the correct array configuration
+        if (jsonKeys.length > 0) {
+          const jsonValues = await (primaryDb.json as any).mget(jsonKeys, "$");
+          if (jsonValues && Array.isArray(jsonValues)) {
+            jsonKeys.forEach((key, index) => {
+              let parsedVal = jsonValues[index];
+              if (parsedVal !== null && parsedVal !== undefined) {
+                if (Array.isArray(parsedVal)) {
+                  parsedVal = parsedVal[0];
+                }
+                jsonPayload.push({ key, value: parsedVal });
+              }
+            });
           }
-        });
+        }
+
+        // 3. Direct upsert writes into the backup database
+        const writes: Promise<any>[] = [];
+
+        // Write standard strings out all at once
+        if (Object.keys(scalarPayload).length > 0) {
+          writes.push(backupDb.mset(scalarPayload as any));
+        }
+
+        // Write JSON objects using the SDK's pipelining mechanics
+        for (const entry of jsonPayload) {
+          writes.push((backupDb.json as any).set(entry.key, "$", entry.value));
+        }
+
+        if (writes.length === 0) {
+          return null;
+        }
+
+        return await Promise.all(writes);
+      } catch (syncError) {
+        // Fail-safe: If a network error happens mid-sync, delete the lock key immediately
+        // This stops the system from locking you out of updates for 4 hours on a failure
+        await primaryDb.del(TIMEOUT_KEY).catch(() => {});
+        throw syncError;
       }
-
-      // 4. Batch write to the backup database
-      const writes: Promise<any>[] = [];
-
-      // Write strings in a single MSET command
-      if (Object.keys(scalarPayload).length > 0) {
-        writes.push(backupDb.mset(scalarPayload as any));
-      }
-
-      // Redis does not have a JSON.MSET command.
-      // We push them into Promise.all which leverages the Upstash SDK auto-pipelining.
-      for (const entry of jsonPayload) {
-        writes.push((backupDb.json as any).set(entry.key, "$", entry.value));
-      }
-
-      if (writes.length === 0) {
-        return null;
-      }
-
-      return Promise.all(writes);
     })
     .catch((err) => {
-      // Keep it silent for the user, but log it to the server console for you
-      console.error("[Optimistic Backup Engine Error]:", err);
+      // Keeps everything invisible to website visitors, logging issues only inside server logs
+      console.error("[Backup Engine Error]:", err);
       return undefined;
     })
     .finally(() => {
       optimisticBackupInFlight = false;
     });
 }
-
 function isJsonBackedKey(key: string) {
   return key === "users:index" || JSON_BACKED_KEY_PREFIXES.some((prefix) => key.startsWith(prefix));
 }
