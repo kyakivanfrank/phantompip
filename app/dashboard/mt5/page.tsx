@@ -22,7 +22,13 @@ export default function Mt5Page() {
   });
 
   const [existingCredentials, setExistingCredentials] = useState<ExistingCredentials | null>(null);
+  
+  // State for the existing connection credentials card
   const [showPassword, setShowPassword] = useState(false);
+  
+  // State for the new credential submission form field
+  const [showFormPassword, setShowFormPassword] = useState(false);
+
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingAccess, setIsCheckingAccess] = useState(true);
   const [canConnect, setCanConnect] = useState(false);
@@ -163,7 +169,7 @@ export default function Mt5Page() {
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-white mb-4">Active MT5 Connection</h3>
-              
+
               {/* Credentials Grid */}
               <div className="grid gap-4 sm:grid-cols-2">
                 {/* Login ID */}
@@ -190,6 +196,7 @@ export default function Mt5Page() {
                       {showPassword ? existingCredentials.password : '•'.repeat(10)}
                     </span>
                     <button
+                      type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="text-gray-400 hover:text-green-400 transition-colors"
                     >
@@ -270,12 +277,11 @@ export default function Mt5Page() {
         <div className="relative">
           {/* Conditional Intercept Layer & Glassmorphic Box */}
           {!canConnect && !existingCredentials && (
-            <div 
-              className={`absolute inset-0 z-10 flex flex-col items-center justify-center rounded-xl transition-all duration-500 ${
-                showWarningOverlay 
-                  ? 'border border-white/[0.15] bg-slate-900/70 p-6 text-center backdrop-blur-md' 
+            <div
+              className={`absolute inset-0 z-10 flex flex-col items-center justify-center rounded-xl transition-all duration-500 ${showWarningOverlay
+                  ? 'border border-white/[0.15] bg-slate-900/70 p-6 text-center backdrop-blur-md'
                   : 'cursor-pointer bg-transparent'
-              }`}
+                }`}
               onClick={() => {
                 if (!showWarningOverlay) setShowWarningOverlay(true);
               }}
@@ -309,11 +315,10 @@ export default function Mt5Page() {
           )}
 
           {/* Form */}
-          <form 
-            onSubmit={handleSubmit} 
-            className={`rounded-xl border border-white/[0.1] bg-dark-secondary/40 p-6 transition-all duration-500 ${
-              (!canConnect && !existingCredentials && showWarningOverlay) ? 'pointer-events-none opacity-30 select-none blur-[2px]' : 'backdrop-blur-xl'
-            }`}
+          <form
+            onSubmit={handleSubmit}
+            className={`rounded-xl border border-white/[0.1] bg-dark-secondary/40 p-6 transition-all duration-500 ${(!canConnect && !existingCredentials && showWarningOverlay) ? 'pointer-events-none opacity-30 select-none blur-[2px]' : 'backdrop-blur-xl'
+              }`}
           >
             <div className="space-y-4">
               {/* MT5 Login ID */}
@@ -340,17 +345,31 @@ export default function Mt5Page() {
                 <label htmlFor="mt5Password" className="block text-sm font-medium text-gray-300">
                   MT5 Password
                 </label>
-                <input
-                  type="password"
-                  id="mt5Password"
-                  name="mt5Password"
-                  value={formData.mt5Password}
-                  onChange={handleChange}
-                  placeholder="••••••••••"
-                  required
-                  tabIndex={!canConnect && !existingCredentials ? -1 : 0}
-                  className="mt-2 w-full rounded-lg border border-white/[0.1] bg-dark-tertiary/50 px-4 py-2.5 text-white placeholder:text-gray-500 outline-none focus:border-cyan-500/50 transition-colors"
-                />
+                <div className="relative mt-2">
+                  <input
+                    type={showFormPassword ? 'text' : 'password'}
+                    id="mt5Password"
+                    name="mt5Password"
+                    value={formData.mt5Password}
+                    onChange={handleChange}
+                    placeholder="••••••••••"
+                    required
+                    tabIndex={!canConnect && !existingCredentials ? -1 : 0}
+                    className="w-full rounded-lg border border-white/[0.1] bg-dark-tertiary/50 pl-4 pr-12 py-2.5 text-white placeholder:text-gray-500 outline-none focus:border-cyan-500/50 transition-colors"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowFormPassword(!showFormPassword)}
+                    tabIndex={!canConnect && !existingCredentials ? -1 : 0}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 z-10 p-1 text-gray-400 hover:text-cyan-400 transition-colors"
+                  >
+                    {showFormPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
                 <p className="mt-1 text-xs text-gray-400">Your MT5 trading password</p>
               </div>
 
