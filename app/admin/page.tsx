@@ -29,14 +29,6 @@ export default function AdminDashboard() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialRender, setIsInitialRender] = useState(true);
-  const [passwordForm, setPasswordForm] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
-  });
-  const [passwordMessage, setPasswordMessage] = useState('');
-  const [passwordError, setPasswordError] = useState('');
-  const [isPasswordSaving, setIsPasswordSaving] = useState(false);
 
   useEffect(() => {
     fetchStats();
@@ -80,34 +72,6 @@ export default function AdminDashboard() {
     }
   };
 
-  const handlePasswordChange = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPasswordError('');
-    setPasswordMessage('');
-    setIsPasswordSaving(true);
-
-    try {
-      const res = await fetch('/api/admin/change-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(passwordForm),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to update password');
-      }
-
-      setPasswordMessage('Admin password updated successfully.');
-      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    } catch (error: any) {
-      setPasswordError(error.message || 'Failed to update password');
-    } finally {
-      setIsPasswordSaving(false);
-    }
-  };
-
   if (isLoading && isInitialRender) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -140,58 +104,13 @@ export default function AdminDashboard() {
       >
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold text-white">Admin Credentials</h2>
-            <p className="mt-1 text-sm text-gray-400">Change the current admin password while keeping the same admin account.</p>
+            <h2 className="text-lg font-semibold text-white">Admin Settings</h2>
+            <p className="mt-1 text-sm text-gray-400">Use the Settings page to update admin credentials and account settings.</p>
           </div>
+          <Link href="/admin/settings" className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm text-cyan-400 hover:bg-cyan-500/20 transition">
+            Go to Settings
+          </Link>
         </div>
-
-        <form onSubmit={handlePasswordChange} className="mt-5 space-y-4">
-          <div>
-            <label className="mb-1 block text-sm text-gray-400">Current password</label>
-            <input
-              type="password"
-              value={passwordForm.currentPassword}
-              onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-              className="w-full rounded-lg border border-white/[0.1] bg-dark-tertiary/50 px-3 py-2 text-sm text-white outline-none transition focus:border-cyan-500"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm text-gray-400">New password</label>
-            <input
-              type="password"
-              value={passwordForm.newPassword}
-              onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-              className="w-full rounded-lg border border-white/[0.1] bg-dark-tertiary/50 px-3 py-2 text-sm text-white outline-none transition focus:border-cyan-500"
-              required
-              minLength={8}
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm text-gray-400">Confirm new password</label>
-            <input
-              type="password"
-              value={passwordForm.confirmPassword}
-              onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-              className="w-full rounded-lg border border-white/[0.1] bg-dark-tertiary/50 px-3 py-2 text-sm text-white outline-none transition focus:border-cyan-500"
-              required
-              minLength={8}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={isPasswordSaving}
-            className="w-full rounded-lg bg-cyan-500 px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isPasswordSaving ? 'Updating...' : 'Update admin password'}
-          </button>
-
-          {passwordMessage ? <p className="text-sm text-green-400">{passwordMessage}</p> : null}
-          {passwordError ? <p className="text-sm text-red-400">{passwordError}</p> : null}
-        </form>
       </motion.div>
 
       {/* Domain-Driven Grid */}

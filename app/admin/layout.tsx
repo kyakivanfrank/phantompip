@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { LogOut, Users, CreditCard, Key, TrendingUp, ChevronDown, CheckCircle } from 'lucide-react';
+import { LogOut, Users, CreditCard, Key, TrendingUp, ChevronDown, CheckCircle, Settings } from 'lucide-react';
 import { AdminMobileBottomNav } from '@/components/AdminMobileBottomNav';
 import { ToastProvider } from '@/components/Toast';
 
@@ -11,8 +11,8 @@ const NAV_LINKS = [
   { href: '/admin', label: 'Dashboard', icon: TrendingUp, exact: true },
   { href: '/admin/mt5-vault', label: 'MT5 Vault', icon: Key },
   { href: '/admin/payments', label: 'Subscriptions', icon: CreditCard },
-  { href: '/admin/users', label: 'Users', icon: Users }
-
+  { href: '/admin/users', label: 'Users', icon: Users },
+  { href: '/admin/settings', label: 'Settings', icon: Settings }
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
