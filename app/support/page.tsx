@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { ArrowLeft, Mail, MessageCircle, Copy, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Mail, MessageCircle, Copy, ChevronRight, Phone } from 'lucide-react';
 
 const supportTopics = [
   {
@@ -204,6 +204,19 @@ export default function Support() {
                   <Copy className="size-3" />
                   {copied ? 'copied' : 'copy'}
                 </button>
+              </a>
+
+              {/* Helpline */}
+              <a
+                href="tel:+256731020815"
+                className="group rounded-xl border border-white/[0.1] bg-dark-secondary/40 p-4 hover:border-cyan-500/30 transition"
+              >
+                <div className="flex items-center gap-2 text-cyan-400">
+                  <Phone className="size-4" />
+                  <span className="font-mono text-[10px] uppercase tracking-widest">Customer Care</span>
+                </div>
+                <p className="mt-3 font-mono text-xs text-white">+256 731 020 815</p>
+                <p className="mt-2 text-[10px] text-gray-400">Call us for direct support</p>
               </a>
 
               {/* Telegram */}
