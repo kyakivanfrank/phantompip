@@ -357,14 +357,17 @@ export async function updateUserDetails(userId: string, updates: { username?: st
   const user = await getUser(userId);
   if (!user) return;
 
+  // CRITICAL FIX: Explicitly stringify plain string values. Upstash's serializer passes raw
+  // strings through untouched, but RedisJSON.SET requires a valid JSON literal, so an unquoted
+  // string fails to parse and throws a 500.
   if (updates.username) {
-    await attempt(() => (redis.json as any).set(`user:${userId}`, "$.account.username", updates.username));
+    await attempt(() => (redis.json as any).set(`user:${userId}`, "$.account.username", JSON.stringify(updates.username)));
   }
 
   if (updates.email && updates.email !== user.account.email) {
     await attempt(() => redis.del(emailKey(user.account.email)));
     await attempt(() => redis.set(emailKey(updates.email!), userId));
-    await attempt(() => (redis.json as any).set(`user:${userId}`, "$.account.email", updates.email));
+    await attempt(() => (redis.json as any).set(`user:${userId}`, "$.account.email", JSON.stringify(updates.email)));
   }
 
   // Sync index
@@ -385,7 +388,10 @@ export async function updateUserDetails(userId: string, updates: { username?: st
 
 export async function resetUserPassword(userId: string, newPasswordHash: string) {
   const redis = getRedis();
-  return await attempt(() => (redis.json as any).set(`user:${userId}`, "$.account.passwordHash", newPasswordHash));
+  // CRITICAL FIX: Explicitly stringify the plain string value. Upstash's serializer passes
+  // raw strings through untouched, but RedisJSON.SET requires a valid JSON literal — an
+  // unquoted bcrypt hash (e.g. "$2b$10$...") fails to parse and throws a 500.
+  return await attempt(() => (redis.json as any).set(`user:${userId}`, "$.account.passwordHash", JSON.stringify(newPasswordHash)));
 }
 
 export async function updateSubscription(userId: string, updates: Partial<UserDocument["subscription"]>) {

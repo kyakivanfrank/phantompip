@@ -1,26 +1,5 @@
 import { getAllUsers, getUser, mapWithConcurrency } from "@/lib/server/db";
 
-function summarizeUser(user: any, now: number) {
-  const expiryTimestamp = new Date(user.subscription.expiryDate).getTime();
-  const isExpired = expiryTimestamp < now;
-  const isActive = user.subscription.status === "active" && user.subscription.approvalStatus === "approved" && !isExpired;
-  const isPendingApproval = user.subscription.approvalStatus === "pending";
-
-  return {
-    expiryTimestamp,
-    isExpired,
-    isActive,
-    isPendingApproval,
-    paidAmount: (user.subscription.payments || []).reduce((sum: number, payment: any) => {
-      if (payment.status === "confirmed") {
-        return sum + (payment.amount || 0);
-      }
-      return sum;
-    }, 0) || 0,
-    mt5Connected: Boolean(user.mt5?.isConnected),
-  };
-}
-
 export interface AdminDashboardStats {
   totalUsers: number;
   activeUsers: number;
@@ -36,7 +15,7 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
   const userIndex = await getAllUsers();
   const nonAdminUsers = userIndex.filter((userSummary) => !userSummary.isAdmin);
 
-  let totalUsers = nonAdminUsers.length;
+  const totalUsers = nonAdminUsers.length;
   let activeUsers = 0;
   let pendingApprovalUsers = 0;
   let expiredUsers = 0;
@@ -46,39 +25,53 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
   let expiringSubscriptions = 0;
 
   const now = Date.now();
-  const userSummaries = await mapWithConcurrency(nonAdminUsers.slice(0, 60), async (userSummary) => {
-    const fullUser = await getUser(userSummary.userId);
-    if (!fullUser) {
-      return null;
-    }
+  const DAY_MS = 24 * 60 * 60 * 1000;
 
-    return summarizeUser(fullUser, now);
-  }, 12);
+  // --- Phase 1: Subscription-status metrics from the lightweight index ---------------------
+  // The users:index already carries subscriptionStatus / approvalStatus / expiryDate, so every
+  // status count is computed here WITHOUT fetching a single full user document. This keeps the
+  // dashboard fast and, unlike the previous 60-user cap, accurate at any scale.
+  for (const entry of nonAdminUsers) {
+    const expiryTimestamp = entry.expiryDate ? new Date(entry.expiryDate).getTime() : 0;
+    const isExpired = !expiryTimestamp || expiryTimestamp < now;
+    const isActive =
+      entry.subscriptionStatus === "active" &&
+      entry.approvalStatus === "approved" &&
+      !isExpired;
 
-  for (const summary of userSummaries) {
-    if (!summary) continue;
-
-    if (summary.isActive) {
+    if (isActive) {
       activeUsers++;
       activeSubscriptions++;
-    } else if (summary.isPendingApproval) {
-      pendingApprovalUsers++;
-    } else if (summary.isExpired) {
-      expiredUsers++;
-    }
-
-    if (summary.mt5Connected) {
-      mt5ConnectedUsers++;
-    }
-
-    totalRevenue += summary.paidAmount;
-
-    if (summary.isActive) {
-      const daysUntilExpiry = Math.ceil((summary.expiryTimestamp - now) / (24 * 60 * 60 * 1000));
+      const daysUntilExpiry = Math.ceil((expiryTimestamp - now) / DAY_MS);
       if (daysUntilExpiry <= 7 && daysUntilExpiry > 0) {
         expiringSubscriptions++;
       }
+    } else if (entry.approvalStatus === "pending") {
+      pendingApprovalUsers++;
+    } else if (isExpired) {
+      expiredUsers++;
     }
+  }
+
+  // --- Phase 2: Revenue + MT5 connectivity from full documents -----------------------------
+  // These two figures live inside the full user document (payments[] and mt5.isConnected) and
+  // cannot be read from the index, so a scan is unavoidable. Bounded concurrency keeps Redis
+  // from being throttled under load.
+  const perUserFinancials = await mapWithConcurrency(nonAdminUsers, async (entry) => {
+    const fullUser = await getUser(entry.userId);
+    if (!fullUser) return null;
+
+    const paidAmount = (fullUser.subscription?.payments || []).reduce((sum: number, payment: any) => {
+      return payment.status === "confirmed" ? sum + (payment.amount || 0) : sum;
+    }, 0);
+
+    return { paidAmount, mt5Connected: Boolean(fullUser.mt5?.isConnected) };
+  }, 12);
+
+  for (const financials of perUserFinancials) {
+    if (!financials) continue;
+    totalRevenue += financials.paidAmount;
+    if (financials.mt5Connected) mt5ConnectedUsers++;
   }
 
   return {

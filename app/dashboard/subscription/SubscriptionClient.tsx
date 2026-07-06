@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CreditCard, Check, AlertCircle, Copy as CopyIcon, Smartphone, Coins, Store } from 'lucide-react';
+import { CreditCard, Check, AlertCircle, Copy as CopyIcon, Smartphone, Coins, Store, ShieldAlert } from 'lucide-react';
 
 type PaymentDetail = {
   label: string;
@@ -166,6 +166,28 @@ export default function SubscriptionClient({ paymentDetails }: { paymentDetails:
           <h1 className="text-3xl font-semibold text-white">Subscription & Payment</h1>
         </div>
         <p className="text-gray-400">Choose your gateway destination below to allocate your 30-day active session license securely.</p>
+      </motion.div>
+
+      {/* CRITICAL ANTI-FRAUD SECURITY NOTICE — must remain highly visible */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+        className="rounded-xl border-2 border-red-500/50 bg-red-500/10 p-5 shadow-lg shadow-red-900/20"
+      >
+        <div className="flex gap-3.5">
+          <ShieldAlert className="h-7 w-7 shrink-0 text-red-400" />
+          <div className="space-y-1.5">
+            <h3 className="font-bold text-red-300 text-base uppercase tracking-wide">Security Warning — Read Before Paying</h3>
+            <p className="text-sm text-red-100/90 leading-relaxed">
+              Only ever send money to the <span className="font-bold text-white">official wallet addresses, mobile numbers and merchant codes shown on THIS page</span>.
+            </p>
+            <p className="text-sm text-red-100/90 leading-relaxed">
+              Our team and agents will <span className="font-bold text-white">NEVER</span> ask you to send money to a personal phone number, private contact, or any account that is not listed here.
+              If anyone — even someone claiming to be our admin, staff or agent — asks you to send money anywhere else, <span className="font-bold text-white">it is a scam</span>. Do not send it, and report it to us immediately.
+            </p>
+          </div>
+        </div>
       </motion.div>
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="space-y-6">
