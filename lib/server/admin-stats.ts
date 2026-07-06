@@ -1,4 +1,25 @@
-import { getAllUsers, getUser } from "@/lib/server/db";
+import { getAllUsers, getUser, mapWithConcurrency } from "@/lib/server/db";
+
+function summarizeUser(user: any, now: number) {
+  const expiryTimestamp = new Date(user.subscription.expiryDate).getTime();
+  const isExpired = expiryTimestamp < now;
+  const isActive = user.subscription.status === "active" && user.subscription.approvalStatus === "approved" && !isExpired;
+  const isPendingApproval = user.subscription.approvalStatus === "pending";
+
+  return {
+    expiryTimestamp,
+    isExpired,
+    isActive,
+    isPendingApproval,
+    paidAmount: (user.subscription.payments || []).reduce((sum: number, payment: any) => {
+      if (payment.status === "confirmed") {
+        return sum + (payment.amount || 0);
+      }
+      return sum;
+    }, 0) || 0,
+    mt5Connected: Boolean(user.mt5?.isConnected),
+  };
+}
 
 export interface AdminDashboardStats {
   totalUsers: number;
@@ -24,51 +45,38 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
   let expiringSubscriptions = 0;
 
   const now = Date.now();
+  const nonAdminUsers = userIndex.filter((userSummary) => !userSummary.isAdmin);
+  const userSummaries = await mapWithConcurrency(nonAdminUsers, async (userSummary) => {
+    const fullUser = await getUser(userSummary.userId);
+    if (!fullUser) {
+      return null;
+    }
 
-  for (const userSummary of userIndex) {
-    // Skip admin users
-    if (userSummary.isAdmin) continue;
+    return summarizeUser(fullUser, now);
+  }, 12);
+
+  for (const summary of userSummaries) {
+    if (!summary) continue;
 
     totalUsers++;
 
-    // Get full user data
-    const fullUser = await getUser(userSummary.userId);
-    if (!fullUser) continue;
-
-    // Account status breakdown
-    const expiryTimestamp = new Date(fullUser.subscription.expiryDate).getTime();
-    const isExpired = expiryTimestamp < now;
-    const isActive = fullUser.subscription.status === "active" && fullUser.subscription.approvalStatus === "approved" && !isExpired;
-    const isPendingApproval = fullUser.subscription.approvalStatus === "pending";
-
-    if (isActive) {
+    if (summary.isActive) {
       activeUsers++;
       activeSubscriptions++;
-    } else if (isPendingApproval) {
+    } else if (summary.isPendingApproval) {
       pendingApprovalUsers++;
-    } else if (isExpired) {
+    } else if (summary.isExpired) {
       expiredUsers++;
     }
 
-    // MT5 connection check
-    if (fullUser.mt5?.isConnected) {
+    if (summary.mt5Connected) {
       mt5ConnectedUsers++;
     }
 
-    // Revenue calculation (sum of paid amounts)
-    const paidAmount = fullUser.subscription.payments?.reduce((sum, payment) => {
-      // FIX: Changed from "approved" to "confirmed" to match your Payment status type
-      if (payment.status === "confirmed") {
-        return sum + (payment.amount || 0);
-      }
-      return sum;
-    }, 0) || 0;
-    
-    totalRevenue += paidAmount;
+    totalRevenue += summary.paidAmount;
 
-    // Expiring subscriptions check (within 7 days and active)
-    if (isActive) {
-      const daysUntilExpiry = Math.ceil((expiryTimestamp - now) / (24 * 60 * 60 * 1000));
+    if (summary.isActive) {
+      const daysUntilExpiry = Math.ceil((summary.expiryTimestamp - now) / (24 * 60 * 60 * 1000));
       if (daysUntilExpiry <= 7 && daysUntilExpiry > 0) {
         expiringSubscriptions++;
       }

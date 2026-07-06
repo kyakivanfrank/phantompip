@@ -37,6 +37,24 @@ const JSON_BACKED_KEY_PREFIXES = ["user:"];
 let redisClient: Redis | null = primaryDb;
 let optimisticBackupInFlight = false;
 
+export async function mapWithConcurrency<T, R>(items: T[], worker: (item: T, index: number) => Promise<R>, concurrency = 10): Promise<R[]> {
+  if (!items.length) return [];
+
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+    while (true) {
+      const currentIndex = nextIndex++;
+      if (currentIndex >= items.length) return;
+      results[currentIndex] = await worker(items[currentIndex], currentIndex);
+    }
+  });
+
+  await Promise.all(workers);
+  return results;
+}
+
 // Memory mock that partially supports RedisJSON (for fallback)
 const inMemory = (() => {
   const store = new Map<string, any>();
@@ -422,25 +440,28 @@ export async function getUserPayments(userId: string): Promise<Payment[]> {
 
 export async function getAllPayments() {
   const index = await getAllUsers();
-  const allPayments: any[] = [];
-  const seenPaymentIds = new Set<string>(); // Tracker to eliminate duplicates
-
-  for (const entry of index) {
+  const paymentGroups = await mapWithConcurrency(index, async (entry) => {
     const user = await getUser(entry.userId);
-    if (user && user.subscription && Array.isArray(user.subscription.payments)) {
-      for (const p of user.subscription.payments) {
+    if (!user || !user.subscription || !Array.isArray(user.subscription.payments)) {
+      return [] as any[];
+    }
 
-        // Only process this payment if we haven't seen its ID before
-        if (!seenPaymentIds.has(p.paymentId)) {
-          seenPaymentIds.add(p.paymentId);
-          allPayments.push({
-            ...p,
-            userId: user.userId,
-            userEmail: user.account.email,
-            username: user.account.username
-          });
-        }
+    return user.subscription.payments.map((payment) => ({
+      ...payment,
+      userId: user.userId,
+      userEmail: user.account.email,
+      username: user.account.username,
+    }));
+  }, 10);
 
+  const allPayments: any[] = [];
+  const seenPaymentIds = new Set<string>();
+
+  for (const payments of paymentGroups) {
+    for (const payment of payments) {
+      if (!seenPaymentIds.has(payment.paymentId)) {
+        seenPaymentIds.add(payment.paymentId);
+        allPayments.push(payment);
       }
     }
   }

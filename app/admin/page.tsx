@@ -37,9 +37,9 @@ export default function AdminDashboard() {
     try {
       const [statsRes, usersRes, paymentsRes, mt5VaultRes] = await Promise.all([
         fetch('/api/admin/stats', { cache: 'no-store' }),
-        fetch('/api/admin/users', { cache: 'no-store' }),
+        fetch('/api/admin/users?limit=20', { cache: 'no-store' }),
         fetch('/api/admin/payments/pending', { cache: 'no-store' }),
-        fetch('/api/admin/mt5-vault', { cache: 'no-store' })
+        fetch('/api/admin/mt5-vault?limit=6', { cache: 'no-store' })
       ]);
 
       const statsData = await statsRes.json();
