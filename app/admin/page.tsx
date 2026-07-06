@@ -28,6 +28,7 @@ export default function AdminDashboard() {
   });
 
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitialRender, setIsInitialRender] = useState(true);
 
   useEffect(() => {
     fetchStats();
@@ -63,13 +64,15 @@ export default function AdminDashboard() {
       });
 
       setIsLoading(false);
+      setIsInitialRender(false);
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
       setIsLoading(false);
+      setIsInitialRender(false);
     }
   };
 
-  if (isLoading) {
+  if (isLoading && isInitialRender) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="h-12 w-12 animate-spin rounded-full border-4 border-cyan-500 border-t-transparent"></div>

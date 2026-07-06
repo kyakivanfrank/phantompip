@@ -34,8 +34,9 @@ export interface AdminDashboardStats {
 
 export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
   const userIndex = await getAllUsers();
-  
-  let totalUsers = 0;
+  const nonAdminUsers = userIndex.filter((userSummary) => !userSummary.isAdmin);
+
+  let totalUsers = nonAdminUsers.length;
   let activeUsers = 0;
   let pendingApprovalUsers = 0;
   let expiredUsers = 0;
@@ -45,8 +46,7 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
   let expiringSubscriptions = 0;
 
   const now = Date.now();
-  const nonAdminUsers = userIndex.filter((userSummary) => !userSummary.isAdmin);
-  const userSummaries = await mapWithConcurrency(nonAdminUsers, async (userSummary) => {
+  const userSummaries = await mapWithConcurrency(nonAdminUsers.slice(0, 60), async (userSummary) => {
     const fullUser = await getUser(userSummary.userId);
     if (!fullUser) {
       return null;
@@ -57,8 +57,6 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
 
   for (const summary of userSummaries) {
     if (!summary) continue;
-
-    totalUsers++;
 
     if (summary.isActive) {
       activeUsers++;
