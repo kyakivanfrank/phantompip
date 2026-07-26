@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Key, Copy, Eye, EyeOff, Clock, AlertCircle, CheckCircle } from 'lucide-react';
+import { Key, Copy, Eye, EyeOff, Clock, AlertCircle, CheckCircle, Search } from 'lucide-react';
 
 interface CredentialItem {
   userId: string;
@@ -21,6 +21,12 @@ export default function Mt5VaultPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [visiblePasswords, setVisiblePasswords] = useState<Set<string>>(new Set());
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredUsers = allUsers.filter(u => 
+    u.userFullName.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    u.userEmail.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   useEffect(() => {
     fetchVault();
@@ -209,8 +215,8 @@ export default function Mt5VaultPage() {
     </motion.div>
   );
 
-  const usersWithCreds = allUsers.filter(u => u.hasCredentials);
-  const usersAwaitingCreds = allUsers.filter(u => !u.hasCredentials);
+  const usersWithCreds = filteredUsers.filter(u => u.hasCredentials);
+  const usersAwaitingCreds = filteredUsers.filter(u => !u.hasCredentials);
 
   return (
     <div className="space-y-6">
@@ -240,7 +246,35 @@ export default function Mt5VaultPage() {
         </p>
       </motion.div>
 
-      {/* Section 1: Users with Credentials */}
+      {/* Search Bar */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="relative"
+      >
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+        <input
+          type="text"
+          placeholder="Search by user name or email..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full rounded-lg border border-white/[0.1] bg-dark-secondary/20 py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-gray-500 focus:border-cyan-500/50 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 transition-all"
+        />
+      </motion.div>
+
+      {filteredUsers.length === 0 && searchQuery ? (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="rounded-xl border border-white/[0.1] bg-dark-secondary/40 p-8 text-center mt-6"
+        >
+          <Search className="h-12 w-12 mx-auto text-gray-500/50 mb-3" />
+          <p className="text-gray-400">No results found for "{searchQuery}"</p>
+        </motion.div>
+      ) : (
+        <>
+          {/* Section 1: Users with Credentials */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -274,27 +308,29 @@ export default function Mt5VaultPage() {
       {/* Divider */}
       {usersAwaitingCreds.length > 0 && <div className="border-t border-white/[0.1]" />}
 
-      {/* Section 2: Users Without Credentials */}
-      {usersAwaitingCreds.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="space-y-4"
-        >
-          <div className="flex items-center gap-2">
-            <AlertCircle className="h-5 w-5 text-yellow-400" />
-            <h2 className="text-xl font-semibold text-white">
-              Awaiting Setup ({usersAwaitingCreds.length})
-            </h2>
-          </div>
+          {/* Section 2: Users Without Credentials */}
+          {usersAwaitingCreds.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="space-y-4"
+            >
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-yellow-400" />
+                <h2 className="text-xl font-semibold text-white">
+                  Awaiting Setup ({usersAwaitingCreds.length})
+                </h2>
+              </div>
 
-          <div className="space-y-4">
-            <AnimatePresence>
-              {usersAwaitingCreds.map(item => renderCredentialCard(item))}
-            </AnimatePresence>
-          </div>
-        </motion.div>
+              <div className="space-y-4">
+                <AnimatePresence>
+                  {usersAwaitingCreds.map(item => renderCredentialCard(item))}
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          )}
+        </>
       )}
     </div>
   );

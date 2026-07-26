@@ -218,10 +218,27 @@ export default function UsersPage() {
                       className="border-t border-white/[0.1] bg-white/[0.02] px-6 py-4"
                     >
                       <div className="space-y-4">
-                        {/* Joined Date */}
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Joined</p>
-                          <p className="mt-1 text-sm text-gray-300">{formatDate(user.createdAt)}</p>
+                        <div className="grid gap-6 sm:grid-cols-2">
+                          {/* System Login Details */}
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">System Login Details</p>
+                            <div className="rounded-lg border border-white/[0.05] bg-black/20 p-3 space-y-2">
+                              <div className="flex justify-between items-center gap-4">
+                                <span className="text-sm text-gray-400">Email:</span>
+                                <span className="text-sm font-mono text-cyan-400 break-all text-right">{user.email}</span>
+                              </div>
+                              <div className="flex justify-between items-center gap-4">
+                                <span className="text-sm text-gray-400">Password:</span>
+                                <span className="text-sm font-mono text-gray-500 italic text-right">[Encrypted]</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Joined Date */}
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Joined</p>
+                            <p className="mt-1 text-sm text-gray-300">{formatDate(user.createdAt)}</p>
+                          </div>
                         </div>
 
                         {/* Delete Button */}

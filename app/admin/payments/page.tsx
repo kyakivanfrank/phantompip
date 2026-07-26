@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, XCircle, Clock, RefreshCw, Copy, Check, AlertCircle, Calendar } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, RefreshCw, Copy, Check, AlertCircle, Calendar, Search } from 'lucide-react';
 
 interface Payment {
   id: string;
@@ -33,6 +33,17 @@ export default function PaymentsPage() {
   const [actionTracking, setActionTracking] = useState<{ id: string; type: ActionType } | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [extendDays, setExtendDays] = useState<{ [key: string]: string }>({});
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredPending = pendingPayments.filter(p => 
+    p.userFullName.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    p.userEmail.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredSubscriptions = subscriptions.filter(s => 
+    s.userFullName.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    s.userEmail.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   useEffect(() => {
     fetchData();
@@ -221,6 +232,23 @@ export default function PaymentsPage() {
         </button>
       </motion.div>
 
+      {/* Search Bar */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        className="relative"
+      >
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+        <input
+          type="text"
+          placeholder="Search users by name or email..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full rounded-lg border border-white/[0.1] bg-dark-secondary/20 py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-gray-500 focus:border-cyan-500/50 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 transition-all"
+        />
+      </motion.div>
+
       {/* Content */}
       <AnimatePresence mode="wait">
         {activeTab === 'pending' && (
@@ -231,8 +259,8 @@ export default function PaymentsPage() {
             exit={{ opacity: 0, y: -10 }}
             className="space-y-4"
           >
-            {pendingPayments.length > 0 ? (
-              pendingPayments.map((payment) => (
+            {filteredPending.length > 0 ? (
+              filteredPending.map((payment) => (
                 <motion.div
                   key={payment.id}
                   initial={{ opacity: 0, y: 10 }}
@@ -312,8 +340,17 @@ export default function PaymentsPage() {
                 animate={{ opacity: 1 }}
                 className="rounded-xl border border-white/[0.1] bg-dark-secondary/40 p-8 text-center"
               >
-                <CheckCircle className="h-12 w-12 mx-auto text-green-500/50 mb-3" />
-                <p className="text-gray-400">No pending payments to review</p>
+                {searchQuery ? (
+                  <>
+                    <Search className="h-12 w-12 mx-auto text-gray-500/50 mb-3" />
+                    <p className="text-gray-400">No results found for "{searchQuery}"</p>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="h-12 w-12 mx-auto text-green-500/50 mb-3" />
+                    <p className="text-gray-400">No pending payments to review</p>
+                  </>
+                )}
               </motion.div>
             )}
           </motion.div>
@@ -327,8 +364,8 @@ export default function PaymentsPage() {
             exit={{ opacity: 0, y: -10 }}
             className="space-y-4"
           >
-            {subscriptions.length > 0 ? (
-              subscriptions.map((sub) => (
+            {filteredSubscriptions.length > 0 ? (
+              filteredSubscriptions.map((sub) => (
                 <motion.div
                   key={sub.userId}
                   initial={{ opacity: 0, y: 10 }}
@@ -403,8 +440,17 @@ export default function PaymentsPage() {
                 animate={{ opacity: 1 }}
                 className="rounded-xl border border-white/[0.1] bg-dark-secondary/40 p-8 text-center"
               >
-                <AlertCircle className="h-12 w-12 mx-auto text-gray-500/50 mb-3" />
-                <p className="text-gray-400">No active subscriptions</p>
+                {searchQuery ? (
+                  <>
+                    <Search className="h-12 w-12 mx-auto text-gray-500/50 mb-3" />
+                    <p className="text-gray-400">No results found for "{searchQuery}"</p>
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="h-12 w-12 mx-auto text-gray-500/50 mb-3" />
+                    <p className="text-gray-400">No active subscriptions</p>
+                  </>
+                )}
               </motion.div>
             )}
           </motion.div>
