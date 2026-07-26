@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { LogOut, Home, Plug, CreditCard, Settings, User, ChevronDown, Bot } from 'lucide-react';
+import { LogOut, Home, Plug, CreditCard, Settings, User, ChevronDown, Bot, AlertCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { ToastProvider } from '@/components/Toast';
 
@@ -21,6 +22,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [isLoading, setIsLoading] = useState(true);
   const [userData, setUserData] = useState<any>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [showWarningModal, setShowWarningModal] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -37,6 +39,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           } else {
             setUserData(user);
             setIsLoading(false);
+            if (!sessionStorage.getItem('scamWarningShown')) {
+              setShowWarningModal(true);
+            }
           }
         } else {
           router.push('/login');
@@ -44,6 +49,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       })
       .catch(() => router.push('/login'));
   }, [router]);
+
+  const handleCloseWarning = () => {
+    sessionStorage.setItem('scamWarningShown', 'true');
+    setShowWarningModal(false);
+  };
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -190,6 +200,45 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
 
         <MobileBottomNav userData={userData} onLogout={handleLogout} />
+
+        {/* Warning Modal */}
+        <AnimatePresence>
+          {showWarningModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: -20 }}
+                className="w-full max-w-md rounded-2xl border border-red-500/30 bg-dark-secondary shadow-2xl overflow-hidden"
+              >
+                <div className="bg-red-500/10 p-6 border-b border-red-500/20 text-center">
+                  <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                  <h2 className="text-2xl font-bold text-white tracking-tight uppercase">Security Warning</h2>
+                </div>
+                <div className="p-6 space-y-4">
+                  <p className="text-gray-300 text-sm md:text-base leading-relaxed text-center">
+                    Please remember: <strong>NEVER</strong> send money to personal numbers. Our system is automated, so anyone asking for manual transfers to them is a scammer.
+                  </p>
+                  <div className="bg-dark-tertiary/50 p-4 rounded-lg border border-white/5 text-center">
+                    <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Official Support Contact</p>
+                    <p className="text-xl font-bold text-cyan-400">+256731020815</p>
+                  </div>
+                  <button
+                    onClick={handleCloseWarning}
+                    className="w-full py-3 mt-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-all active:scale-[0.98]"
+                  >
+                    I Understand
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </ToastProvider>
   );

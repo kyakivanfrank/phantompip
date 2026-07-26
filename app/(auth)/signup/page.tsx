@@ -15,11 +15,11 @@ export default function SignupPage() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  
+
   // Visibility states for password fields
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
+
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
   // Password validation logic
@@ -91,8 +91,14 @@ export default function SignupPage() {
           Step 1 of 2 — next, activate your subscription (or wait for admin activation).
         </p>
 
+        <div className="mt-6 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-4 text-center">
+          <p className="text-xs sm:text-sm text-yellow-400 font-medium leading-relaxed">
+            ⚠️ <strong>SECURITY WARNING:</strong> Never send money to personal numbers. Our system is automated, so anyone asking for manual transfers to them is a scammer. Our ONLY official contact is <span className="font-bold text-white">+256731020815</span>.
+          </p>
+        </div>
+
         {error && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="mt-4 rounded-md border border-red-500/30 bg-red-500/10 p-3"
