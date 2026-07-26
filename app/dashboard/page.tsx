@@ -116,6 +116,23 @@ export default function DashboardPage() {
         </div>
       </motion.div>
 
+      {/* Security Warning Banner */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+        className="rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-4 md:p-5 flex flex-col md:flex-row items-start md:items-center gap-4 shadow-lg"
+      >
+        <div className="flex-shrink-0 h-10 w-10 rounded-full bg-yellow-500/20 flex items-center justify-center border border-yellow-500/30">
+          <AlertCircle className="h-5 w-5 text-yellow-400" />
+        </div>
+        <div className="flex-1">
+          <p className="text-sm text-yellow-400 leading-relaxed font-medium">
+            <strong className="tracking-wider uppercase text-yellow-300">SECURITY WARNING:</strong> Never send money to personal numbers. Our system is automated, so anyone asking for manual transfers to them is a scammer. Our ONLY official contact is <span className="font-bold text-white bg-black/20 px-1.5 py-0.5 rounded ml-1">+256731020815</span>.
+          </p>
+        </div>
+      </motion.div>
+
       <div className="grid gap-8 md:grid-cols-12">
         
         {/* 2. Personal Board (Subscription & Info Panel) */}
