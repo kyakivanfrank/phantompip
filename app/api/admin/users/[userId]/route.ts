@@ -71,6 +71,18 @@ export async function PATCH(
         status: "expired",
         expiryDate: toExpiryDateIso(Date.now()),
       });
+    } else if (action === "changePlan") {
+      const newPlanName = body?.planName;
+      let newPriceUSD = 50; // default Starter price
+      if (newPlanName === "Elite Scalper") newPriceUSD = 120;
+      if (newPlanName === "Pulse Pro Scalper") newPriceUSD = 200;
+
+      if (newPlanName) {
+        await updateSubscription(userId, {
+          planName: newPlanName,
+          priceUSD: newPriceUSD,
+        });
+      }
     } else {
       return errorResponse("Unsupported admin action", 400);
     }

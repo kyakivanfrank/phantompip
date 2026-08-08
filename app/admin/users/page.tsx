@@ -25,6 +25,7 @@ export default function UsersPage() {
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -59,6 +60,28 @@ export default function UsersPage() {
     } catch (error) {
       console.error('Failed to fetch users:', error);
       setIsLoading(false);
+    }
+  };
+
+  const handleAdminAction = async (userId: string, action: string, payload?: any) => {
+    setActionLoading(`${userId}-${action}`);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, ...payload }),
+      });
+      
+      if (res.ok) {
+        await fetchUsers();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to perform action');
+      }
+    } catch (error) {
+      alert('Error performing action');
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -261,16 +284,68 @@ export default function UsersPage() {
                             <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Joined</p>
                             <p className="mt-1 text-sm text-gray-300">{formatDate(user.createdAt)}</p>
                           </div>
+                          {/* Admin Action Center */}
+                          <div className="sm:col-span-2">
+                            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Admin Actions</p>
+                            <div className="flex flex-wrap gap-3">
+                              <button
+                                onClick={() => handleAdminAction(user.id, 'extendSubscription', { days: 30 })}
+                                disabled={actionLoading === `${user.id}-extendSubscription`}
+                                className="px-4 py-2 text-sm font-medium rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/20 disabled:opacity-50 transition-colors"
+                              >
+                                {actionLoading === `${user.id}-extendSubscription` ? 'Extending...' : '+30 Days Subscription'}
+                              </button>
+                              
+                              <select 
+                                className="px-4 py-2 text-sm font-medium rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 outline-none hover:bg-purple-500/20 cursor-pointer disabled:opacity-50 transition-colors"
+                                onChange={(e) => {
+                                  if (e.target.value) {
+                                    handleAdminAction(user.id, 'changePlan', { planName: e.target.value });
+                                    e.target.value = "";
+                                  }
+                                }}
+                                disabled={actionLoading === `${user.id}-changePlan`}
+                              >
+                                <option value="" className="bg-dark-secondary">Change Plan...</option>
+                                <option value="Starter Scalper" className="bg-dark-secondary">Starter Scalper ($50)</option>
+                                <option value="Elite Scalper" className="bg-dark-secondary">Elite Scalper ($120)</option>
+                                <option value="Pulse Pro Scalper" className="bg-dark-secondary">Pulse Pro Scalper ($200)</option>
+                                <option value="No Plan" className="bg-dark-secondary">No Plan</option>
+                              </select>
+
+                              <button
+                                onClick={() => handleAdminAction(user.id, 'resetMt5')}
+                                disabled={actionLoading === `${user.id}-resetMt5`}
+                                className="px-4 py-2 text-sm font-medium rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 hover:bg-orange-500/20 disabled:opacity-50 transition-colors"
+                              >
+                                Reset MT5 Data
+                              </button>
+                              
+                              <button
+                                onClick={() => {
+                                  if (confirm("Are you sure you want to expire this subscription immediately?")) {
+                                    handleAdminAction(user.id, 'expireSubscription')
+                                  }
+                                }}
+                                disabled={actionLoading === `${user.id}-expireSubscription`}
+                                className="px-4 py-2 text-sm font-medium rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 hover:bg-yellow-500/20 disabled:opacity-50 transition-colors"
+                              >
+                                Force Expire
+                              </button>
+                            </div>
+                          </div>
                         </div>
 
                         {/* Delete Button */}
-                        <button
-                          onClick={() => handleDeleteClick(user.id)}
-                          className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/20 transition-colors"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          Delete Account
-                        </button>
+                        <div className="pt-4 border-t border-white/[0.05]">
+                          <button
+                            onClick={() => handleDeleteClick(user.id)}
+                            className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/20 transition-colors"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Delete Account
+                          </button>
+                        </div>
                       </div>
                     </motion.div>
                   )}
