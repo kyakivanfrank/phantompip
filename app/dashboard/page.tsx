@@ -290,7 +290,12 @@ export default function DashboardPage() {
                       Connect MT5 Account
                     </Link>
                   ) : (
-                    <p className="text-xs text-orange-400">Activate subscription to connect MT5.</p>
+                    <Link
+                      href="/dashboard/subscription"
+                      className="inline-block bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+                    >
+                      Activate Subscription to Connect MT5
+                    </Link>
                   )}
                 </div>
               )}
