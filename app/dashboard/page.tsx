@@ -78,8 +78,9 @@ export default function DashboardPage() {
   const isPending = userData?.subscription?.latestPaymentStatus === 'pending';
   const hasMt5 = userData?.mt5?.isConnected && userData?.mt5?.loginId;
 
-  const rawPlanName = userData?.subscription?.planName || '';
-  const resolvedPlan = Object.values(PLANS).find(p => p.name === rawPlanName) || null;
+  const hasActivePlan = userData?.subscription?.status === 'active' && userData?.subscription?.approvalStatus === 'approved' && userData?.subscription?.remainingDays > 0;
+  const rawPlanName = hasActivePlan ? userData?.subscription?.planName || '' : '';
+  const resolvedPlan = hasActivePlan ? (Object.values(PLANS).find(p => p.name === rawPlanName) || null) : null;
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">

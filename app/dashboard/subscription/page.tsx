@@ -12,8 +12,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
   const planIdParam = resolvedParams?.plan || '';
   let selectedPlanId = isValidPlanId(planIdParam) ? planIdParam : null;
 
-  // If no plan param, try to infer from user's current subscription
-  if (!selectedPlanId && user?.subscription?.planName) {
+  // If no plan param, infer from user's active approved subscription only
+  if (!selectedPlanId && user?.subscription?.planName && user.subscription.status === 'active' && user.subscription.approvalStatus === 'approved') {
     const currentPlan = Object.values(PLANS).find(p => p.name === user.subscription.planName);
     if (currentPlan) {
       selectedPlanId = currentPlan.id;

@@ -2,8 +2,11 @@
  * Common types used throughout the application
  */
 
+import { PlanId } from "@/lib/plans";
+
 // -----------------------------------------------------------------------------
 // REDIS JSON SCHEMA TYPES
+// -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 
 export interface Payment {
@@ -14,6 +17,7 @@ export interface Payment {
   transactionRef: string;
   status: "pending" | "confirmed" | "rejected";
   submittedAt: string; // ISO datetime
+  planId?: PlanId;
   planName?: string;
 }
 

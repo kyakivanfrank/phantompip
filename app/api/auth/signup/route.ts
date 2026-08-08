@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
       subscription: {
         status: "inactive",
         approvalStatus: "none",
-        planName: "",
+        planName: "No Plan",
         priceUSD: 0,
         billingCycle: "monthly",
         startDate: "",

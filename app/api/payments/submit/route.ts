@@ -10,7 +10,7 @@ import {
 } from "@/lib/server/validation";
 import { handleApiError, successResponse, errorResponse } from "@/lib/server/api-response";
 import { Payment } from "@/lib/types";
-import { isValidPlanId, getPlanPrice, getPlan } from "@/lib/plans";
+import { isValidPlanId, getPlanPrice, getPlan, PLANS, type PlanId } from "@/lib/plans";
 
 const FALLBACK_AMOUNT = 50; // $50 default
 
@@ -34,7 +34,10 @@ export async function POST(req: NextRequest) {
   try {
     const session = await requireAuth();
     const body = await req.json();
-    const { transactionId, method, planId } = body;
+    const transactionId = typeof body.transactionId === 'string' ? body.transactionId : undefined;
+    const method = typeof body.method === 'string' ? body.method : undefined;
+    const planIdRaw = typeof body.planId === 'string' ? body.planId : undefined;
+    const planId = isValidPlanId(planIdRaw) ? planIdRaw : undefined;
 
     // Validate inputs
     if (!transactionId || !method) {
@@ -52,22 +55,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Determine payment amount from plan
+    // Determine payment amount from the selected or current active plan
     let paymentAmount = FALLBACK_AMOUNT;
     let resolvedPlanName = "No Plan";
+    let resolvedPlanId: PlanId | undefined = undefined;
 
-    if (planId && isValidPlanId(planId)) {
+    const existingUser = await getUser(session.userId);
+    const currentPlan = existingUser?.subscription?.planName
+      ? Object.values(PLANS).find((plan) => plan.name === existingUser.subscription.planName)
+      : undefined;
+    const hasValidActivePlan = !!(
+      currentPlan &&
+      existingUser?.subscription?.status === "active" &&
+      existingUser?.subscription?.approvalStatus === "approved"
+    );
+
+    if (planId) {
+      resolvedPlanId = planId;
       paymentAmount = getPlanPrice(planId);
       resolvedPlanName = getPlan(planId).name;
+    } else if (hasValidActivePlan && currentPlan) {
+      resolvedPlanId = currentPlan.id as PlanId;
+      paymentAmount = currentPlan.price;
+      resolvedPlanName = currentPlan.name;
     } else {
-      // Try to derive from user's existing subscription
-      const existingUser = await getUser(session.userId);
-      if (existingUser?.subscription?.priceUSD && existingUser.subscription.priceUSD > 0) {
-        paymentAmount = existingUser.subscription.priceUSD;
-      }
-      if (existingUser?.subscription?.planName) {
-        resolvedPlanName = existingUser.subscription.planName;
-      }
+      return errorResponse("You must select a valid subscription plan before submitting payment", 400);
     }
 
     const { paymentMethod, paymentNetwork } = mapMethod(method as FrontendMethod);
@@ -84,21 +96,24 @@ export async function POST(req: NextRequest) {
       transactionRef: sanitizeInput(transactionId),
       status: "pending",
       submittedAt: now,
+      planId: resolvedPlanId,
       planName: resolvedPlanName,
     };
 
     await createPayment(session.userId, newPayment);
 
-    const user = await getUser(session.userId);
-    const updates: Partial<Subscription> = {};
+    const updates: Partial<Record<string, any>> = {
+      approvalStatus: "pending",
+    };
 
-    if (user?.subscription?.approvalStatus !== "approved") {
-      updates.approvalStatus = "pending";
+    if (!hasValidActivePlan) {
+      updates.status = "inactive";
+      updates.planName = "No Plan";
+      updates.priceUSD = 0;
+      updates.expiryDate = "";
     }
 
-    if (Object.keys(updates).length > 0) {
-      await updateSubscription(session.userId, updates);
-    }
+    await updateSubscription(session.userId, updates);
 
     return successResponse(
       {

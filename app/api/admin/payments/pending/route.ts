@@ -23,6 +23,7 @@ export async function GET(_req: NextRequest) {
           method: payment.method,
           transactionId: payment.transactionRef,
           amount: payment.amount,
+          planId: payment.planId || null,
           planName: payment.planName || "No Plan",
           status: payment.status,
           createdAt: new Date(payment.submittedAt).getTime(),

@@ -97,19 +97,21 @@ export function buildAdminUserSummary(user: UserDocument, now = Date.now()): Adm
   const expiryTimestamp = new Date(user.subscription.expiryDate).getTime();
   const { latestPayment, latestConfirmedPayment } = getPaymentMeta(user);
 
+  const hasActiveSubscription = user.subscription.status === 'active' && user.subscription.approvalStatus === 'approved' && expiryTimestamp > now;
+
   return {
     id: user.userId,
     email: user.account.email,
     fullName: user.account.username,
     accountStatus: getDisplayAccountStatus(user, now),
-    planName: user.subscription?.planName || 'No Plan',
+    planName: hasActiveSubscription ? user.subscription.planName : 'No Plan',
     subscriptionStatus: user.subscription.status,
     approvalStatus: user.subscription.approvalStatus,
-    subscriptionExpiresAt: expiryTimestamp,
+    subscriptionExpiresAt: hasActiveSubscription ? expiryTimestamp : 0,
     createdAt: new Date(user.account.createdAt).getTime(),
     mt5Connected: user.mt5?.isConnected ?? false,
     daysRemaining: Math.max(0, Math.ceil((expiryTimestamp - now) / (24 * 60 * 60 * 1000))),
-    paidAmount: latestConfirmedPayment?.amount ?? user.subscription.priceUSD ?? 0,
+    paidAmount: hasActiveSubscription ? latestConfirmedPayment?.amount ?? user.subscription.priceUSD ?? 0 : 0,
     latestPaymentStatus: latestPayment?.status ?? null,
     latestPaymentMethod: latestPayment?.method ?? null,
     latestPaymentSubmittedAt: latestPayment?.submittedAt ?? null,
@@ -126,6 +128,8 @@ export async function buildAdminUserDetails(userId: string, now = Date.now()): P
   const summary = buildAdminUserSummary(user, now);
   const { orderedPayments, latestPayment, latestConfirmedPayment } = getPaymentMeta(user);
 
+  const hasActiveSubscription = user.subscription.status === 'active' && user.subscription.approvalStatus === 'approved' && summary.subscriptionExpiresAt > 0;
+
   return {
     ...summary,
     userId: user.userId,
@@ -133,12 +137,12 @@ export async function buildAdminUserDetails(userId: string, now = Date.now()): P
       status: user.subscription.status,
       approvalStatus: user.subscription.approvalStatus,
       displayStatus: summary.accountStatus,
-      planName: user.subscription.planName,
+      planName: hasActiveSubscription ? user.subscription.planName : 'No Plan',
       billingCycle: user.subscription.billingCycle,
-      expiryDate: user.subscription.expiryDate,
-      expiryTimestamp: summary.subscriptionExpiresAt,
+      expiryDate: hasActiveSubscription ? user.subscription.expiryDate : '',
+      expiryTimestamp: hasActiveSubscription ? summary.subscriptionExpiresAt : 0,
       remainingDays: summary.daysRemaining,
-      paidAmount: latestConfirmedPayment?.amount ?? user.subscription.priceUSD ?? 0,
+      paidAmount: hasActiveSubscription ? latestConfirmedPayment?.amount ?? user.subscription.priceUSD ?? 0 : 0,
       latestPaymentStatus: latestPayment?.status ?? null,
       latestPaymentMethod: latestPayment?.method ?? null,
       latestPaymentReference: latestPayment?.transactionRef ?? null,

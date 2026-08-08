@@ -39,10 +39,13 @@ export async function POST(req: NextRequest) {
       expiryTimestamp > now;
 
     if (!isCurrentlyActive) {
-      // Set subscription to inactive/rejected
+      // Set subscription to inactive/rejected and clear any temporary plan assignment
       await updateSubscription(payment.userId, {
         status: "inactive",
         approvalStatus: "rejected",
+        planName: "No Plan",
+        priceUSD: 0,
+        expiryDate: "",
       });
     }
 
