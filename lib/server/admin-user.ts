@@ -102,7 +102,7 @@ export function buildAdminUserSummary(user: UserDocument, now = Date.now()): Adm
     email: user.account.email,
     fullName: user.account.username,
     accountStatus: getDisplayAccountStatus(user, now),
-    planName: user.subscription?.planName || 'Starter Scalper',
+    planName: user.subscription?.planName || 'No Plan',
     subscriptionStatus: user.subscription.status,
     approvalStatus: user.subscription.approvalStatus,
     subscriptionExpiresAt: expiryTimestamp,

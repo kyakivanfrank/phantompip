@@ -75,11 +75,11 @@ export default function DashboardPage() {
   }
 
   const isSubscriptionActive = userData?.subscription?.isActive === true;
-  const isPending = userData?.subscription?.approvalStatus === 'pending';
+  const isPending = userData?.subscription?.latestPaymentStatus === 'pending';
   const hasMt5 = userData?.mt5?.isConnected && userData?.mt5?.loginId;
 
   const rawPlanName = userData?.subscription?.planName || '';
-  const resolvedPlan = Object.values(PLANS).find(p => p.name === rawPlanName) || PLANS.starter;
+  const resolvedPlan = Object.values(PLANS).find(p => p.name === rawPlanName) || null;
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
@@ -104,13 +104,13 @@ export default function DashboardPage() {
 
         {/* Master Account Status Badge */}
         <div className="flex items-center gap-2">
-          {isSubscriptionActive ? (
+          {isPending ? (
+            <span className="flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 px-4 py-2 rounded-full text-sm font-medium">
+              <Clock className="h-4 w-4" /> Awaiting Payment Approval
+            </span>
+          ) : isSubscriptionActive ? (
             <span className="flex items-center gap-2 bg-green-500/10 border border-green-500/20 text-green-400 px-4 py-2 rounded-full text-sm font-medium">
               <CheckCircle2 className="h-4 w-4" /> Premium Access Active
-            </span>
-          ) : isPending ? (
-            <span className="flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 px-4 py-2 rounded-full text-sm font-medium">
-              <Clock className="h-4 w-4" /> Awaiting Admin Approval
             </span>
           ) : (
             <span className="flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 text-orange-400 px-4 py-2 rounded-full text-sm font-medium">
@@ -155,16 +155,23 @@ export default function DashboardPage() {
                   <div className="grid grid-cols-2 gap-6">
                     <div className="col-span-2 sm:col-span-1">
                       <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Current Trading Plan</p>
-                      <div className="rounded-lg border border-purple-500/20 bg-purple-500/5 px-4 py-3">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="font-semibold text-purple-300">{resolvedPlan.name}</span>
-                          <Zap className="w-4 h-4 text-purple-400" />
+                      {resolvedPlan ? (
+                        <div className="rounded-lg border border-purple-500/20 bg-purple-500/5 px-4 py-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-semibold text-purple-300">{resolvedPlan.name}</span>
+                            <Zap className="w-4 h-4 text-purple-400" />
+                          </div>
+                          <div className="rounded border border-green-500/[0.15] bg-green-500/[0.05] px-2 py-1.5 w-fit mt-2">
+                            <p className="text-[9px] font-mono uppercase tracking-[0.1em] text-green-500/70 mb-0.5">Expected Monthly Profit</p>
+                            <p className="text-xs font-semibold text-green-400">{resolvedPlan.expectedProfit}</p>
+                          </div>
                         </div>
-                        <div className="rounded border border-green-500/[0.15] bg-green-500/[0.05] px-2 py-1.5 w-fit mt-2">
-                          <p className="text-[9px] font-mono uppercase tracking-[0.1em] text-green-500/70 mb-0.5">Expected Monthly Profit</p>
-                          <p className="text-xs font-semibold text-green-400">{resolvedPlan.expectedProfit}</p>
+                      ) : (
+                        <div className="rounded-lg border border-gray-500/20 bg-gray-500/5 px-4 py-3 flex flex-col justify-center h-[90px]">
+                          <span className="font-semibold text-gray-400">No Plan Selected</span>
+                          <p className="text-xs text-gray-500 mt-1">Visit subscription page to get started.</p>
                         </div>
-                      </div>
+                      )}
                     </div>
                     <div className="col-span-2 sm:col-span-1 flex flex-col justify-center">
                       <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Billing Cycle</p>
@@ -181,16 +188,16 @@ export default function DashboardPage() {
                     <div>
                       <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Expiry Date</p>
                       <p className="text-base font-medium text-white flex items-center gap-2">
-                        <CalendarDays className="h-4 w-4 text-gray-400" /> {userData.subscription.expiryDate}
+                        <CalendarDays className="h-4 w-4 text-gray-400" /> {userData.subscription.expiryDate || "N/A"}
                       </p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Time Remaining</p>
                       <p className={`text-base font-medium ${
                         userData.subscription.remainingDays > 7 ? 'text-green-400' : 
-                        userData.subscription.remainingDays > 0 ? 'text-yellow-400' : 'text-red-400'
+                        (userData.subscription.remainingDays > 0 ? 'text-yellow-400' : 'text-gray-400')
                       }`}>
-                        {userData.subscription.remainingDays} Days
+                        {userData.subscription.remainingDays > 0 ? `${userData.subscription.remainingDays} Days` : '0 Days'}
                       </p>
                     </div>
                   </div>

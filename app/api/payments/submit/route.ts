@@ -54,16 +54,19 @@ export async function POST(req: NextRequest) {
 
     // Determine payment amount from plan
     let paymentAmount = FALLBACK_AMOUNT;
-    let resolvedPlanName = "Starter Scalper";
+    let resolvedPlanName = "No Plan";
 
     if (planId && isValidPlanId(planId)) {
       paymentAmount = getPlanPrice(planId);
       resolvedPlanName = getPlan(planId).name;
     } else {
       // Try to derive from user's existing subscription
-      const user = await getUser(session.userId);
-      if (user?.subscription?.priceUSD && user.subscription.priceUSD > 0) {
-        paymentAmount = user.subscription.priceUSD;
+      const existingUser = await getUser(session.userId);
+      if (existingUser?.subscription?.priceUSD && existingUser.subscription.priceUSD > 0) {
+        paymentAmount = existingUser.subscription.priceUSD;
+      }
+      if (existingUser?.subscription?.planName) {
+        resolvedPlanName = existingUser.subscription.planName;
       }
     }
 
@@ -81,16 +84,20 @@ export async function POST(req: NextRequest) {
       transactionRef: sanitizeInput(transactionId),
       status: "pending",
       submittedAt: now,
+      planName: resolvedPlanName,
     };
 
     await createPayment(session.userId, newPayment);
 
-    // Update subscription plan details if a valid planId was provided
-    if (planId && isValidPlanId(planId)) {
-      await updateSubscription(session.userId, {
-        planName: resolvedPlanName,
-        priceUSD: paymentAmount,
-      });
+    const user = await getUser(session.userId);
+    const updates: Partial<Subscription> = {};
+
+    if (user?.subscription?.approvalStatus !== "approved") {
+      updates.approvalStatus = "pending";
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await updateSubscription(session.userId, updates);
     }
 
     return successResponse(

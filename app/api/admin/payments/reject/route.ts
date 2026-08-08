@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/server/auth";
-import { getPayment, updatePaymentStatus, updateSubscription } from "@/lib/server/db";
+import { getPayment, updatePaymentStatus, updateSubscription, getUser } from "@/lib/server/db";
 import { handleApiError, successResponse, errorResponse } from "@/lib/server/api-response";
 
 export async function POST(req: NextRequest) {
@@ -28,11 +28,23 @@ export async function POST(req: NextRequest) {
     // Reject payment
     await updatePaymentStatus(payment.userId, paymentId, "rejected");
     
-    // Set subscription to inactive/rejected
-    await updateSubscription(payment.userId, {
-      status: "inactive",
-      approvalStatus: "rejected",
-    });
+    // Get user to see if they are active
+    const user = await getUser(payment.userId);
+    const now = Date.now();
+    const expiryTimestamp = user?.subscription?.expiryDate ? new Date(user.subscription.expiryDate).getTime() : 0;
+    
+    const isCurrentlyActive = 
+      user?.subscription?.status === "active" && 
+      user?.subscription?.approvalStatus === "approved" &&
+      expiryTimestamp > now;
+
+    if (!isCurrentlyActive) {
+      // Set subscription to inactive/rejected
+      await updateSubscription(payment.userId, {
+        status: "inactive",
+        approvalStatus: "rejected",
+      });
+    }
 
     return successResponse(
       {

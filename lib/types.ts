@@ -14,11 +14,12 @@ export interface Payment {
   transactionRef: string;
   status: "pending" | "confirmed" | "rejected";
   submittedAt: string; // ISO datetime
+  planName?: string;
 }
 
 export interface Subscription {
   status: "active" | "expired" | "pending" | "inactive";
-  approvalStatus: "approved" | "pending" | "rejected";
+  approvalStatus: "approved" | "pending" | "rejected" | "none";
   planName: string;
   priceUSD: number;
   billingCycle: "monthly" | "lifetime";
@@ -63,7 +64,7 @@ export interface UserIndexEntry {
   username: string;
   email: string;
   subscriptionStatus: "active" | "expired" | "pending" | "inactive";
-  approvalStatus: "approved" | "pending" | "rejected";
+  approvalStatus: "approved" | "pending" | "rejected" | "none";
   expiryDate: string;
   isAdmin: boolean;
 }

@@ -78,7 +78,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
   const subscription = user?.subscription;
   if (subscription) {
     const matched = Object.values(PLANS).find(p => p.name === subscription.planName);
-    subscription.planName = matched ? matched.name : 'Starter Scalper';
+    subscription.planName = matched ? matched.name : 'No Plan';
   }
   const isActive = subscription?.status === 'active' && subscription?.approvalStatus === 'approved';
   const expiryDate = subscription?.expiryDate ? new Date(subscription.expiryDate) : null;

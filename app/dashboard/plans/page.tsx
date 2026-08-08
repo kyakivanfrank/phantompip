@@ -46,7 +46,7 @@ export default function PlansPage() {
       .then(res => res.json())
       .then(data => {
         const planName = data?.data?.user?.subscription?.planName;
-        let resolvedPlanName = 'Starter Scalper';
+        let resolvedPlanName = null;
         if (planName) {
            const matched = Object.values(PLANS).find(p => p.name === planName);
            if (matched) resolvedPlanName = matched.name;

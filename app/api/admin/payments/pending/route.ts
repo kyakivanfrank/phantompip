@@ -23,6 +23,7 @@ export async function GET(_req: NextRequest) {
           method: payment.method,
           transactionId: payment.transactionRef,
           amount: payment.amount,
+          planName: payment.planName || "No Plan",
           status: payment.status,
           createdAt: new Date(payment.submittedAt).getTime(),
           daysOld: Math.floor((Date.now() - new Date(payment.submittedAt).getTime()) / (24 * 60 * 60 * 1000)),

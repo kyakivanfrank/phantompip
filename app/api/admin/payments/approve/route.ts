@@ -46,11 +46,16 @@ export async function POST(req: NextRequest) {
     const newExpiry = new Date(Math.max(currentExpiry.getTime(), now.getTime()) + thirtyDaysMs);
     const newExpiryIso = newExpiry.toISOString().split('T')[0];
 
+    const newPlanName = payment.planName || userData?.subscription?.planName || "Starter Scalper";
+    const newPriceUSD = payment.amount || userData?.subscription?.priceUSD || 50;
+
     await updateSubscription(userId, {
       status: "active",
       approvalStatus: "approved",
       approvedAt: now.toISOString(),
       expiryDate: newExpiryIso,
+      planName: newPlanName,
+      priceUSD: newPriceUSD,
     });
 
     return successResponse(
