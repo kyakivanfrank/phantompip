@@ -81,8 +81,10 @@ export default function DashboardPage() {
   const hasActivePlan = userData?.subscription?.status === 'active' && userData?.subscription?.approvalStatus === 'approved' && userData?.subscription?.remainingDays > 0;
   const rawPlanName = hasActivePlan ? userData?.subscription?.planName || '' : '';
   const resolvedPlan = hasActivePlan ? (Object.values(PLANS).find(p => p.name === rawPlanName) || null) : null;
-  const displayBillingCycle = hasActivePlan ? userData.subscription.billingCycle : 'N/A';
-  const displayPaidAmount = hasActivePlan ? userData.subscription.paidAmount : null;
+  const displayBillingCycle = hasActivePlan ? userData?.subscription?.billingCycle : 'N/A';
+  const displayPaidAmount = hasActivePlan ? userData?.subscription?.paidAmount : null;
+  const displayExpiryDate = hasActivePlan ? userData?.subscription?.expiryDate : 'N/A';
+  const displayRemainingDays = hasActivePlan ? (userData?.subscription?.remainingDays ?? 0) : 0;
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
