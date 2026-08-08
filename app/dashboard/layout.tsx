@@ -226,7 +226,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   </p>
                   <div className="bg-dark-tertiary/50 p-4 rounded-lg border border-white/5 text-center">
                     <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Official Support Contact</p>
-                    <p className="text-xl font-bold text-cyan-400">+256731020815</p>
+                    <p className="text-xl font-bold text-cyan-400">{process.env.NEXT_PUBLIC_SUPPORT_CONTACT_NUMBER}</p>
                   </div>
                   <button
                     onClick={handleCloseWarning}

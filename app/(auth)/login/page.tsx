@@ -68,7 +68,7 @@ export default function LoginPage() {
 
         <div className="mt-6 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-4 text-center">
           <p className="text-xs sm:text-sm text-yellow-400 font-medium leading-relaxed">
-            ⚠️ <strong>SECURITY WARNING:</strong> Never send money to personal numbers. Our system is automated, so anyone asking for manual transfers to them is a scammer. Our ONLY official contact is <span className="font-bold text-white">+256731020815</span>.
+            ⚠️ <strong>SECURITY WARNING:</strong> Never send money to personal numbers. Our system is automated, so anyone asking for manual transfers to them is a scammer. Our ONLY official contact is <span className="font-bold text-white">{process.env.NEXT_PUBLIC_SUPPORT_CONTACT_NUMBER}</span>.
           </p>
         </div>
 
