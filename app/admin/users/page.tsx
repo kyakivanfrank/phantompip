@@ -9,6 +9,9 @@ interface User {
   fullName: string;
   email: string;
   accountStatus: 'Active' | 'Pending Approval' | 'Expired' | 'Rejected' | 'Inactive';
+  planName: string;
+  subscriptionExpiresAt: number;
+  paidAmount: number;
   createdAt: number;
 }
 
@@ -230,6 +233,25 @@ export default function UsersPage() {
                               <div className="flex justify-between items-center gap-4">
                                 <span className="text-sm text-gray-400">Password:</span>
                                 <span className="text-sm font-mono text-gray-500 italic text-right">[Encrypted]</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Active Subscription Details */}
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Subscription & Plan</p>
+                            <div className="rounded-lg border border-purple-500/20 bg-purple-500/5 p-3 space-y-2">
+                              <div className="flex justify-between items-center gap-4">
+                                <span className="text-sm text-gray-400">Trading Plan:</span>
+                                <span className="text-sm font-semibold text-purple-300 text-right">{user.planName}</span>
+                              </div>
+                              <div className="flex justify-between items-center gap-4">
+                                <span className="text-sm text-gray-400">Monthly Payment:</span>
+                                <span className="text-sm font-medium text-gray-300 text-right">${user.paidAmount}/mo</span>
+                              </div>
+                              <div className="flex justify-between items-center gap-4">
+                                <span className="text-sm text-gray-400">Expires:</span>
+                                <span className="text-sm font-medium text-gray-300 text-right">{user.subscriptionExpiresAt ? formatDate(user.subscriptionExpiresAt) : 'N/A'}</span>
                               </div>
                             </div>
                           </div>

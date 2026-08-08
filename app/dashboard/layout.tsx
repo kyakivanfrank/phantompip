@@ -3,14 +3,14 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { LogOut, Home, Plug, CreditCard, Settings, User, ChevronDown, Bot, AlertCircle } from 'lucide-react';
+import { LogOut, Home, Plug, CreditCard, Settings, User, ChevronDown, Layers, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { ToastProvider } from '@/components/Toast';
 
 const NAV_LINKS = [
   { href: '/dashboard', label: 'Dashboard', icon: Home, exact: true },
-  { href: '/dashboard/bots', label: 'Bots', icon: Bot },
+  { href: '/dashboard/plans', label: 'Plans', icon: Layers },
   { href: '/dashboard/mt5', label: 'MT5 Account', icon: Plug },
   { href: '/dashboard/subscription', label: 'Subscription', icon: CreditCard },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },

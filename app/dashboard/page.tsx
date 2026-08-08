@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import {
   Clock,
-  CreditCard,
   ShieldCheck,
   Activity,
   UserCircle,
@@ -13,8 +12,10 @@ import {
   KeyRound,
   Server,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Zap
 } from 'lucide-react';
+import { PLANS } from '@/lib/plans';
 
 type DashboardUser = {
   id: string;
@@ -76,6 +77,9 @@ export default function DashboardPage() {
   const isSubscriptionActive = userData?.subscription?.isActive === true;
   const isPending = userData?.subscription?.approvalStatus === 'pending';
   const hasMt5 = userData?.mt5?.isConnected && userData?.mt5?.loginId;
+
+  const rawPlanName = userData?.subscription?.planName || '';
+  const resolvedPlan = Object.values(PLANS).find(p => p.name === rawPlanName) || PLANS.starter;
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
@@ -149,15 +153,25 @@ export default function DashboardPage() {
               {userData?.subscription ? (
                 <>
                   <div className="grid grid-cols-2 gap-6">
-                    <div>
-                      <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Current Plan</p>
-                      <p className="text-base font-medium text-white flex items-center gap-2">
-                        <CreditCard className="h-4 w-4 text-cyan-400" /> {userData.subscription.planName}
-                      </p>
+                    <div className="col-span-2 sm:col-span-1">
+                      <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Current Trading Plan</p>
+                      <div className="rounded-lg border border-purple-500/20 bg-purple-500/5 px-4 py-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-semibold text-purple-300">{resolvedPlan.name}</span>
+                          <Zap className="w-4 h-4 text-purple-400" />
+                        </div>
+                        <div className="rounded border border-green-500/[0.15] bg-green-500/[0.05] px-2 py-1.5 w-fit mt-2">
+                          <p className="text-[9px] font-mono uppercase tracking-[0.1em] text-green-500/70 mb-0.5">Expected Monthly Profit</p>
+                          <p className="text-xs font-semibold text-green-400">{resolvedPlan.expectedProfit}</p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
+                    <div className="col-span-2 sm:col-span-1 flex flex-col justify-center">
                       <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Billing Cycle</p>
                       <p className="text-base font-medium text-white capitalize">{userData.subscription.billingCycle}</p>
+                      
+                      <p className="text-xs text-gray-500 uppercase tracking-wider mb-1 mt-4">Monthly Payment</p>
+                      <p className="text-base font-medium text-white capitalize">${userData.subscription.paidAmount}/mo</p>
                     </div>
                   </div>
 

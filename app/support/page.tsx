@@ -52,8 +52,8 @@ export default function Support() {
             <img src="/phantompip-logo.png" alt="Phantompip" className="h-10 w-auto" />
           </Link>
           <div className="hidden items-center gap-9 md:flex">
-            <a href="/#strategies" className="text-xs font-medium text-gray-400 hover:text-white transition">
-              Strategies
+            <a href="/#capabilities" className="text-xs font-medium text-gray-400 hover:text-white transition">
+              Capabilities
             </a>
             <a href="/#terminal" className="text-xs font-medium text-gray-400 hover:text-white transition">
               Terminal

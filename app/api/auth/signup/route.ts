@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
       subscription: {
         status: "pending",
         approvalStatus: "pending",
-        planName: "Current Plan",
+        planName: "No Plan",
         priceUSD: 0,
         billingCycle: "monthly",
         startDate: todayStr,
@@ -77,7 +77,6 @@ export async function POST(req: NextRequest) {
         payments: [],
       },
       mt5: null,
-      bots: {},
     };
 
     await createUser(userId, newUser);

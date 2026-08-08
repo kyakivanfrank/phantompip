@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { ArrowRight, Plug, Cpu, Bot, TrendingUp, ChevronDown, Shield } from 'lucide-react';
+import { ArrowRight, Plug, Layers, Zap, TrendingUp, ChevronDown, Shield, Crown, Rocket } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { PLANS, PLAN_ORDER } from '@/lib/plans';
 
 const chartData = [
   { month: 'D1', value: 120000 },
@@ -14,33 +15,33 @@ const chartData = [
   { month: 'D20', value: 142850 },
 ];
 
-const strategies = [
-  { name: 'Neural-X Trend', type: 'Trend Following', risk: 'Medium', roi: '+18.4%' },
-  { name: 'Scalp Alpha', type: 'Scalping', risk: 'High', roi: '+32.1%' },
-  { name: 'Grid Sentinel', type: 'Grid', risk: 'Low', roi: '+9.7%' },
-  { name: 'Break Pulse', type: 'Breakout', risk: 'Medium', roi: '+21.2%' },
+const capabilities = [
+  { name: 'Smart Scalping', type: 'Entry Detection', risk: 'Balanced', roi: '+18.4%' },
+  { name: 'Trend Analysis', type: 'AI-Powered', risk: 'Adaptive', roi: '+32.1%' },
+  { name: 'Risk Guard', type: 'Protection', risk: 'Automated', roi: '+9.7%' },
+  { name: 'Fast Execution', type: 'Low Latency', risk: 'Optimized', roi: '+21.2%' },
 ];
 
 const faqItems = [
   {
     q: 'How does Phantompip connect to my MT5 account?',
-    a: 'You provide your broker name, MT5 login, password, and server. Credentials are encrypted at rest and used solely to place trades the bot generates. You retain full custody — funds never leave your broker.',
+    a: 'You provide your broker name, MT5 login, password, and server. Credentials are encrypted at rest and used solely to execute trades. You retain full custody — funds never leave your broker.',
   },
   {
-    q: 'What strategies are available?',
-    a: 'Trend following, scalping, grid, and breakout neural models. Each is parameterized — choose risk, stop loss, take profit, daily loss limit, and max drawdown.',
+    q: 'What subscription plans are available?',
+    a: 'We offer three plans: Starter ($50/mo) for beginners, Elite Scalper ($120/mo) for active traders, and Pulse Pro Scalper ($200/mo) for maximum performance. Each plan includes AI-powered automated trading.',
   },
   {
     q: 'Which payment methods do you accept?',
-    a: 'Manual crypto payments in USDT (TRC20), BTC, and our native NTR token. Subscriptions activate after on-chain confirmation.',
+    a: 'Manual crypto payments in USDT (TRC20), Airtel Money, and MTN Mobile Money. Subscriptions activate after confirmation.',
   },
   {
     q: 'What happens when my subscription expires?',
-    a: 'Bots auto-disable. Open trades remain managed by your broker but no new orders are placed until you renew.',
+    a: 'Trading automation pauses automatically. Open trades remain managed by your broker but no new orders are placed until you renew.',
   },
   {
     q: 'Is my data and capital safe?',
-    a: 'Credentials are encrypted, sessions expire, and 2FA is supported. Capital stays at your broker — we never custody funds.',
+    a: 'Credentials are encrypted, sessions expire, and we never custody funds. Your capital stays at your broker at all times.',
   },
 ];
 
@@ -56,8 +57,8 @@ export default function Home() {
             <img src="/phantompip-logo.png" alt="Phantompip" className="h-10 w-auto" />
           </Link>
           <div className="hidden items-center gap-9 md:flex">
-            <a href="#strategies" className="text-xs font-medium text-gray-400 hover:text-white transition">
-              Strategies
+            <a href="#capabilities" className="text-xs font-medium text-gray-400 hover:text-white transition">
+              Capabilities
             </a>
             <a href="#terminal" className="text-xs font-medium text-gray-400 hover:text-white transition">
               Terminal
@@ -140,7 +141,7 @@ export default function Home() {
               transition={{ duration: 0.8, delay: 0.3 }}
               className="mt-7 max-w-md text-base leading-relaxed text-gray-400"
             >
-              Connect your MT5 account and let neural strategies trade for you 24/7. Institutional execution, transparent performance, zero compromise.
+              Connect your MT5 account and let our trading engine execute for you 24/7. Institutional execution, transparent performance, zero compromise.
             </motion.p>
 
             {/* CTAs */}
@@ -343,13 +344,13 @@ export default function Home() {
                   </span>
                 </h2>
                 <p className="mt-5 text-sm md:text-base leading-relaxed text-gray-400">
-                  Watch your bots execute in real time. Drawdown, equity curve, win rate — surfaced with zero noise.
+                  Watch your trades execute in real time. Drawdown, equity curve, win rate — surfaced with zero noise.
                 </p>
               </div>
               <ul className="mt-10 space-y-3.5 text-sm">
                 {[
                   'Real-time P&L and equity curve',
-                  'Per-bot drawdown & risk controls',
+                  'Per-plan drawdown & risk controls',
                   'Trade-by-trade execution log',
                   'Telegram alerts on every fill',
                 ].map((item, i) => (
@@ -455,8 +456,8 @@ export default function Home() {
           <div className="grid gap-6 md:grid-cols-3">
             {[
               { num: '01', title: 'Secure MT5 link', desc: 'Encrypted credentials. Funds stay with your broker — we never custody capital.', icon: Plug },
-              { num: '02', title: 'Configure neural bot', desc: 'Pick a strategy. Set risk, stop loss, take profit, daily caps, max drawdown.', icon: Cpu },
-              { num: '03', title: 'Trade 24/7', desc: 'Bots execute autonomously. Monitor P&L, win rate and drawdown from the terminal.', icon: Bot },
+              { num: '02', title: 'Choose your plan', desc: 'Select from Starter, Elite Scalper, or Pulse Pro plans. Activate your subscription.', icon: Layers },
+              { num: '03', title: 'Trade 24/7', desc: 'AI-powered automation executes on your behalf. Monitor P&L, win rate and drawdown.', icon: Zap },
             ].map((step, i) => {
               const Icon = step.icon;
               return (
@@ -480,8 +481,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Strategies Section */}
-      <section id="strategies" className="relative overflow-hidden border-b border-white/[0.05] bg-dark-secondary/20">
+      <section id="capabilities" className="relative overflow-hidden border-b border-white/[0.05] bg-dark-secondary/20">
         <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
           <div className="absolute top-0 -right-32 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl"></div>
         </div>
@@ -492,17 +492,17 @@ export default function Home() {
             transition={{ duration: 0.6 }}
             className="max-w-2xl mb-14"
           >
-            <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-blue-400">Neural strategies</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-blue-400">Trading capabilities</p>
             <h2 className="mt-5 text-3xl md:text-5xl font-semibold text-white">
-              Four engines. <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">Distinct edge.</span>
+              AI-Powered. <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">Precision-driven.</span>
             </h2>
             <p className="mt-5 text-sm md:text-base leading-relaxed text-gray-400">
-              Every strategy is parameterized. Pick risk, set guards, and let the engine handle execution.
+              Advanced trading automation built on neural strategies. Every plan comes with institutional-grade execution.
             </p>
           </motion.div>
 
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {strategies.map((strategy, i) => (
+            {capabilities.map((capability, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 20 }}
@@ -512,16 +512,16 @@ export default function Home() {
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-sm font-semibold text-white">{strategy.name}</p>
-                    <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-gray-400">{strategy.type}</p>
+                    <p className="text-sm font-semibold text-white">{capability.name}</p>
+                    <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-gray-400">{capability.type}</p>
                   </div>
-                  <span className={`font-mono text-[10px] uppercase tracking-[0.2em] ${strategy.risk === 'High' ? 'text-red-400' : 'text-blue-400'}`}>
-                    {strategy.risk}
+                  <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-blue-400">
+                    {capability.risk}
                   </span>
                 </div>
                 <div className="mt-6 flex items-end justify-between border-t border-white/[0.05] pt-3">
                   <span className="text-[10px] uppercase tracking-widest text-gray-400">30d ROI</span>
-                  <span className="font-mono text-base font-medium text-blue-400">{strategy.roi}</span>
+                  <span className="font-mono text-base font-medium text-blue-400">{capability.roi}</span>
                 </div>
               </motion.div>
             ))}
@@ -538,49 +538,75 @@ export default function Home() {
             transition={{ duration: 0.6 }}
             className="mx-auto max-w-2xl text-center mb-16"
           >
-            <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-blue-400">Subscription</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-blue-400">Subscription plans</p>
             <h2 className="mt-5 text-3xl md:text-5xl font-semibold text-white">
-              Scale compute as your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">capital grows</span>.
+              Choose the plan that <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">fits your goals</span>.
             </h2>
             <p className="mt-5 text-sm md:text-base leading-relaxed text-gray-400">
-              USDT (TRC20), BTC, and NTR accepted. Bots auto-disable when subscription lapses.
+              USDT (TRC20), Airtel Money, and MTN Mobile Money accepted. Trading automation pauses when subscription lapses.
             </p>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6 }}
-            className="mx-auto max-w-md"
-          >
-            <div className="relative flex flex-col rounded-2xl p-8 border-2 border-blue-500/40 bg-dark-secondary/60 backdrop-blur">
-              <span className="absolute -top-2.5 left-8 rounded-full bg-blue-500 px-3 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
-                Most popular
-              </span>
-              <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-blue-400">Starter</p>
-              <div className="mt-6 flex items-baseline gap-1.5">
-                <span className="font-mono text-5xl font-semibold">$50</span>
-                <span className="text-sm text-gray-400">/month</span>
-              </div>
-              <p className="mt-3 text-sm text-gray-400">For traders validating their first automated strategy.</p>
-              <ul className="mt-8 flex-1 space-y-3 border-t border-white/[0.05] pt-6 text-sm">
-                {['1 active bot', 'Up to $10k account size', 'Standard execution', 'Email support'].map(
-                  (item, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <span className="mt-1.5 size-1 shrink-0 rounded-full bg-blue-500"></span>
-                      <span className="text-white/85">{item}</span>
-                    </li>
-                  )
-                )}
-              </ul>
-              <Link
-                href="/signup"
-                className="mt-10 inline-flex h-11 items-center justify-center rounded-md bg-blue-500 text-sm font-medium text-white hover:opacity-90 transition"
-              >
-                Choose Starter
-              </Link>
-            </div>
-          </motion.div>
+          <div className="grid gap-6 md:grid-cols-3 mx-auto max-w-4xl">
+            {PLAN_ORDER.map((planId, i) => {
+              const plan = PLANS[planId];
+              const PlanIcon = planId === 'starter' ? Zap : planId === 'elite' ? Crown : Rocket;
+              const accentText = planId === 'starter' ? 'text-cyan-400' : planId === 'elite' ? 'text-purple-400' : 'text-amber-400';
+              const borderClass = plan.isPopular ? 'border-2 border-purple-500/40' : plan.isFlagship ? 'border-2 border-amber-500/30' : 'border border-white/[0.1]';
+
+              return (
+                <motion.div
+                  key={planId}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: i * 0.1 }}
+                  className={`relative flex flex-col rounded-2xl p-8 ${borderClass} bg-dark-secondary/60 backdrop-blur`}
+                >
+                  {plan.isPopular && (
+                    <span className="absolute -top-2.5 left-8 rounded-full bg-purple-600 px-3 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
+                      Most popular
+                    </span>
+                  )}
+                  {plan.isFlagship && (
+                    <span className="absolute -top-2.5 left-8 rounded-full bg-amber-600 px-3 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
+                      Flagship
+                    </span>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <PlanIcon className={`h-5 w-5 ${accentText}`} />
+                    <p className={`font-mono text-[10px] uppercase tracking-[0.22em] ${accentText}`}>{plan.name}</p>
+                  </div>
+                  <div className="mt-6 flex items-baseline gap-1.5">
+                    <span className="font-mono text-5xl font-semibold">${plan.price}</span>
+                    <span className="text-sm text-gray-400">/month</span>
+                  </div>
+                  <p className="mt-3 text-sm text-gray-400">{plan.bestFor}</p>
+                  
+                  <div className="mt-4 rounded-lg border border-green-500/[0.15] bg-green-500/[0.05] px-3 py-2 text-center">
+                    <p className="text-[9px] font-mono uppercase tracking-[0.2em] text-green-500/70">Expected Monthly Profit</p>
+                    <p className="mt-1 text-sm font-semibold text-green-400">{plan.expectedProfit}</p>
+                  </div>
+
+                  <ul className="mt-6 flex-1 space-y-3 border-t border-white/[0.05] pt-6 text-sm">
+                    {plan.features.slice(0, 4).map((feature, fi) => (
+                      <li key={fi} className="flex items-start gap-3">
+                        <span className="mt-1.5 size-1 shrink-0 rounded-full bg-blue-500"></span>
+                        <span className="text-white/85">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    href="/signup"
+                    className={`mt-10 inline-flex h-11 items-center justify-center rounded-md text-sm font-medium text-white hover:opacity-90 transition ${
+                      plan.isPopular ? 'bg-purple-600' : plan.isFlagship ? 'bg-amber-600' : 'bg-blue-500'
+                    }`}
+                  >
+                    Choose {plan.name}
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </div>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -590,7 +616,7 @@ export default function Home() {
           >
             <Shield className="w-3.5 h-3.5 text-blue-400" />
             <span>Payments</span>
-            {['USDT · TRC20', 'BTC', 'NTR'].map((method, i) => (
+            {['USDT · TRC20', 'Airtel Money', 'MTN MoMo'].map((method, i) => (
               <span key={i} className="rounded-full border border-white/[0.08] bg-white/[0.02] px-3 py-1">
                 {method}
               </span>
@@ -699,7 +725,7 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="mx-auto mt-6 max-w-md text-base text-gray-400"
           >
-            Connect your MT5 account. Pick a strategy. Let the neural engine do the rest.
+            Connect your MT5 account. Choose your plan. Let the AI trading engine do the rest.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -740,7 +766,7 @@ export default function Home() {
               {[
                 {
                   title: 'Product',
-                  links: ['Strategies', 'Terminal', 'Pricing'],
+                  links: ['Capabilities', 'Terminal', 'Pricing'],
                 },
                 {
                   title: 'Company',

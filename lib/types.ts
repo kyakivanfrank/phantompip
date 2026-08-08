@@ -44,29 +44,6 @@ export interface Mt5Details {
   isConnected: boolean;
 }
 
-export interface BotSettingsDetails {
-  stopLoss: number;
-  takeProfit: number;
-  maxDrawdown: number;
-  dailyLossLimit: number;
-  lotSize: number;
-}
-
-export interface Bot {
-  displayName: string; // fixed, never change
-  style: string; // fixed, never change
-  riskLevel: string; // fixed, never change
-  isEnabled: boolean; // ONLY field user controls
-  settings: BotSettingsDetails;
-  activatedAt: string | null;
-}
-
-export interface Bots {
-  neuralXTrend: Bot;
-  scalpAlpha: Bot;
-  gridSentinel: Bot;
-}
-
 /**
  * The unified User document structure (`user:{userId}`)
  */
@@ -76,7 +53,6 @@ export interface UserDocument {
   account: Account;
   subscription: Subscription;
   mt5: Mt5Details | null;
-  bots: Partial<Bots>;
 }
 
 /**

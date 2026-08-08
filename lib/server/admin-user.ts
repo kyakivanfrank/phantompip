@@ -1,11 +1,12 @@
-import { getAllUserBotSettings, getUser } from "@/lib/server/db";
-import { Bot, Payment, UserDocument } from "@/lib/types";
+import { getUser } from "@/lib/server/db";
+import { Payment, UserDocument } from "@/lib/types";
 
 export interface AdminUserSummary {
   id: string;
   email: string;
   fullName: string;
   accountStatus: string;
+  planName: string;
   subscriptionStatus: UserDocument["subscription"]["status"];
   approvalStatus: UserDocument["subscription"]["approvalStatus"];
   subscriptionExpiresAt: number;
@@ -50,7 +51,6 @@ export interface AdminUserDetails extends AdminUserSummary {
     brokerServer: string;
     connectedAt: string | null;
   };
-  bots: Record<string, Bot>;
 }
 
 function sortPayments(payments: Payment[] = []) {
@@ -102,6 +102,7 @@ export function buildAdminUserSummary(user: UserDocument, now = Date.now()): Adm
     email: user.account.email,
     fullName: user.account.username,
     accountStatus: getDisplayAccountStatus(user, now),
+    planName: user.subscription?.planName || 'Starter Scalper',
     subscriptionStatus: user.subscription.status,
     approvalStatus: user.subscription.approvalStatus,
     subscriptionExpiresAt: expiryTimestamp,
@@ -124,7 +125,6 @@ export async function buildAdminUserDetails(userId: string, now = Date.now()): P
 
   const summary = buildAdminUserSummary(user, now);
   const { orderedPayments, latestPayment, latestConfirmedPayment } = getPaymentMeta(user);
-  const bots = await getAllUserBotSettings(user.userId);
 
   return {
     ...summary,
@@ -159,6 +159,5 @@ export async function buildAdminUserDetails(userId: string, now = Date.now()): P
       brokerServer: user.mt5?.brokerServer ?? "",
       connectedAt: user.mt5?.connectedAt ?? null,
     },
-    bots: Object.fromEntries(Object.entries(bots)) as Record<string, Bot>,
   };
 }

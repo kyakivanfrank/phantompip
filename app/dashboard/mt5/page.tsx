@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plug, Check, AlertCircle, Lock, Eye, EyeOff, Zap } from 'lucide-react';
+import { PLANS, PlanDefinition } from '@/lib/plans';
 
 interface ExistingCredentials {
   loginId: string;
@@ -18,7 +19,6 @@ export default function Mt5Page() {
     mt5LoginId: '',
     mt5Password: '',
     brokerServer: '',
-    tradingStyle: 'Conservative',
   });
 
   const [existingCredentials, setExistingCredentials] = useState<ExistingCredentials | null>(null);
@@ -35,6 +35,7 @@ export default function Mt5Page() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const [showWarningOverlay, setShowWarningOverlay] = useState(false);
+  const [activePlanData, setActivePlanData] = useState<PlanDefinition | null>(null);
 
   useEffect(() => {
     const checkAccess = async () => {
@@ -45,8 +46,16 @@ export default function Mt5Page() {
         });
 
         const data = await response.json();
-        const isActive = data?.data?.user?.subscription?.isActive === true;
+        const subscription = data?.data?.user?.subscription;
+        const isActive = subscription?.isActive === true;
         setCanConnect(isActive);
+        
+        if (subscription?.planName) {
+          const matchedPlan = Object.values(PLANS).find(p => p.name === subscription.planName) || PLANS.starter;
+          setActivePlanData(matchedPlan);
+        } else {
+          setActivePlanData(PLANS.starter);
+        }
 
         // Fetch existing credentials
         if (isActive || data?.data?.user?.mt5?.isConnected) {
@@ -83,7 +92,7 @@ export default function Mt5Page() {
     e.preventDefault();
 
     if (!canConnect) {
-      router.replace('/dashboard/subscription');
+      router.replace('/dashboard/plans');
       return;
     }
 
@@ -112,7 +121,6 @@ export default function Mt5Page() {
           mt5LoginId: '',
           mt5Password: '',
           brokerServer: '',
-          tradingStyle: 'Conservative',
         });
         setTimeout(() => setSuccess(false), 5000);
       } else {
@@ -296,17 +304,17 @@ export default function Mt5Page() {
                   >
                     <Lock className="mb-4 h-12 w-12 text-cyan-400 drop-shadow-lg" />
                     <h3 className="mb-2 text-xl font-semibold text-white">Subscription Required</h3>
-                    <p className="mb-6 max-w-sm text-sm text-gray-300">
-                      First make your subscription payment or contact support to approve your subscription to proceed on MT5.
+                    <p className="mb-2 max-w-sm text-sm text-gray-300">
+                      Choose a subscription plan to activate trading automation on your MT5 account.
                     </p>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        router.replace('/dashboard/subscription');
+                        router.replace('/dashboard/plans');
                       }}
                       className="rounded-lg bg-cyan-500 px-6 py-2.5 font-medium text-white transition-colors hover:bg-cyan-600 shadow-[0_0_15px_rgba(6,182,212,0.3)]"
                     >
-                      Go to Subscription
+                      Choose a Plan
                     </button>
                   </motion.div>
                 )}
@@ -392,24 +400,26 @@ export default function Mt5Page() {
                 <p className="mt-1 text-xs text-gray-400">Your broker's MT5 server name (e.g., ICMarketsSC-Demo)</p>
               </div>
 
-              {/* Trading Style */}
+              {/* Active Plan Strategy info */}
               <div>
-                <label htmlFor="tradingStyle" className="block text-sm font-medium text-gray-300">
-                  Trading Style
+                <label className="block text-sm font-medium text-gray-300">
+                  Active Trading Plan
                 </label>
-                <select
-                  id="tradingStyle"
-                  name="tradingStyle"
-                  value={formData.tradingStyle}
-                  onChange={handleChange}
-                  tabIndex={!canConnect && !existingCredentials ? -1 : 0}
-                  className="mt-2 w-full rounded-lg border border-white/[0.1] bg-dark-tertiary/50 px-4 py-2.5 text-white outline-none focus:border-cyan-500/50 transition-colors"
-                >
-                  <option value="Scalping">Scalping (Quick trades, high frequency)</option>
-                  <option value="Conservative">Conservative (Low risk, steady returns)</option>
-                  <option value="Aggressive">Aggressive (High risk, high reward)</option>
-                </select>
-                <p className="mt-1 text-xs text-gray-400">Select your preferred trading strategy</p>
+                <div className="mt-2 w-full rounded-lg border border-purple-500/20 bg-purple-500/5 px-4 py-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-semibold text-purple-300">{activePlanData?.name || 'Loading...'}</span>
+                    <Zap className="w-4 h-4 text-purple-400" />
+                  </div>
+                  {activePlanData && (
+                    <>
+                      <p className="text-sm text-gray-300 mb-3">{activePlanData.description}</p>
+                      <div className="rounded border border-green-500/[0.15] bg-green-500/[0.05] px-3 py-2 w-fit">
+                        <p className="text-[10px] font-mono uppercase tracking-[0.1em] text-green-500/70 mb-0.5">Target Strategy Profit</p>
+                        <p className="text-sm font-semibold text-green-400">{activePlanData.expectedProfit}</p>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 

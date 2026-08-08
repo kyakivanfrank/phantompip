@@ -65,7 +65,7 @@ const gatewayStyles: Record<string, {
   }
 };
 
-export default function SubscriptionClient({ paymentDetails }: { paymentDetails: Record<string, PaymentDetail> }) {
+export default function SubscriptionClient({ paymentDetails, planId }: { paymentDetails: Record<string, PaymentDetail>; planId?: string }) {
   const availableMethods = Object.keys(paymentDetails);
   const initialMethod = availableMethods.length > 0 ? availableMethods[0] : '';
 
@@ -118,7 +118,7 @@ export default function SubscriptionClient({ paymentDetails }: { paymentDetails:
       const res = await fetch('/api/payments/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, planId }),
       });
 
       const data = await res.json();

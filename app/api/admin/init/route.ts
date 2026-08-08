@@ -59,7 +59,6 @@ export async function POST(_req: NextRequest) {
         payments: [],
       },
       mt5: null,
-      bots: {},
     };
 
     await createUser(adminId, adminUser);

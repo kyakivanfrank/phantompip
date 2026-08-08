@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Home, Plug, CreditCard, MicrowaveIcon } from 'lucide-react';
+import { Home, Plug, CreditCard, Layers } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
 interface MobileBottomNavProps {
@@ -17,7 +17,7 @@ export function MobileBottomNav({ userData }: MobileBottomNavProps) {
   const navItems = [
     { href: '/dashboard', label: 'Home', icon: Home },
     { href: '/dashboard/mt5', label: 'MT5', icon: Plug },
-    { href: '/dashboard/bots', label: 'Bots', icon: MicrowaveIcon },
+    { href: '/dashboard/plans', label: 'Plans', icon: Layers },
     { href: '/dashboard/subscription', label: 'Sub', icon: CreditCard },
   ];
 

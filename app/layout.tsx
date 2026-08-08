@@ -3,7 +3,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Phantompip — AI Trading with Invisible Moves. Definitive Pips.',
-  description: 'Professional institutional-grade AI trading platform for MetaTrader 5. Connect your MT5 account and let neural strategies trade autonomously 24/7.',
+  description: 'Professional institutional-grade AI trading platform for MetaTrader 5. Connect your MT5 account and let our automated plans trade autonomously 24/7.',
   keywords: ['trading', 'forex', 'AI', 'terminal', 'platform', 'MT5', 'automated trading', 'neural networks'],
 };
 
