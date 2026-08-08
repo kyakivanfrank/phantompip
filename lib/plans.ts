@@ -45,7 +45,7 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
     price: 120,
     description:
       'An advanced scalping package with faster execution, smarter market analysis, and higher trade frequency.',
-    recommendedAccount: '$10 – $50',
+    recommendedAccount: '$50 – $100',
     bestFor: 'Traders seeking faster account growth',
     expectedProfit: '$1,000 – $2,000',
     isPopular: true,
@@ -64,7 +64,7 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
     price: 200,
     description:
       'The ultimate high-performance scalping package. Built for maximum speed, aggressive entries, and dominant market performance.',
-    recommendedAccount: '$50 – $200+',
+    recommendedAccount: '$50 – $200',
     bestFor: 'Serious traders & prop firm challengers',
     expectedProfit: '$10,000+',
     isFlagship: true,
