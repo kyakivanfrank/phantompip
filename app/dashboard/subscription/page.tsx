@@ -1,18 +1,18 @@
 import SubscriptionClient from './SubscriptionClient';
 import { requireAuth } from '@/lib/server/auth';
 import { getUser } from '@/lib/server/db';
-import { isValidPlanId, getPlan, PLANS } from '@/lib/plans';
+import { redirect } from 'next/navigation';
+import { isValidPlanId, getPlan, PLANS, type PlanId } from '@/lib/plans';
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ plan?: string }> }) {
   const session = await requireAuth();
   const user = await getUser(session.userId);
   const resolvedParams = await searchParams;
 
-  // Determine selected plan from query param, fallback to user's current plan
+  // Determine selected plan from query param, fallback to user's current approved plan
   const planIdParam = resolvedParams?.plan || '';
-  let selectedPlanId = isValidPlanId(planIdParam) ? planIdParam : null;
+  let selectedPlanId: PlanId | null = isValidPlanId(planIdParam) ? planIdParam : null;
 
-  // If no plan param, infer from user's active approved subscription only
   if (!selectedPlanId && user?.subscription?.planName && user.subscription.status === 'active' && user.subscription.approvalStatus === 'approved') {
     const currentPlan = Object.values(PLANS).find(p => p.name === user.subscription.planName);
     if (currentPlan) {
@@ -20,9 +20,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
     }
   }
 
-  // Default to starter if nothing matches
   if (!selectedPlanId) {
-    selectedPlanId = 'starter';
+    redirect('/dashboard/plans');
   }
 
   const plan = getPlan(selectedPlanId);
@@ -76,9 +75,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
 
   // Format subscription data for display
   const subscription = user?.subscription;
-  if (subscription) {
+  if (subscription && subscription.status === 'active' && subscription.approvalStatus === 'approved') {
     const matched = Object.values(PLANS).find(p => p.name === subscription.planName);
     subscription.planName = matched ? matched.name : 'No Plan';
+  } else if (subscription) {
+    subscription.planName = 'No Plan';
   }
   const isActive = subscription?.status === 'active' && subscription?.approvalStatus === 'approved';
   const expiryDate = subscription?.expiryDate ? new Date(subscription.expiryDate) : null;

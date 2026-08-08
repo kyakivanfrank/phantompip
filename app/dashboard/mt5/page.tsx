@@ -49,12 +49,12 @@ export default function Mt5Page() {
         const subscription = data?.data?.user?.subscription;
         const isActive = subscription?.isActive === true;
         setCanConnect(isActive);
-        
-        if (subscription?.planName) {
-          const matchedPlan = Object.values(PLANS).find(p => p.name === subscription.planName) || PLANS.starter;
-          setActivePlanData(matchedPlan);
+
+        if (isActive && subscription?.planName) {
+          const matchedPlan = Object.values(PLANS).find(p => p.name === subscription.planName);
+          setActivePlanData(matchedPlan || null);
         } else {
-          setActivePlanData(PLANS.starter);
+          setActivePlanData(null);
         }
 
         // Fetch existing credentials
@@ -407,10 +407,10 @@ export default function Mt5Page() {
                 </label>
                 <div className="mt-2 w-full rounded-lg border border-purple-500/20 bg-purple-500/5 px-4 py-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-semibold text-purple-300">{activePlanData?.name || 'Loading...'}</span>
+                    <span className="font-semibold text-purple-300">{activePlanData?.name ?? 'No Active Plan'}</span>
                     <Zap className="w-4 h-4 text-purple-400" />
                   </div>
-                  {activePlanData && (
+                  {activePlanData ? (
                     <>
                       <p className="text-sm text-gray-300 mb-3">{activePlanData.description}</p>
                       <div className="rounded border border-green-500/[0.15] bg-green-500/[0.05] px-3 py-2 w-fit">
@@ -418,6 +418,8 @@ export default function Mt5Page() {
                         <p className="text-sm font-semibold text-green-400">{activePlanData.expectedProfit}</p>
                       </div>
                     </>
+                  ) : (
+                    <p className="text-sm text-gray-400">You currently have no approved trading plan. Select a subscription plan to activate MT5 access.</p>
                   )}
                 </div>
               </div>

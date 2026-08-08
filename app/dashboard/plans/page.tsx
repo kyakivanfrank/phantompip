@@ -45,11 +45,12 @@ export default function PlansPage() {
     fetch('/api/auth/me', { credentials: 'include', cache: 'no-store' })
       .then(res => res.json())
       .then(data => {
-        const planName = data?.data?.user?.subscription?.planName;
+        const user = data?.data?.user;
+        const planName = user?.subscription?.isActive ? user.subscription.planName : '';
         let resolvedPlanName = null;
         if (planName) {
-           const matched = Object.values(PLANS).find(p => p.name === planName);
-           if (matched) resolvedPlanName = matched.name;
+          const matched = Object.values(PLANS).find(p => p.name === planName);
+          if (matched) resolvedPlanName = matched.name;
         }
         setCurrentPlan(resolvedPlanName);
         setIsLoading(false);

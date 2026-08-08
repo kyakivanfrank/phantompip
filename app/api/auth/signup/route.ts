@@ -52,8 +52,6 @@ export async function POST(req: NextRequest) {
     // Create user document according to RedisJSON schema
     const userId = "usr_" + randomUUID().substring(0, 8);
     const nowIso = new Date().toISOString();
-    const thirtyDaysLater = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    const todayStr = new Date().toISOString().split('T')[0];
 
     const newUser: UserDocument = {
       userId,

@@ -81,6 +81,8 @@ export default function DashboardPage() {
   const hasActivePlan = userData?.subscription?.status === 'active' && userData?.subscription?.approvalStatus === 'approved' && userData?.subscription?.remainingDays > 0;
   const rawPlanName = hasActivePlan ? userData?.subscription?.planName || '' : '';
   const resolvedPlan = hasActivePlan ? (Object.values(PLANS).find(p => p.name === rawPlanName) || null) : null;
+  const displayBillingCycle = hasActivePlan ? userData.subscription.billingCycle : 'N/A';
+  const displayPaidAmount = hasActivePlan ? userData.subscription.paidAmount : null;
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
@@ -176,10 +178,10 @@ export default function DashboardPage() {
                     </div>
                     <div className="col-span-2 sm:col-span-1 flex flex-col justify-center">
                       <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Billing Cycle</p>
-                      <p className="text-base font-medium text-white capitalize">{userData.subscription.billingCycle}</p>
+                      <p className="text-base font-medium text-white capitalize">{displayBillingCycle}</p>
                       
                       <p className="text-xs text-gray-500 uppercase tracking-wider mb-1 mt-4">Monthly Payment</p>
-                      <p className="text-base font-medium text-white capitalize">${userData.subscription.paidAmount}/mo</p>
+                      <p className="text-base font-medium text-white capitalize">{displayPaidAmount !== null ? `$${displayPaidAmount}/mo` : 'N/A'}</p>
                     </div>
                   </div>
 
@@ -189,16 +191,16 @@ export default function DashboardPage() {
                     <div>
                       <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Expiry Date</p>
                       <p className="text-base font-medium text-white flex items-center gap-2">
-                        <CalendarDays className="h-4 w-4 text-gray-400" /> {userData.subscription.expiryDate || "N/A"}
+                        <CalendarDays className="h-4 w-4 text-gray-400" /> {displayExpiryDate}
                       </p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Time Remaining</p>
                       <p className={`text-base font-medium ${
-                        userData.subscription.remainingDays > 7 ? 'text-green-400' : 
-                        (userData.subscription.remainingDays > 0 ? 'text-yellow-400' : 'text-gray-400')
+                        displayRemainingDays > 7 ? 'text-green-400' : 
+                        (displayRemainingDays > 0 ? 'text-yellow-400' : 'text-gray-400')
                       }`}>
-                        {userData.subscription.remainingDays > 0 ? `${userData.subscription.remainingDays} Days` : '0 Days'}
+                        {displayRemainingDays > 0 ? `${displayRemainingDays} Days` : '0 Days'}
                       </p>
                     </div>
                   </div>
