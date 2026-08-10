@@ -101,9 +101,8 @@ export default function PlansPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className={`relative flex flex-col overflow-hidden rounded-2xl border-2 ${
-                plan.isPopular ? accent.border : 'border-white/[0.08]'
-              } ${accent.bg} backdrop-blur-xl transition-all hover:border-opacity-60`}
+              className={`relative flex flex-col overflow-hidden rounded-2xl border-2 ${plan.isPopular ? accent.border : 'border-white/[0.08]'
+                } ${accent.bg} backdrop-blur-xl transition-all hover:border-opacity-60`}
             >
               {/* Popular / Flagship Badge */}
               {plan.isPopular && (
@@ -149,9 +148,9 @@ export default function PlansPage() {
                   {plan.description}
                 </p>
 
-                {/* Expected Account */}
+                {/* Account Capital */}
                 <div className="mt-4 rounded-lg border border-white/[0.05] bg-white/[0.02] px-3 py-2">
-                  <p className="text-[9px] font-mono uppercase tracking-[0.2em] text-gray-500">Expected Account</p>
+                  <p className="text-[9px] font-mono uppercase tracking-[0.2em] text-gray-500">Account Capital</p>
                   <p className={`mt-1 text-sm font-semibold ${accent.text}`}>{plan.recommendedAccount}</p>
                 </div>
 
@@ -175,11 +174,10 @@ export default function PlansPage() {
                 <button
                   onClick={() => handleChoosePlan(planId)}
                   disabled={isCurrentPlan}
-                  className={`mt-8 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed ${
-                    isCurrentPlan
+                  className={`mt-8 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed ${isCurrentPlan
                       ? 'bg-green-600/20 border border-green-500/30 text-green-400'
                       : accent.btn
-                  }`}
+                    }`}
                 >
                   {isCurrentPlan ? (
                     <>

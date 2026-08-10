@@ -108,13 +108,13 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
                 </span>
               )}
             </div>
-            
+
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <p className="text-xs text-gray-400 mb-1">Plan</p>
                 <p className={`text-sm font-semibold ${isActive && isCurrentPlan ? 'text-green-300' : 'text-purple-300'}`}>{plan.name}</p>
               </div>
-              
+
               <div>
                 <p className="text-xs text-gray-400 mb-1">Monthly Price</p>
                 <p className={`text-sm font-semibold ${isActive && isCurrentPlan ? 'text-green-300' : 'text-purple-300'}`}>${plan.price}/month</p>
@@ -140,7 +140,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
                     <p className="text-sm font-semibold text-purple-300">{plan.bestFor}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-400 mb-1">Expected Account</p>
+                    <p className="text-xs text-gray-400 mb-1">Account Capital</p>
                     <p className="text-sm font-semibold text-purple-300">{plan.recommendedAccount}</p>
                   </div>
                   <div>

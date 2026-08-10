@@ -412,7 +412,7 @@ export default function Home() {
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                        <XAxis dataKey="month" stroke="#9ca3af"  tick={false} />
+                        <XAxis dataKey="month" stroke="#9ca3af" tick={false} />
                         <YAxis stroke="#9ca3af" tick={false} />
                         <Tooltip
                           contentStyle={{ backgroundColor: '#0f0f0f', border: '1px solid rgba(255,255,255,0.1)' }}
@@ -581,9 +581,9 @@ export default function Home() {
                     <span className="text-sm text-gray-400">/month</span>
                   </div>
                   <p className="mt-3 text-sm text-gray-400">{plan.bestFor}</p>
-                  
+
                   <div className="mt-4 rounded-lg border border-white/[0.05] bg-white/[0.02] px-3 py-2 text-center">
-                    <p className="text-[9px] font-mono uppercase tracking-[0.2em] text-gray-500">Expected Account</p>
+                    <p className="text-[9px] font-mono uppercase tracking-[0.2em] text-gray-500">Account Capital</p>
                     <p className={`mt-1 text-sm font-semibold ${accentText}`}>{plan.recommendedAccount}</p>
                   </div>
 
@@ -602,9 +602,8 @@ export default function Home() {
                   </ul>
                   <Link
                     href="/signup"
-                    className={`mt-10 inline-flex h-11 items-center justify-center rounded-md text-sm font-medium text-white hover:opacity-90 transition ${
-                      plan.isPopular ? 'bg-purple-600' : plan.isFlagship ? 'bg-amber-600' : 'bg-blue-500'
-                    }`}
+                    className={`mt-10 inline-flex h-11 items-center justify-center rounded-md text-sm font-medium text-white hover:opacity-90 transition ${plan.isPopular ? 'bg-purple-600' : plan.isFlagship ? 'bg-amber-600' : 'bg-blue-500'
+                      }`}
                   >
                     Choose {plan.name}
                   </Link>
