@@ -140,12 +140,12 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
                     <p className="text-sm font-semibold text-purple-300">{plan.bestFor}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-400 mb-1">Expected Monthly Profit</p>
-                    <p className="text-sm font-semibold text-green-400">{plan.expectedProfit}</p>
+                    <p className="text-xs text-gray-400 mb-1">Expected Account</p>
+                    <p className="text-sm font-semibold text-purple-300">{plan.recommendedAccount}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-400 mb-1">Recommended Account</p>
-                    <p className="text-sm font-semibold text-purple-300">{plan.recommendedAccount}</p>
+                    <p className="text-xs text-gray-400 mb-1">Expected daily profit</p>
+                    <p className="text-sm font-semibold text-green-400">{plan.expectedProfit}</p>
                   </div>
                 </>
               )}

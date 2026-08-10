@@ -24,10 +24,10 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
   starter: {
     id: 'starter',
     name: 'Starter Scalper',
-    price: 50,
+    price: 70,
     description:
-      'A reliable entry-level scalping package designed for traders who want smart, accurate, and disciplined trade execution.',
-    recommendedAccount: '$10 – $50',
+      'A reliable entry-level trading bot designed for traders who want smart, accurate, and disciplined trade execution.',
+    recommendedAccount: '$10 - $200',
     bestFor: 'Beginners and small account traders',
     expectedProfit: '$100 – $200',
     features: [
@@ -44,8 +44,8 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
     name: 'Elite Scalper',
     price: 120,
     description:
-      'An advanced scalping package with faster execution, smarter market analysis, and higher trade frequency.',
-    recommendedAccount: '$50 – $100',
+      'An advanced scalper with faster execution, smarter market analysis, and higher trade frequency.',
+    recommendedAccount: '$15 - $200',
     bestFor: 'Traders seeking faster account growth',
     expectedProfit: '$1,000 – $2,000',
     isPopular: true,
@@ -63,8 +63,8 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
     name: 'Pulse Pro Scalper',
     price: 200,
     description:
-      'The ultimate high-performance scalping package. Built for maximum speed, aggressive entries, and dominant market performance.',
-    recommendedAccount: '$50 – $200',
+      'The ultimate high-performance automated scalper. Built for maximum speed, aggressive entries, and dominant market performance.',
+    recommendedAccount: '$30 - $500',
     bestFor: 'Serious traders & prop firm challengers',
     expectedProfit: '$10,000+',
     isFlagship: true,

@@ -582,8 +582,13 @@ export default function Home() {
                   </div>
                   <p className="mt-3 text-sm text-gray-400">{plan.bestFor}</p>
                   
-                  <div className="mt-4 rounded-lg border border-green-500/[0.15] bg-green-500/[0.05] px-3 py-2 text-center">
-                    <p className="text-[9px] font-mono uppercase tracking-[0.2em] text-green-500/70">Expected Monthly Profit</p>
+                  <div className="mt-4 rounded-lg border border-white/[0.05] bg-white/[0.02] px-3 py-2 text-center">
+                    <p className="text-[9px] font-mono uppercase tracking-[0.2em] text-gray-500">Expected Account</p>
+                    <p className={`mt-1 text-sm font-semibold ${accentText}`}>{plan.recommendedAccount}</p>
+                  </div>
+
+                  <div className="mt-3 rounded-lg border border-green-500/[0.15] bg-green-500/[0.05] px-3 py-2 text-center">
+                    <p className="text-[9px] font-mono uppercase tracking-[0.2em] text-green-500/70">Expected daily profit</p>
                     <p className="mt-1 text-sm font-semibold text-green-400">{plan.expectedProfit}</p>
                   </div>
 

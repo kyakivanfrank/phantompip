@@ -3,14 +3,14 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { LogOut, Home, Plug, CreditCard, Settings, User, ChevronDown, Layers, AlertCircle } from 'lucide-react';
+import { LogOut, Home, Plug, CreditCard, Settings, User, ChevronDown, Cpu, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { ToastProvider } from '@/components/Toast';
 
 const NAV_LINKS = [
   { href: '/dashboard', label: 'Dashboard', icon: Home, exact: true },
-  { href: '/dashboard/plans', label: 'Plans', icon: Layers },
+  { href: '/dashboard/plans', label: 'Bots', icon: Cpu },
   { href: '/dashboard/mt5', label: 'MT5 Account', icon: Plug },
   { href: '/dashboard/subscription', label: 'Subscription', icon: CreditCard },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
@@ -101,11 +101,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <Link
                   key={href}
                   href={href}
-                  className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
-                    active
-                      ? 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/20'
-                      : 'text-gray-300 hover:bg-cyan-500/10 hover:text-cyan-400'
-                  }`}
+                  className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${active
+                    ? 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/20'
+                    : 'text-gray-300 hover:bg-cyan-500/10 hover:text-cyan-400'
+                    }`}
                 >
                   <Icon className="h-5 w-5 shrink-0" />
                   {label}
@@ -230,7 +229,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   </div>
                   <button
                     onClick={handleCloseWarning}
-                    className="w-full py-3 mt-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-all active:scale-[0.98]"
+                    className="w-full py-3 mt-2 bg-red-600 hover:bg-green-700 text-white font-bold rounded-xl transition-all active:scale-[0.98]"
                   >
                     I Understand
                   </button>

@@ -17,7 +17,7 @@ export function MobileBottomNav({ userData }: MobileBottomNavProps) {
   const navItems = [
     { href: '/dashboard', label: 'Home', icon: Home },
     { href: '/dashboard/mt5', label: 'MT5', icon: Plug },
-    { href: '/dashboard/plans', label: 'Plans', icon: Layers },
+    { href: '/dashboard/plans', label: 'Bots', icon: Layers },
     { href: '/dashboard/subscription', label: 'Sub', icon: CreditCard },
   ];
 

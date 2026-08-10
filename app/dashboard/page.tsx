@@ -167,7 +167,7 @@ export default function DashboardPage() {
                             <Zap className="w-4 h-4 text-purple-400" />
                           </div>
                           <div className="rounded border border-green-500/[0.15] bg-green-500/[0.05] px-2 py-1.5 w-fit mt-2">
-                            <p className="text-[9px] font-mono uppercase tracking-[0.1em] text-green-500/70 mb-0.5">Expected Monthly Profit</p>
+                            <p className="text-[9px] font-mono uppercase tracking-[0.1em] text-green-500/70 mb-0.5">Expected daily profit</p>
                             <p className="text-xs font-semibold text-green-400">{resolvedPlan.expectedProfit}</p>
                           </div>
                         </div>
