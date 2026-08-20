@@ -47,7 +47,7 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
       'An advanced scalper with faster execution, smarter market analysis, and higher trade frequency.',
     recommendedAccount: '$15 - $200',
     bestFor: 'Traders seeking faster account growth',
-    expectedProfit: '$1,000 – $2,000',
+    expectedProfit: '$200 – $800',
     isPopular: true,
     features: [
       'Advanced scalping engine',
@@ -66,7 +66,7 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
       'The ultimate high-performance automated scalper. Built for maximum speed, aggressive entries, and dominant market performance.',
     recommendedAccount: '$30 - $500',
     bestFor: 'Serious traders & prop firm challengers',
-    expectedProfit: '$10,000+',
+    expectedProfit: '$1000 – $5000',
     isFlagship: true,
     features: [
       'Ultra-fast scalping execution',
