@@ -138,7 +138,8 @@ export default function DashboardPage() {
         </div>
         <div className="flex-1">
           <p className="text-sm text-yellow-400 leading-relaxed font-medium">
-            <strong className="tracking-wider uppercase text-yellow-300">SECURITY WARNING:</strong> Never send money to personal numbers. Our system is automated, so anyone asking for manual transfers to them is a scammer. Our only support contactt is <span className="font-bold text-white bg-black/20 px-1.5 py-0.5 rounded ml-1">{supportContactNumber}</span>.
+            <strong className="tracking-wider uppercase text-yellow-300">SECURITY WARNING:</strong> Never send money to personal numbers, so anyone asking for manual transfers is a scammer. Our only support contact is
+            <span className="mt-2 block w-fit rounded bg-black/20 px-2 py-1 font-bold tracking-wide text-white">{supportContactNumber}</span>
           </p>
         </div>
       </motion.div>
