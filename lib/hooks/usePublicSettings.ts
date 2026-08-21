@@ -17,8 +17,7 @@ export interface PublicSettings {
 }
 
 const FALLBACK: PublicSettings = {
-  supportContactNumber:
-    process.env.NEXT_PUBLIC_SUPPORT_CONTACT_NUMBER?.trim() || DEFAULT_SUPPORT_CONTACT_NUMBER,
+  supportContactNumber: DEFAULT_SUPPORT_CONTACT_NUMBER,
   plans: PLANS,
 };
 

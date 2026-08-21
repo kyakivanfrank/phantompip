@@ -1,4 +1,3 @@
-import { timingSafeEqual } from "crypto";
 import {
   getRedis,
   attempt,
@@ -8,6 +7,7 @@ import {
   updateSubscription,
   mapWithConcurrency,
 } from "./db";
+import { verifyPassword } from "./hashing";
 import { DEFAULT_PAYMENT_SETTINGS, DEFAULT_SUPPORT_CONTACT_NUMBER } from "@/lib/constants";
 import { PLANS, PLAN_ORDER, type PlanDefinition, type PlanId } from "@/lib/plans";
 
@@ -17,11 +17,10 @@ import { PLANS, PLAN_ORDER, type PlanDefinition, type PlanId } from "@/lib/plans
  * The support contact, the payment destinations and the subscription plan
  * details used to live in .env / lib/plans.ts. They now live in Redis so an
  * admin can change them at any time from Admin -> Settings without a redeploy.
- * The code-level values in lib/constants.ts and lib/plans.ts stay as the seed
- * used by a database that has never been written to.
+ * DEFAULT_SUPPORT_CONTACT_NUMBER / DEFAULT_PAYMENT_SETTINGS (lib/constants.ts)
+ * and PLANS (lib/plans.ts) are the seed for a database never written to.
  *
- * Editing requires CHANGE_SETTINGS_PASSWORD (env only - it is a credential,
- * never stored in or served from the database).
+ * Editing requires the admin to re-enter their own login password.
  */
 
 const SETTINGS_KEY = "system:settings";
@@ -97,32 +96,11 @@ function seedPlans(): Record<PlanId, EditablePlan> {
   }, {} as Record<PlanId, EditablePlan>);
 }
 
-/**
- * Seed values, used only until an admin saves settings for the first time.
- * Env vars still win if present, so a deployment that has not dropped the old
- * variables yet keeps its current values while migrating.
- */
+/** Seed values, used only until an admin saves settings for the first time. */
 function seedDefaults(): PlatformSettings {
   return {
-    supportContactNumber:
-      process.env.NEXT_PUBLIC_SUPPORT_CONTACT_NUMBER?.trim() || DEFAULT_SUPPORT_CONTACT_NUMBER,
-    usdtWalletAddress:
-      process.env.USDT_WALLET_ADDRESS?.trim() || DEFAULT_PAYMENT_SETTINGS.usdtWalletAddress,
-    airtelMoneyNumber:
-      process.env.AIRTEL_MONEY_NUMBER?.trim() || DEFAULT_PAYMENT_SETTINGS.airtelMoneyNumber,
-    airtelMoneyAccountName:
-      process.env.AIRTEL_MONEY_NUMBER_ACCOUNT_NAME?.trim() ||
-      DEFAULT_PAYMENT_SETTINGS.airtelMoneyAccountName,
-    airtelMoneyMerchantCode:
-      process.env.AIRTEL_MONEY_MERCHANT_CODE?.trim() ||
-      DEFAULT_PAYMENT_SETTINGS.airtelMoneyMerchantCode,
-    airtelMoneyMerchantCodeName:
-      process.env.AIRTEL_MONEY_MERCHANT_CODE_NAME?.trim() ||
-      DEFAULT_PAYMENT_SETTINGS.airtelMoneyMerchantCodeName,
-    mtnMomoNumber: process.env.MTN_MOMO_NUMBER?.trim() || DEFAULT_PAYMENT_SETTINGS.mtnMomoNumber,
-    mtnMomoAccountName:
-      process.env.MTN_MOMO_NUMBER_ACCOUNT_NAME?.trim() ||
-      DEFAULT_PAYMENT_SETTINGS.mtnMomoAccountName,
+    supportContactNumber: DEFAULT_SUPPORT_CONTACT_NUMBER,
+    ...DEFAULT_PAYMENT_SETTINGS,
     plans: seedPlans(),
   };
 }
@@ -281,23 +259,16 @@ export async function applyPlanRenames(renames: Record<string, string>): Promise
   return updated.reduce<number>((total, n) => total + n, 0);
 }
 
-export function isSettingsPasswordConfigured(): boolean {
-  return Boolean(process.env.CHANGE_SETTINGS_PASSWORD?.trim());
-}
+/**
+ * Saving settings is confirmed with the admin's own login password, so there is
+ * no second credential to keep in sync and a rotated admin password takes
+ * effect here immediately.
+ */
+export async function verifyAdminPassword(userId: string, candidate: string): Promise<boolean> {
+  if (!candidate) return false;
 
-/** Constant-time comparison so the gate cannot be probed byte by byte. */
-export function verifySettingsPassword(candidate: string): boolean {
-  const expected = process.env.CHANGE_SETTINGS_PASSWORD?.trim();
-  if (!expected) return false;
+  const user = await getUser(userId);
+  if (!user?.account?.passwordHash) return false;
 
-  const expectedBuffer = Buffer.from(expected, "utf8");
-  const candidateBuffer = Buffer.from(candidate ?? "", "utf8");
-
-  if (expectedBuffer.length !== candidateBuffer.length) {
-    // Still burn a comparison to keep the timing profile flat.
-    timingSafeEqual(expectedBuffer, expectedBuffer);
-    return false;
-  }
-
-  return timingSafeEqual(expectedBuffer, candidateBuffer);
+  return await verifyPassword(candidate, user.account.passwordHash);
 }

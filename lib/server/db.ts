@@ -27,7 +27,7 @@ export const backupDb = createUpstashClient(
   process.env.UPSTASH_REDIS_BACKUP_DB_REST_TOKEN
 );
 
-const backupHoursFromEnv = Number.parseInt(process.env.BACKUPNUMBEROFHOURS || "4", 10);
+const backupHoursFromEnv = Number.parseInt(process.env.BACKUP_NUMBER_OF_HOURS || "4", 10);
 const backupIntervalHours = Number.isFinite(backupHoursFromEnv) && backupHoursFromEnv > 0 ? backupHoursFromEnv : 4;
 const backupIntervalSeconds = backupIntervalHours * 60 * 60;
 const TIMEOUT_KEY = "system:last_backup_time";

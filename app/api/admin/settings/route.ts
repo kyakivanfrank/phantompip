@@ -5,10 +5,9 @@ import { requireAdmin } from "@/lib/server/auth";
 import {
   applyPlanRenames,
   getPlatformSettings,
-  isSettingsPasswordConfigured,
   isValidContactNumber,
   savePlatformSettings,
-  verifySettingsPassword,
+  verifyAdminPassword,
   SETTINGS_TEXT_FIELDS,
   type EditablePlan,
   type PlatformSettings,
@@ -20,11 +19,7 @@ export async function GET() {
   try {
     await requireAdmin();
     const settings = await getPlatformSettings();
-    return successResponse(
-      { settings, passwordConfigured: isSettingsPasswordConfigured() },
-      "Settings retrieved",
-      200
-    );
+    return successResponse({ settings }, "Settings retrieved", 200);
   } catch (error) {
     return handleApiError(error);
   }
@@ -32,25 +27,20 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
 
     const body = await request.json().catch(() => ({}));
-    const settingsPassword =
-      typeof body.settingsPassword === 'string' ? body.settingsPassword : '';
+    const adminPassword =
+      typeof body.adminPassword === 'string' ? body.adminPassword : '';
 
-    if (!isSettingsPasswordConfigured()) {
-      return errorResponse(
-        "Settings are locked: CHANGE_SETTINGS_PASSWORD is not configured on the server",
-        503
-      );
+    if (!adminPassword) {
+      return errorResponse("Your admin password is required to save settings", 400);
     }
 
-    if (!settingsPassword) {
-      return errorResponse("Settings password is required", 400);
-    }
-
-    if (!verifySettingsPassword(settingsPassword)) {
-      return errorResponse("Incorrect settings password", 401);
+    // These values decide where subscribers send money, so confirm the session
+    // really belongs to the admin before anything is written.
+    if (!(await verifyAdminPassword(session.userId, adminPassword))) {
+      return errorResponse("Incorrect admin password", 401);
     }
 
     const incoming = body.settings;

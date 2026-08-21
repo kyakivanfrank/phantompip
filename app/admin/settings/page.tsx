@@ -148,14 +148,13 @@ export default function AdminSettingsPage() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  // Platform settings (support contact + payment destinations). Stored in the
-  // database so they can change at any time; every save is gated by the
-  // settings password.
+  // Platform settings (support contact, payment destinations, plans). Stored in
+  // the database so they can change at any time; every save is confirmed with
+  // the admin's own login password.
   const [settings, setSettings] = useState<PlatformSettingsForm>(EMPTY_SETTINGS);
   const [plans, setPlans] = useState<Record<PlanId, PlanForm>>(EMPTY_PLANS);
-  const [settingsPassword, setSettingsPassword] = useState('');
-  const [showSettingsPassword, setShowSettingsPassword] = useState(false);
-  const [passwordConfigured, setPasswordConfigured] = useState(true);
+  const [adminPassword, setAdminPassword] = useState('');
+  const [showAdminPassword, setShowAdminPassword] = useState(false);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [settingsMessage, setSettingsMessage] = useState('');
@@ -181,7 +180,6 @@ export default function AdminSettingsPage() {
           const loaded = data.data?.settings || {};
           setSettings({ ...EMPTY_SETTINGS, ...loaded });
           setPlans(toPlanForms(loaded.plans));
-          setPasswordConfigured(data.data?.passwordConfigured !== false);
         }
       } catch (err: any) {
         if (active) setSettingsError(err.message || 'Unable to load platform settings');
@@ -241,8 +239,8 @@ export default function AdminSettingsPage() {
       return;
     }
 
-    if (!settingsPassword) {
-      setSettingsError('Enter the settings password to save changes');
+    if (!adminPassword) {
+      setSettingsError('Enter your admin password to save changes');
       return;
     }
 
@@ -253,7 +251,7 @@ export default function AdminSettingsPage() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          settingsPassword,
+          adminPassword,
           settings: { ...settings, plans: planPayload },
         }),
       });
@@ -266,7 +264,7 @@ export default function AdminSettingsPage() {
       const saved = data.data?.settings || {};
       setSettings({ ...EMPTY_SETTINGS, ...saved });
       setPlans(toPlanForms(saved.plans));
-      setSettingsPassword('');
+      setAdminPassword('');
       invalidatePublicSettings();
       setSettingsMessage(data.message || 'Settings updated. Changes are live across the site.');
     } catch (err: any) {
@@ -356,12 +354,6 @@ export default function AdminSettingsPage() {
           </div>
         </div>
 
-        {!passwordConfigured && (
-          <p className="mt-4 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-300">
-            CHANGE_SETTINGS_PASSWORD is not set on the server, so these settings are locked. Add it to your environment and restart to enable editing.
-          </p>
-        )}
-
         <form onSubmit={handleSettingsSubmit} className="mt-6 space-y-6">
           {SETTINGS_GROUPS.map((group) => (
             <div key={group.title} className="rounded-md border border-white/[0.05] bg-dark-tertiary/20 p-4">
@@ -377,7 +369,7 @@ export default function AdminSettingsPage() {
                       value={settings[field]}
                       onChange={(e) => updateSetting(field, e.target.value)}
                       placeholder={isLoadingSettings ? 'Loading...' : placeholder}
-                      disabled={isLoadingSettings || !passwordConfigured}
+                      disabled={isLoadingSettings}
                       className="w-full rounded-lg border border-white/[0.1] bg-dark px-3 py-2 text-sm text-white outline-none focus:border-cyan-500 transition disabled:opacity-60"
                     />
                   </div>
@@ -414,7 +406,7 @@ export default function AdminSettingsPage() {
                           value={plans[planId][field]}
                           onChange={(e) => updatePlan(planId, field, e.target.value)}
                           placeholder={isLoadingSettings ? 'Loading...' : placeholder}
-                          disabled={isLoadingSettings || !passwordConfigured}
+                          disabled={isLoadingSettings}
                           className="w-full rounded-lg border border-white/[0.1] bg-dark px-3 py-2 text-sm text-white outline-none focus:border-cyan-500 transition disabled:opacity-60"
                         />
                       </div>
@@ -427,7 +419,7 @@ export default function AdminSettingsPage() {
                       value={plans[planId].description}
                       onChange={(e) => updatePlan(planId, 'description', e.target.value)}
                       rows={2}
-                      disabled={isLoadingSettings || !passwordConfigured}
+                      disabled={isLoadingSettings}
                       className="w-full rounded-lg border border-white/[0.1] bg-dark px-3 py-2 text-sm text-white outline-none focus:border-cyan-500 transition disabled:opacity-60"
                     />
                   </div>
@@ -438,7 +430,7 @@ export default function AdminSettingsPage() {
                       value={plans[planId].features}
                       onChange={(e) => updatePlan(planId, 'features', e.target.value)}
                       rows={6}
-                      disabled={isLoadingSettings || !passwordConfigured}
+                      disabled={isLoadingSettings}
                       className="w-full rounded-lg border border-white/[0.1] bg-dark px-3 py-2 font-mono text-xs text-white outline-none focus:border-cyan-500 transition disabled:opacity-60"
                     />
                   </div>
@@ -450,39 +442,39 @@ export default function AdminSettingsPage() {
           <div className="rounded-md border border-cyan-500/20 bg-cyan-500/[0.04] p-4">
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-cyan-400" />
-              <p className="text-sm font-medium text-white">Settings password required</p>
+              <p className="text-sm font-medium text-white">Confirm with your admin password</p>
             </div>
             <p className="mt-1 text-[11px] text-gray-500">
-              These values decide where subscribers send money, so every save must be confirmed with the settings password.
+              These values decide where subscribers send money, so every save is confirmed with the password you log in with.
             </p>
 
             <div className="relative mt-3">
               <input
-                type={showSettingsPassword ? 'text' : 'password'}
-                value={settingsPassword}
+                type={showAdminPassword ? 'text' : 'password'}
+                value={adminPassword}
                 onChange={(e) => {
-                  setSettingsPassword(e.target.value);
+                  setAdminPassword(e.target.value);
                   setSettingsError('');
                   setSettingsMessage('');
                 }}
-                placeholder="Settings password"
-                autoComplete="off"
-                disabled={isLoadingSettings || !passwordConfigured}
+                placeholder="Admin password"
+                autoComplete="current-password"
+                disabled={isLoadingSettings}
                 className="w-full rounded-lg border border-white/[0.1] bg-dark px-3 py-2 pr-12 text-sm text-white outline-none focus:border-cyan-500 transition disabled:opacity-60"
               />
               <button
                 type="button"
-                onClick={() => setShowSettingsPassword(!showSettingsPassword)}
+                onClick={() => setShowAdminPassword(!showAdminPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-cyan-400 transition-colors"
               >
-                {showSettingsPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showAdminPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
           </div>
 
           <button
             type="submit"
-            disabled={isSavingSettings || isLoadingSettings || !passwordConfigured}
+            disabled={isSavingSettings || isLoadingSettings}
             className="w-full rounded-lg bg-cyan-500 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-400 transition disabled:cursor-not-allowed disabled:bg-cyan-500/60"
           >
             {isSavingSettings ? 'Saving...' : 'Save settings'}
