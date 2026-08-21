@@ -15,7 +15,7 @@ import {
   AlertCircle,
   Zap
 } from 'lucide-react';
-import { PLANS } from '@/lib/plans';
+import { usePublicSettings } from '@/lib/hooks';
 
 type DashboardUser = {
   id: string;
@@ -47,6 +47,7 @@ type DashboardUser = {
 };
 
 export default function DashboardPage() {
+  const { supportContactNumber, plans } = usePublicSettings();
   const [userData, setUserData] = useState<DashboardUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -80,7 +81,7 @@ export default function DashboardPage() {
 
   const hasActivePlan = userData?.subscription?.status === 'active' && userData?.subscription?.approvalStatus === 'approved' && userData?.subscription?.remainingDays > 0;
   const rawPlanName = hasActivePlan ? userData?.subscription?.planName || '' : '';
-  const resolvedPlan = hasActivePlan ? (Object.values(PLANS).find(p => p.name === rawPlanName) || null) : null;
+  const resolvedPlan = hasActivePlan ? (Object.values(plans).find(p => p.name === rawPlanName) || null) : null;
   const displayBillingCycle = hasActivePlan ? userData?.subscription?.billingCycle : 'N/A';
   const displayPaidAmount = hasActivePlan ? userData?.subscription?.paidAmount : null;
   const displayExpiryDate = hasActivePlan ? userData?.subscription?.expiryDate : 'N/A';
@@ -137,7 +138,7 @@ export default function DashboardPage() {
         </div>
         <div className="flex-1">
           <p className="text-sm text-yellow-400 leading-relaxed font-medium">
-            <strong className="tracking-wider uppercase text-yellow-300">SECURITY WARNING:</strong> Never send money to personal numbers. Our system is automated, so anyone asking for manual transfers to them is a scammer. Our only support contactt is <span className="font-bold text-white bg-black/20 px-1.5 py-0.5 rounded ml-1">{process.env.NEXT_PUBLIC_SUPPORT_CONTACT_NUMBER}</span>.
+            <strong className="tracking-wider uppercase text-yellow-300">SECURITY WARNING:</strong> Never send money to personal numbers. Our system is automated, so anyone asking for manual transfers to them is a scammer. Our only support contactt is <span className="font-bold text-white bg-black/20 px-1.5 py-0.5 rounded ml-1">{supportContactNumber}</span>.
           </p>
         </div>
       </motion.div>

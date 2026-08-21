@@ -86,7 +86,7 @@ export default function SubscriptionClient({ paymentDetails, planId }: { payment
           <AlertCircle className="h-6 w-6 text-red-400 shrink-0" />
           <div>
             <h3 className="font-semibold text-red-400 mb-1">Secure Routing Error</h3>
-            <p className="text-sm text-gray-400">Payment options are unavailable because environment configuration handles are missing. Support must resolve this configuration conflict.</p>
+            <p className="text-sm text-gray-400">Payment options are unavailable because no payment destination has been configured yet. An admin can add one under Admin &rarr; Settings.</p>
           </div>
         </div>
       </div>

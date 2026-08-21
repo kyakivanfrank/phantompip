@@ -205,3 +205,26 @@ export const BREAKPOINTS = {
   XL: '1280px',
   '2XL': '1536px',
 } as const;
+
+/**
+ * Support contact
+ * Fallback used until an admin sets the live number in Admin → Settings.
+ */
+export const DEFAULT_SUPPORT_CONTACT_NUMBER = '+256 793 704987';
+
+/**
+ * Payment destinations
+ * Seed values only. They used to live in .env; the live values are stored in
+ * the database and edited by the admin in Admin -> Settings. These keep the
+ * checkout working on a database that has never been written to.
+ */
+export const DEFAULT_PAYMENT_SETTINGS = {
+  usdtWalletAddress: 'TPkbbmZfewcqcUzSG4Vfx6oFD1jUpMGCQK',
+  airtelMoneyNumber: '0731020815',
+  airtelMoneyAccountName: 'Michael',
+  airtelMoneyMerchantCode: '7121441',
+  airtelMoneyMerchantCodeName: 'Micheal PhantomPip',
+  mtnMomoNumber: '',
+  mtnMomoAccountName: '',
+} as const;
+

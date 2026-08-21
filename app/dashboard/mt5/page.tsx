@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plug, Check, AlertCircle, Lock, Eye, EyeOff, Zap } from 'lucide-react';
-import { PLANS, PlanDefinition } from '@/lib/plans';
+import { PlanDefinition } from '@/lib/plans';
+import { usePlans } from '@/lib/hooks';
 
 interface ExistingCredentials {
   loginId: string;
@@ -36,6 +37,11 @@ export default function Mt5Page() {
   const [error, setError] = useState('');
   const [showWarningOverlay, setShowWarningOverlay] = useState(false);
   const [activePlanData, setActivePlanData] = useState<PlanDefinition | null>(null);
+  const plans = usePlans();
+  // The access check runs once, so read the catalogue through a ref to avoid
+  // matching against a stale copy once the live plans arrive.
+  const plansRef = useRef(plans);
+  plansRef.current = plans;
 
   useEffect(() => {
     const checkAccess = async () => {
@@ -51,7 +57,7 @@ export default function Mt5Page() {
         setCanConnect(isActive);
 
         if (isActive && subscription?.planName) {
-          const matchedPlan = Object.values(PLANS).find(p => p.name === subscription.planName);
+          const matchedPlan = Object.values(plansRef.current).find(p => p.name === subscription.planName);
           setActivePlanData(matchedPlan || null);
         } else {
           setActivePlanData(null);

@@ -10,7 +10,8 @@ import {
 } from "@/lib/server/validation";
 import { handleApiError, successResponse, errorResponse } from "@/lib/server/api-response";
 import { Payment } from "@/lib/types";
-import { isValidPlanId, getPlanPrice, getPlan, PLANS, type PlanId } from "@/lib/plans";
+import { isValidPlanId, type PlanId } from "@/lib/plans";
+import { getPlans } from "@/lib/server/settings";
 
 const FALLBACK_AMOUNT = 50; // $50 default
 
@@ -60,9 +61,11 @@ export async function POST(req: NextRequest) {
     let resolvedPlanName = "No Plan";
     let resolvedPlanId: PlanId | undefined = undefined;
 
+    // Prices are admin-managed, so charge from the live catalogue.
+    const plans = await getPlans();
     const existingUser = await getUser(session.userId);
     const currentPlan = existingUser?.subscription?.planName
-      ? Object.values(PLANS).find((plan) => plan.name === existingUser.subscription.planName)
+      ? Object.values(plans).find((plan) => plan.name === existingUser.subscription.planName)
       : undefined;
     const hasValidActivePlan = !!(
       currentPlan &&
@@ -72,8 +75,8 @@ export async function POST(req: NextRequest) {
 
     if (planId) {
       resolvedPlanId = planId;
-      paymentAmount = getPlanPrice(planId);
-      resolvedPlanName = getPlan(planId).name;
+      paymentAmount = plans[planId].price;
+      resolvedPlanName = plans[planId].name;
     } else if (hasValidActivePlan && currentPlan) {
       resolvedPlanId = currentPlan.id as PlanId;
       paymentAmount = currentPlan.price;

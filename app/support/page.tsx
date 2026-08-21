@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { ArrowLeft, Mail, MessageCircle, Copy, ChevronRight, Phone } from 'lucide-react';
+import { useSupportContact } from '@/lib/hooks';
 
 const supportTopics = [
   {
@@ -27,6 +28,7 @@ const supportTopics = [
 ];
 
 export default function Support() {
+  const supportContactNumber = useSupportContact();
   const [openTopic, setOpenTopic] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '' });
@@ -208,14 +210,14 @@ export default function Support() {
 
               {/* Helpline */}
               <a
-                href={`tel:${process.env.NEXT_PUBLIC_SUPPORT_CONTACT_NUMBER}`}
+                href={`tel:${supportContactNumber.replace(/\s/g, '')}`}
                 className="group rounded-xl border border-white/[0.1] bg-dark-secondary/40 p-4 hover:border-cyan-500/30 transition"
               >
                 <div className="flex items-center gap-2 text-cyan-400">
                   <Phone className="size-4" />
                   <span className="font-mono text-[10px] uppercase tracking-widest">Customer Care</span>
                 </div>
-                <p className="mt-3 font-mono text-xs text-white">{process.env.NEXT_PUBLIC_SUPPORT_CONTACT_NUMBER}</p>
+                <p className="mt-3 font-mono text-xs text-white">{supportContactNumber}</p>
                 <p className="mt-2 text-[10px] text-gray-400">Call us for direct support</p>
               </a>
 

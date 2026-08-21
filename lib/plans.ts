@@ -1,8 +1,12 @@
 /**
  * Subscription Plan Definitions
  *
- * Central source of truth for all plan metadata, pricing, and features.
- * Every part of the app (UI, API, payment logic) must reference these constants.
+ * Seed metadata, pricing and features for every plan.
+ * An admin can override the name, price, description, recommended account,
+ * best-for line, expected profit and features from Admin -> Settings; those
+ * edits are stored in the database. Read the LIVE catalogue through
+ * getPlans()/resolvePlans() (server) or usePlans() (client) - these constants
+ * are only the fallback for a database that has never been written to.
  */
 
 export type PlanId = 'starter' | 'elite' | 'pulse_pro';

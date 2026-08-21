@@ -2,19 +2,24 @@ import SubscriptionClient from './SubscriptionClient';
 import { requireAuth } from '@/lib/server/auth';
 import { getUser } from '@/lib/server/db';
 import { redirect } from 'next/navigation';
-import { isValidPlanId, getPlan, PLANS, type PlanId } from '@/lib/plans';
+import { isValidPlanId, type PlanId } from '@/lib/plans';
+import { getPlatformSettings, resolvePlans } from '@/lib/server/settings';
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ plan?: string }> }) {
   const session = await requireAuth();
   const user = await getUser(session.userId);
   const resolvedParams = await searchParams;
 
+  // Plans and payment destinations are admin-managed at runtime (Admin -> Settings).
+  const settings = await getPlatformSettings();
+  const plans = resolvePlans(settings);
+
   // Determine selected plan from query param, fallback to user's current approved plan
   const planIdParam = resolvedParams?.plan || '';
   let selectedPlanId: PlanId | null = isValidPlanId(planIdParam) ? planIdParam : null;
 
   if (!selectedPlanId && user?.subscription?.planName && user.subscription.status === 'active' && user.subscription.approvalStatus === 'approved') {
-    const currentPlan = Object.values(PLANS).find(p => p.name === user.subscription.planName);
+    const currentPlan = Object.values(plans).find(p => p.name === user.subscription.planName);
     if (currentPlan) {
       selectedPlanId = currentPlan.id;
     }
@@ -24,51 +29,51 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
     redirect('/dashboard/plans');
   }
 
-  const plan = getPlan(selectedPlanId);
-  const MOUNT_PAYABLE = plan.price;
+  const plan = plans[selectedPlanId];
+  const amountPayable = plan.price;
 
   const paymentDetails: Record<string, any> = {};
 
   // 1. USDT TRC20 Gateway
-  if (process.env.USDT_WALLET_ADDRESS) {
+  if (settings.usdtWalletAddress) {
     paymentDetails['USDT-TRC20'] = {
       label: 'USDT (TRON/TRC20)',
-      amount: `$${MOUNT_PAYABLE} USDT`,
-      address: process.env.USDT_WALLET_ADDRESS,
+      amount: `$${amountPayable} USDT`,
+      address: settings.usdtWalletAddress,
       accountName: 'Network: TRON (TRC20)',
       helperText: 'Provide the blockchain transaction hash/ID below after completing your transfer.',
     };
   }
 
-  // 2. MTN Mobile Money Gateway (Stays hidden if unconfigured in .env)
-  if (process.env.MTN_MOMO_NUMBER && process.env.MTN_MOMO_NUMBER_ACCOUNT_NAME) {
+  // 2. MTN Mobile Money Gateway (stays hidden while unconfigured)
+  if (settings.mtnMomoNumber && settings.mtnMomoAccountName) {
     paymentDetails['MTN-MoMo'] = {
       label: 'MTN Mobile Money',
-      amount: `USD ${MOUNT_PAYABLE} (pay the equivalent of $${MOUNT_PAYABLE})`,
-      address: process.env.MTN_MOMO_NUMBER,
-      accountName: `Account Name: ${process.env.MTN_MOMO_NUMBER_ACCOUNT_NAME}`,
+      amount: `USD ${amountPayable} (pay the equivalent of $${amountPayable})`,
+      address: settings.mtnMomoNumber,
+      accountName: `Account Name: ${settings.mtnMomoAccountName}`,
       helperText: 'Send the exact USD-equivalent amount to the mobile number above. Verify the account name matches before sending.',
     };
   }
 
   // 3. Airtel Money Merchant Code Gateway
-  if (process.env.AIRTEL_MONEY_MERCHANT_CODE && process.env.AIRTEL_MONEY_MERCHANT_CODE_NAME) {
+  if (settings.airtelMoneyMerchantCode && settings.airtelMoneyMerchantCodeName) {
     paymentDetails['Airtel-Merchant'] = {
       label: 'Airtel Merchant Code',
-      amount: `USD ${MOUNT_PAYABLE} (pay the equivalent of $${MOUNT_PAYABLE})`,
-      address: process.env.AIRTEL_MONEY_MERCHANT_CODE,
-      accountName: `Merchant Name: ${process.env.AIRTEL_MONEY_MERCHANT_CODE_NAME}`,
+      amount: `USD ${amountPayable} (pay the equivalent of $${amountPayable})`,
+      address: settings.airtelMoneyMerchantCode,
+      accountName: `Merchant Name: ${settings.airtelMoneyMerchantCodeName}`,
       helperText: 'Use your Airtel Money menu to Pay Merchant using the code above. Verify the merchant name matches before confirming.',
     };
   }
 
   // 4. Airtel Money Mobile Number Gateway
-  if (process.env.AIRTEL_MONEY_NUMBER && process.env.AIRTEL_MONEY_NUMBER_ACCOUNT_NAME) {
+  if (settings.airtelMoneyNumber && settings.airtelMoneyAccountName) {
     paymentDetails['Airtel-Money'] = {
       label: 'Airtel Mobile Number',
-      amount: `USD ${MOUNT_PAYABLE} (pay the equivalent of $${MOUNT_PAYABLE})`,
-      address: process.env.AIRTEL_MONEY_NUMBER,
-      accountName: `Account Name: ${process.env.AIRTEL_MONEY_NUMBER_ACCOUNT_NAME}`,
+      amount: `USD ${amountPayable} (pay the equivalent of $${amountPayable})`,
+      address: settings.airtelMoneyNumber,
+      accountName: `Account Name: ${settings.airtelMoneyAccountName}`,
       helperText: 'Send the exact USD-equivalent amount directly to the mobile number above. Verify the name matches before sending.',
     };
   }
@@ -76,7 +81,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
   // Format subscription data for display
   const subscription = user?.subscription;
   if (subscription && subscription.status === 'active' && subscription.approvalStatus === 'approved') {
-    const matched = Object.values(PLANS).find(p => p.name === subscription.planName);
+    const matched = Object.values(plans).find(p => p.name === subscription.planName);
     subscription.planName = matched ? matched.name : 'No Plan';
   } else if (subscription) {
     subscription.planName = 'No Plan';

@@ -5,7 +5,8 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { ArrowRight, Plug, Layers, Zap, TrendingUp, ChevronDown, Shield, Crown, Rocket } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { PLANS, PLAN_ORDER } from '@/lib/plans';
+import { PLAN_ORDER } from '@/lib/plans';
+import { usePlans } from '@/lib/hooks';
 
 const chartData = [
   { month: 'D1', value: 120000 },
@@ -46,6 +47,7 @@ const faqItems = [
 ];
 
 export default function Home() {
+  const plans = usePlans();
   const [openFaq, setOpenFaq] = useState(0);
 
   return (
@@ -549,7 +551,7 @@ export default function Home() {
 
           <div className="grid gap-6 md:grid-cols-3 mx-auto max-w-4xl">
             {PLAN_ORDER.map((planId, i) => {
-              const plan = PLANS[planId];
+              const plan = plans[planId];
               const PlanIcon = planId === 'starter' ? Zap : planId === 'elite' ? Crown : Rocket;
               const accentText = planId === 'starter' ? 'text-cyan-400' : planId === 'elite' ? 'text-purple-400' : 'text-amber-400';
               const borderClass = plan.isPopular ? 'border-2 border-purple-500/40' : plan.isFlagship ? 'border-2 border-amber-500/30' : 'border border-white/[0.1]';

@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Check, Zap, Crown, Rocket, ArrowRight, Sparkles } from 'lucide-react';
-import { PLANS, PLAN_ORDER, type PlanId } from '@/lib/plans';
+import { PLAN_ORDER, type PlanId } from '@/lib/plans';
+import { usePlans } from '@/lib/hooks';
 
 const PLAN_ICONS: Record<PlanId, React.ElementType> = {
   starter: Zap,
@@ -38,6 +39,11 @@ const PLAN_ACCENT: Record<PlanId, { border: string; bg: string; text: string; gl
 
 export default function PlansPage() {
   const router = useRouter();
+  const plans = usePlans();
+  // The effect below runs once, so read the catalogue through a ref to avoid
+  // matching against a stale copy once the live plans arrive.
+  const plansRef = useRef(plans);
+  plansRef.current = plans;
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -49,7 +55,7 @@ export default function PlansPage() {
         const planName = user?.subscription?.isActive ? user.subscription.planName : '';
         let resolvedPlanName = null;
         if (planName) {
-          const matched = Object.values(PLANS).find(p => p.name === planName);
+          const matched = Object.values(plansRef.current).find(p => p.name === planName);
           if (matched) resolvedPlanName = matched.name;
         }
         setCurrentPlan(resolvedPlanName);
@@ -90,7 +96,7 @@ export default function PlansPage() {
       {/* Plans Grid */}
       <div className="grid gap-6 md:grid-cols-3">
         {PLAN_ORDER.map((planId, index) => {
-          const plan = PLANS[planId];
+          const plan = plans[planId];
           const accent = PLAN_ACCENT[planId];
           const Icon = PLAN_ICONS[planId];
           const isCurrentPlan = currentPlan === plan.name;

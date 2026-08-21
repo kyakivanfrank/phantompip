@@ -7,6 +7,7 @@ import { LogOut, Home, Plug, CreditCard, Settings, User, ChevronDown, Cpu, Alert
 import { motion, AnimatePresence } from 'framer-motion';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { ToastProvider } from '@/components/Toast';
+import { useSupportContact } from '@/lib/hooks';
 
 const NAV_LINKS = [
   { href: '/dashboard', label: 'Dashboard', icon: Home, exact: true },
@@ -17,6 +18,7 @@ const NAV_LINKS = [
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const supportContactNumber = useSupportContact();
   const router = useRouter();
   const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(true);
@@ -225,7 +227,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   </p>
                   <div className="bg-dark-tertiary/50 p-4 rounded-lg border border-white/5 text-center">
                     <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Official Support Contact</p>
-                    <p className="text-xl font-bold text-cyan-400">{process.env.NEXT_PUBLIC_SUPPORT_CONTACT_NUMBER}</p>
+                    <p className="text-xl font-bold text-cyan-400">{supportContactNumber}</p>
                   </div>
                   <button
                     onClick={handleCloseWarning}
