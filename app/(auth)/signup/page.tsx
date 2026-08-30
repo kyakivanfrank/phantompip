@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useSupportContact } from '@/lib/hooks';
@@ -97,6 +98,24 @@ export default function SignupPage() {
           <p className="text-xs sm:text-sm text-yellow-400 font-medium leading-relaxed">
             ⚠️ <strong>SECURITY WARNING:</strong> Never send money to personal numbers, so anyone asking for manual transfers is a scammer. Our only support contact is
             <span className="mt-2 block text-sm sm:text-base font-bold tracking-wide text-white">{supportContactNumber}</span>
+            <span className="mt-3 flex flex-wrap items-center justify-center gap-2">
+              Join our official Telegram channel:
+              <a
+                href="https://t.me/+lfUKwHk6zZA3MDRk"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 break-all font-semibold text-white underline decoration-cyan-400 underline-offset-4 transition hover:text-cyan-300"
+              >
+                <Image
+                  src="/telegram-icon.webp"
+                  alt=""
+                  width={16}
+                  height={16}
+                  className="h-4 w-4 flex-shrink-0"
+                />
+                https://t.me/+lfUKwHk6zZA3MDRk
+              </a>
+            </span>
           </p>
         </div>
 

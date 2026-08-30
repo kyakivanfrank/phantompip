@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Clock,
   ShieldCheck,
@@ -140,6 +141,24 @@ export default function DashboardPage() {
           <p className="text-sm text-yellow-400 leading-relaxed font-medium">
             <strong className="tracking-wider uppercase text-yellow-300">SECURITY WARNING:</strong> Never send money to personal numbers, so anyone asking for manual transfers is a scammer. Our only support contact is
             <span className="mt-2 block w-fit rounded bg-black/20 px-2 py-1 font-bold tracking-wide text-white">{supportContactNumber}</span>
+            <span className="mt-3 flex flex-wrap items-center gap-2 text-yellow-300">
+              Join our official Telegram channel:
+              <a
+                href="https://t.me/+lfUKwHk6zZA3MDRk"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 break-all rounded bg-black/20 px-2 py-1 font-semibold text-white underline decoration-cyan-400 underline-offset-4 transition hover:text-cyan-300"
+              >
+                <Image
+                  src="/telegram-icon.webp"
+                  alt=""
+                  width={16}
+                  height={16}
+                  className="h-4 w-4 flex-shrink-0"
+                />
+                https://t.me/+lfUKwHk6zZA3MDRk
+              </a>
+            </span>
           </p>
         </div>
       </motion.div>
