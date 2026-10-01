@@ -51,10 +51,10 @@ const NETWORK_ORDER: NetworkId[] = ['BTC', 'BEP20', 'ERC20'];
 
 /* ━━━ Animation presets ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
-const fadeUp = {
+const fadeUp: any = {
   initial: { opacity: 0, y: 16 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] as number[] },
+  transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] },
 };
 
 const stagger = {
@@ -426,6 +426,7 @@ export default function ActivatePage() {
       pollRef.current = setInterval(() => fetchStatus(true), 30000);
       return () => { if (pollRef.current) clearInterval(pollRef.current); };
     }
+    return undefined;
   }, [pageState, fetchStatus]);
 
   /* ── Copy address ───────────────────────────────────────────── */

@@ -2,15 +2,12 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { useSupportContact } from '@/lib/hooks';
 import { useSpotlight } from '@/lib/hooks';
 
 export default function SignupPage() {
   const spotlight = useSpotlight<HTMLDivElement>();
-  const supportContactNumber = useSupportContact();
   const router = useRouter();
   const [formData, setFormData] = useState({
     email: '',

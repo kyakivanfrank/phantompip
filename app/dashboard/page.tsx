@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import Image from 'next/image';
 import {
   Clock,
   ShieldCheck,
@@ -48,7 +47,7 @@ type DashboardUser = {
 };
 
 export default function DashboardPage() {
-  const { supportContactNumber, plans } = usePublicSettings();
+  const { plans } = usePublicSettings();
   const [userData, setUserData] = useState<DashboardUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 

@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/server/auth";
-import { getPayment, updatePaymentStatus, updateSubscription, getUser } from "@/lib/server/db";
+import { getPayment, updatePaymentStatus, updateSubscription } from "@/lib/server/db";
 import { handleApiError, successResponse, errorResponse } from "@/lib/server/api-response";
 import { ACTIVATION_FEE } from "@/lib/constants";
 
