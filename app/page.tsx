@@ -56,7 +56,7 @@ export default function Home() {
       <nav className="sticky top-0 z-40 transition-colors duration-300 border-b border-white/[0.06] bg-dark/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <Link href="/" className="flex items-center active" aria-current="page">
-            <img src="/phantompip-logo.png" alt="Phantompip" className="h-10 w-auto" />
+            <img src="/phantompip-logo.png" alt="Phantompip" className="h-10 w-auto rounded-[33%]" />
           </Link>
           <div className="hidden items-center gap-9 md:flex">
             <a href="#capabilities" className="text-xs font-medium text-gray-400 hover:text-white transition">
@@ -93,7 +93,7 @@ export default function Home() {
       <section className="relative overflow-hidden">
         {/* Background Elements */}
         <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-          <div className="absolute top-0 -right-32 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute top-0 -right-32 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
           <div className="absolute bottom-0 -left-32 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
         </div>
         <div className="bg-grid pointer-events-none absolute inset-0 -z-10 opacity-20"></div>
@@ -113,8 +113,8 @@ export default function Home() {
               className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.02] px-3 py-1 backdrop-blur"
             >
               <span className="relative flex size-1.5">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-blue-500 opacity-75"></span>
-                <span className="relative inline-flex size-1.5 rounded-full bg-blue-500"></span>
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-cyan-500 opacity-75"></span>
+                <span className="relative inline-flex size-1.5 rounded-full bg-cyan-500"></span>
               </span>
               <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-gray-400">
                 Neural engine online · 4.2ms
@@ -131,7 +131,7 @@ export default function Home() {
               AI-Powered MT5
               <br />
               Trading{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-blue-400">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-500 to-cyan-400">
                 Automation
               </span>
             </motion.h1>
@@ -155,7 +155,7 @@ export default function Home() {
             >
               <Link
                 href="/signup"
-                className="group inline-flex h-12 items-center gap-2 rounded-md bg-blue-500 px-6 text-sm font-medium text-white hover:opacity-90 transition"
+                className="group inline-flex h-12 items-center gap-2 rounded-md bg-cyan-500 px-6 text-sm font-medium text-white hover:opacity-90 transition"
               >
                 Connect MT5 & start trading
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition" />
@@ -198,13 +198,13 @@ export default function Home() {
             className="flex justify-center lg:justify-end"
           >
             <div className="relative w-full max-w-[440px]">
-              <div className="absolute -inset-8 -z-10 bg-blue-500/10 blur-3xl"></div>
+              <div className="absolute -inset-8 -z-10 bg-cyan-500/10 blur-3xl"></div>
               <div className="border border-white/[0.1] rounded-2xl p-5 bg-white/[0.02] backdrop-blur">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="relative flex size-2">
-                      <span className="absolute size-full animate-ping rounded-full bg-blue-500/60"></span>
-                      <span className="relative size-2 rounded-full bg-blue-500"></span>
+                      <span className="absolute size-full animate-ping rounded-full bg-cyan-500/60"></span>
+                      <span className="relative size-2 rounded-full bg-cyan-500"></span>
                     </span>
                     <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-gray-400">Terminal · Live</span>
                   </div>
@@ -215,7 +215,7 @@ export default function Home() {
                   <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400">Account equity</p>
                   <div className="mt-1.5 flex items-baseline gap-2">
                     <span className="font-mono text-2xl font-semibold">$142,850.22</span>
-                    <span className="inline-flex items-center gap-0.5 font-mono text-xs text-blue-400">
+                    <span className="inline-flex items-center gap-0.5 font-mono text-xs text-cyan-400">
                       <ArrowRight className="w-3 h-3 rotate-45" />
                       +4.2%
                     </span>
@@ -252,13 +252,13 @@ export default function Home() {
 
                 <div className="mt-3 flex items-center justify-between rounded-lg border border-white/[0.05] bg-dark-tertiary px-3 py-2.5">
                   <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse"></div>
                     <span className="font-mono text-xs text-white">XAUUSD</span>
-                    <span className="rounded-sm bg-blue-500/15 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-widest text-blue-400">
+                    <span className="rounded-sm bg-cyan-500/15 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-widest text-cyan-400">
                       Buy
                     </span>
                   </div>
-                  <span className="font-mono text-xs text-blue-400">+$412.00</span>
+                  <span className="font-mono text-xs text-cyan-400">+$412.00</span>
                 </div>
               </div>
             </div>
@@ -279,7 +279,7 @@ export default function Home() {
             <div key={i} className="flex items-center gap-2.5">
               <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray-400">{item.symbol}</span>
               <span className="font-mono text-xs text-white/80">{item.price}</span>
-              <span className={`font-mono text-[10px] ${item.positive ? 'text-blue-400' : 'text-red-400'}`}>
+              <span className={`font-mono text-[10px] ${item.positive ? 'text-cyan-400' : 'text-red-400'}`}>
                 {item.positive ? '+' : ''}{item.change}
               </span>
             </div>
@@ -315,7 +315,7 @@ export default function Home() {
               transition={{ duration: 0.5, delay: i * 0.1 }}
               className="px-6 py-12"
             >
-              <p className={`text-3xl md:text-4xl tracking-tight ${stat.highlight ? 'text-blue-400' : 'text-white'}`}>
+              <p className={`text-3xl md:text-4xl tracking-tight ${stat.highlight ? 'text-cyan-400' : 'text-white'}`}>
                 <span className="font-mono tabular-nums">{stat.value}</span>
               </p>
               <p className="mt-3 text-[10px] uppercase tracking-[0.22em] text-gray-400">{stat.label}</p>
@@ -335,13 +335,13 @@ export default function Home() {
               className="lg:pt-6"
             >
               <div className="max-w-2xl">
-                <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-blue-400">Command center</p>
+                <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-cyan-400">Command center</p>
                 <h2 className="mt-5 text-3xl md:text-5xl font-semibold text-white">
                   Every position.
                   <br />
                   Every metric.
                   <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">
                     One terminal.
                   </span>
                 </h2>
@@ -357,7 +357,7 @@ export default function Home() {
                   'Telegram alerts on every fill',
                 ].map((item, i) => (
                   <li key={i} className="flex items-center gap-3 text-white/85">
-                    <span className="size-1 rounded-full bg-blue-500"></span>
+                    <span className="size-1 rounded-full bg-cyan-500"></span>
                     {item}
                   </li>
                 ))}
@@ -370,11 +370,11 @@ export default function Home() {
               transition={{ duration: 0.6 }}
               className="relative"
             >
-              <div className="absolute -inset-6 -z-10 bg-blue-500/10 blur-3xl"></div>
+              <div className="absolute -inset-6 -z-10 bg-cyan-500/10 blur-3xl"></div>
               <div className="border border-white/[0.1] rounded-2xl bg-dark-secondary/50 backdrop-blur overflow-hidden">
                 <div className="flex items-center justify-between border-b border-white/[0.05] px-5 py-3">
                   <div className="flex items-center gap-2">
-                    <span className="size-2 rounded-full bg-blue-500 animate-pulse"></span>
+                    <span className="size-2 rounded-full bg-cyan-500 animate-pulse"></span>
                     <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-gray-400">Live terminal</span>
                   </div>
                   <span className="font-mono text-[10px] text-gray-400">IC Markets · 5024188</span>
@@ -384,14 +384,14 @@ export default function Home() {
                   <div className="rounded-lg border border-white/[0.05] bg-dark-tertiary p-4">
                     <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400">Equity</p>
                     <p className="mt-2 font-mono text-xl font-semibold text-white">$142,850.22</p>
-                    <p className="mt-1 inline-flex items-center gap-0.5 font-mono text-[11px] text-blue-400">
+                    <p className="mt-1 inline-flex items-center gap-0.5 font-mono text-[11px] text-cyan-400">
                       <ArrowRight className="w-3 h-3 rotate-45" />
                       +4.2% today
                     </p>
                   </div>
                   <div className="rounded-lg border border-white/[0.05] bg-dark-tertiary p-4">
                     <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400">Daily P&L</p>
-                    <p className="mt-2 font-mono text-xl font-semibold text-blue-400">+$2,401.88</p>
+                    <p className="mt-2 font-mono text-xl font-semibold text-cyan-400">+$2,401.88</p>
                     <p className="mt-1 font-mono text-[11px] text-gray-400">Avg $412/hr</p>
                   </div>
                 </div>
@@ -403,7 +403,7 @@ export default function Home() {
                         <p className="text-[10px] font-medium uppercase tracking-widest text-gray-400">Equity Curve · 30D</p>
                         <p className="mt-1 font-mono text-xl text-white">$142,850.22</p>
                       </div>
-                      <span className="rounded bg-blue-500/15 px-2 py-0.5 font-mono text-[10px] text-blue-400">+18.4%</span>
+                      <span className="rounded bg-cyan-500/15 px-2 py-0.5 font-mono text-[10px] text-cyan-400">+18.4%</span>
                     </div>
                     <ResponsiveContainer width="100%" height={200}>
                       <AreaChart data={chartData}>
@@ -445,10 +445,10 @@ export default function Home() {
             transition={{ duration: 0.6 }}
             className="mx-auto max-w-2xl text-center mb-16"
           >
-            <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-blue-400">Infrastructure flow</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-cyan-400">Infrastructure flow</p>
             <h2 className="mt-5 text-3xl md:text-5xl font-semibold text-white">
               From signup to autonomous execution in{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">
                 three steps
               </span>
               .
@@ -471,8 +471,8 @@ export default function Home() {
                   className="border border-white/[0.1] rounded-xl p-7 bg-dark-secondary/40 backdrop-blur"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-blue-400">{step.num}</span>
-                    <Icon className="w-4 h-4 text-blue-400" />
+                    <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-cyan-400">{step.num}</span>
+                    <Icon className="w-4 h-4 text-cyan-400" />
                   </div>
                   <h3 className="mt-8 text-lg font-semibold">{step.title}</h3>
                   <p className="mt-3 text-sm leading-relaxed text-gray-400">{step.desc}</p>
@@ -494,9 +494,9 @@ export default function Home() {
             transition={{ duration: 0.6 }}
             className="max-w-2xl mb-14"
           >
-            <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-blue-400">Trading capabilities</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-cyan-400">Trading capabilities</p>
             <h2 className="mt-5 text-3xl md:text-5xl font-semibold text-white">
-              AI-Powered. <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">Precision-driven.</span>
+              AI-Powered. <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">Precision-driven.</span>
             </h2>
             <p className="mt-5 text-sm md:text-base leading-relaxed text-gray-400">
               Advanced trading automation built on neural strategies. Every plan comes with institutional-grade execution.
@@ -517,13 +517,13 @@ export default function Home() {
                     <p className="text-sm font-semibold text-white">{capability.name}</p>
                     <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-gray-400">{capability.type}</p>
                   </div>
-                  <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-blue-400">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-cyan-400">
                     {capability.risk}
                   </span>
                 </div>
                 <div className="mt-6 flex items-end justify-between border-t border-white/[0.05] pt-3">
                   <span className="text-[10px] uppercase tracking-widest text-gray-400">30d ROI</span>
-                  <span className="font-mono text-base font-medium text-blue-400">{capability.roi}</span>
+                  <span className="font-mono text-base font-medium text-cyan-400">{capability.roi}</span>
                 </div>
               </motion.div>
             ))}
@@ -540,9 +540,9 @@ export default function Home() {
             transition={{ duration: 0.6 }}
             className="mx-auto max-w-2xl text-center mb-16"
           >
-            <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-blue-400">Subscription plans</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-cyan-400">Subscription plans</p>
             <h2 className="mt-5 text-3xl md:text-5xl font-semibold text-white">
-              Choose the plan that <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">fits your goals</span>.
+              Choose the plan that <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">fits your goals</span>.
             </h2>
             <p className="mt-5 text-sm md:text-base leading-relaxed text-gray-400">
               USDT (TRC20), Airtel Money, and MTN Mobile Money accepted. Trading automation pauses when subscription lapses.
@@ -597,14 +597,14 @@ export default function Home() {
                   <ul className="mt-6 flex-1 space-y-3 border-t border-white/[0.05] pt-6 text-sm">
                     {plan.features.slice(0, 4).map((feature, fi) => (
                       <li key={fi} className="flex items-start gap-3">
-                        <span className="mt-1.5 size-1 shrink-0 rounded-full bg-blue-500"></span>
+                        <span className="mt-1.5 size-1 shrink-0 rounded-full bg-cyan-500"></span>
                         <span className="text-white/85">{feature}</span>
                       </li>
                     ))}
                   </ul>
                   <Link
                     href="/signup"
-                    className={`mt-10 inline-flex h-11 items-center justify-center rounded-md text-sm font-medium text-white hover:opacity-90 transition ${plan.isPopular ? 'bg-purple-600' : plan.isFlagship ? 'bg-amber-600' : 'bg-blue-500'
+                    className={`mt-10 inline-flex h-11 items-center justify-center rounded-md text-sm font-medium text-white hover:opacity-90 transition ${plan.isPopular ? 'bg-purple-600' : plan.isFlagship ? 'bg-amber-600' : 'bg-cyan-500'
                       }`}
                   >
                     Choose {plan.name}
@@ -620,7 +620,7 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="mt-10 flex flex-wrap items-center justify-center gap-3 text-[10px] font-mono uppercase tracking-[0.22em] text-gray-400"
           >
-            <Shield className="w-3.5 h-3.5 text-blue-400" />
+            <Shield className="w-3.5 h-3.5 text-cyan-400" />
             <span>Payments</span>
             {['USDT · TRC20', 'Airtel Money', 'MTN MoMo'].map((method, i) => (
               <span key={i} className="rounded-full border border-white/[0.08] bg-white/[0.02] px-3 py-1">
@@ -671,9 +671,9 @@ export default function Home() {
             transition={{ duration: 0.6 }}
             className="max-w-2xl mb-12"
           >
-            <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-blue-400">FAQ</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-cyan-400">FAQ</p>
             <h2 className="mt-5 text-3xl md:text-5xl font-semibold text-white">
-              Questions, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">answered</span>.
+              Questions, <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">answered</span>.
             </h2>
           </motion.div>
 
@@ -687,7 +687,7 @@ export default function Home() {
               >
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? -1 : i)}
-                  className="flex w-full items-center justify-between py-5 text-left hover:text-blue-400 transition"
+                  className="flex w-full items-center justify-between py-5 text-left hover:text-cyan-400 transition"
                 >
                   <span className="text-sm font-medium text-white">{item.q}</span>
                   <ChevronDown
@@ -723,7 +723,7 @@ export default function Home() {
             transition={{ duration: 0.6 }}
             className="text-4xl md:text-6xl font-semibold text-white"
           >
-            Start trading in <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">60 seconds</span>.
+            Start trading in <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">60 seconds</span>.
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -762,7 +762,7 @@ export default function Home() {
           <div className="flex flex-col justify-between gap-10 lg:flex-row">
             <div className="max-w-sm">
               <Link href="/" className="flex items-center">
-                <img src="/phantompip-logo.png" alt="Phantompip" className="h-10 w-auto" />
+                <img src="/phantompip-logo.png" alt="Phantompip" className="h-10 w-auto rounded-[33%]" />
               </Link>
               <p className="mt-4 text-sm leading-relaxed text-gray-400">
                 Institutional algorithms for the modern trader. Phantompip is not a financial advisor. All trading involves risk.
@@ -784,7 +784,7 @@ export default function Home() {
                 },
               ].map((section, i) => (
                 <div key={i}>
-                  <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-blue-400">{section.title}</p>
+                  <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-cyan-400">{section.title}</p>
                   <ul className="mt-4 space-y-2.5 text-gray-400">
                     {section.links.map((link, j) => (
                       <li key={j}>
@@ -811,3 +811,4 @@ export default function Home() {
     </div>
   );
 }
+

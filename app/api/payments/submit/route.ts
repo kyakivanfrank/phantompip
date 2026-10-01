@@ -10,24 +10,19 @@ import {
 } from "@/lib/server/validation";
 import { handleApiError, successResponse, errorResponse } from "@/lib/server/api-response";
 import { Payment } from "@/lib/types";
-import { isValidPlanId, type PlanId } from "@/lib/plans";
-import { getPlans } from "@/lib/server/settings";
+import { ACTIVATION_FEE } from "@/lib/constants";
 
-const FALLBACK_AMOUNT = 50; // $50 default
+const VALID_METHODS = ["BTC", "BEP20", "ERC20"] as const;
+type PaymentMethod = typeof VALID_METHODS[number];
 
-const VALID_METHODS = ["USDT-TRC20", "MTN-MoMo", "Airtel-Merchant", "Airtel-Money"] as const;
-type FrontendMethod = typeof VALID_METHODS[number];
-
-function mapMethod(method: FrontendMethod): { paymentMethod: Payment["method"]; paymentNetwork: Payment["network"] } {
+function mapNetwork(method: PaymentMethod): Payment["network"] {
   switch (method) {
-    case "MTN-MoMo":
-      return { paymentMethod: "MTNMobileMoney", paymentNetwork: "MTN" };
-    case "Airtel-Merchant":
-    case "Airtel-Money":
-      return { paymentMethod: "AirtelMoney", paymentNetwork: "Airtel" };
-    case "USDT-TRC20":
-    default:
-      return { paymentMethod: "USDT", paymentNetwork: "TRON (TRC20)" };
+    case "BTC":
+      return "Bitcoin";
+    case "BEP20":
+      return "BNB Smart Chain (BEP20)";
+    case "ERC20":
+      return "Ethereum (ERC20)";
   }
 }
 
@@ -37,16 +32,14 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const transactionId = typeof body.transactionId === 'string' ? body.transactionId : undefined;
     const method = typeof body.method === 'string' ? body.method : undefined;
-    const planIdRaw = typeof body.planId === 'string' ? body.planId : undefined;
-    const planId = isValidPlanId(planIdRaw) ? planIdRaw : undefined;
 
     // Validate inputs
     if (!transactionId || !method) {
       return errorResponse("Transaction ID and payment method are required", 400);
     }
 
-    if (!VALID_METHODS.includes(method as FrontendMethod)) {
-      return errorResponse("Invalid payment method selected", 400);
+    if (!VALID_METHODS.includes(method as PaymentMethod)) {
+      return errorResponse("Invalid payment method. Use BTC, BEP20, or ERC20.", 400);
     }
 
     if (!isValidTransactionId(transactionId)) {
@@ -56,36 +49,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Determine payment amount from the selected or current active plan
-    let paymentAmount = FALLBACK_AMOUNT;
-    let resolvedPlanName = "No Plan";
-    let resolvedPlanId: PlanId | undefined = undefined;
-
-    // Prices are admin-managed, so charge from the live catalogue.
-    const plans = await getPlans();
+    // Check if user already has an active subscription (already activated)
     const existingUser = await getUser(session.userId);
-    const currentPlan = existingUser?.subscription?.planName
-      ? Object.values(plans).find((plan) => plan.name === existingUser.subscription.planName)
-      : undefined;
-    const hasValidActivePlan = !!(
-      currentPlan &&
+    if (
       existingUser?.subscription?.status === "active" &&
       existingUser?.subscription?.approvalStatus === "approved"
-    );
-
-    if (planId) {
-      resolvedPlanId = planId;
-      paymentAmount = plans[planId].price;
-      resolvedPlanName = plans[planId].name;
-    } else if (hasValidActivePlan && currentPlan) {
-      resolvedPlanId = currentPlan.id as PlanId;
-      paymentAmount = currentPlan.price;
-      resolvedPlanName = currentPlan.name;
-    } else {
-      return errorResponse("You must select a valid subscription plan before submitting payment", 400);
+    ) {
+      return errorResponse("Your bot is already activated.", 400);
     }
 
-    const { paymentMethod, paymentNetwork } = mapMethod(method as FrontendMethod);
+    const paymentMethod = method as PaymentMethod;
+    const paymentNetwork = mapNetwork(paymentMethod);
 
     // Create payment record
     const paymentId = "pay_" + randomUUID().substring(0, 8);
@@ -93,36 +67,26 @@ export async function POST(req: NextRequest) {
 
     const newPayment: Payment = {
       paymentId,
-      amount: paymentAmount,
+      amount: ACTIVATION_FEE,
       method: paymentMethod,
       network: paymentNetwork,
       transactionRef: sanitizeInput(transactionId),
       status: "pending",
       submittedAt: now,
-      planId: resolvedPlanId,
-      planName: resolvedPlanName,
     };
 
     await createPayment(session.userId, newPayment);
 
-    const updates: Partial<Record<string, any>> = {
+    // Set subscription approval to pending
+    await updateSubscription(session.userId, {
       approvalStatus: "pending",
-    };
-
-    if (!hasValidActivePlan) {
-      updates.status = "inactive";
-      updates.planName = "No Plan";
-      updates.priceUSD = 0;
-      updates.expiryDate = "";
-    }
-
-    await updateSubscription(session.userId, updates);
+      status: "inactive",
+    });
 
     return successResponse(
       {
         paymentId,
-        amount: paymentAmount,
-        planName: resolvedPlanName,
+        amount: ACTIVATION_FEE,
         status: "pending",
       },
       "Payment submitted successfully",

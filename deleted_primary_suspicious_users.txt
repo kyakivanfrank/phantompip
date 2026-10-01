@@ -1,2 +1,0 @@
-Deleted suspicious users from PRIMARY Redis
-

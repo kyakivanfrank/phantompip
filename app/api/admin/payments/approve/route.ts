@@ -4,8 +4,7 @@ import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/server/auth";
 import { getPayment, updatePaymentStatus, updateSubscription, getUser } from "@/lib/server/db";
 import { handleApiError, successResponse, errorResponse } from "@/lib/server/api-response";
-import { isValidPlanId } from "@/lib/plans";
-import { getPlans } from "@/lib/server/settings";
+import { ACTIVATION_FEE } from "@/lib/constants";
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,7 +16,7 @@ export async function POST(req: NextRequest) {
       return errorResponse("Payment ID is required", 400);
     }
 
-    // Get payment (now nested in user, so getPayment searches across users or needs userId)
+    // Get payment (searches across all users)
     const payment = await getPayment(paymentId);
 
     if (!payment) {
@@ -30,73 +29,32 @@ export async function POST(req: NextRequest) {
 
     const userId = payment.userId;
     const now = new Date();
-    const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
 
     // Approve payment inside the user's document
     await updatePaymentStatus(userId, paymentId, "confirmed");
 
-    // Update user subscription
-    const userData = await getUser(userId);
-    let currentExpiry = now;
-    if (userData && userData.subscription.expiryDate) {
-      const parsed = new Date(userData.subscription.expiryDate);
-      if (!isNaN(parsed.getTime())) {
-         currentExpiry = parsed;
-      }
-    }
-
-    const newExpiry = new Date(Math.max(currentExpiry.getTime(), now.getTime()) + thirtyDaysMs);
-    const newExpiryIso = newExpiry.toISOString().split('T')[0];
-
-    // Plan names and prices are admin-managed, so resolve against the live catalogue.
-    const plans = await getPlans();
-    const userPlan = userData?.subscription?.planName
-      ? Object.values(plans).find((plan) => plan.name === userData.subscription.planName)
-      : undefined;
-
-    const rawPaidPlanId: string | undefined = payment.planId;
-    const paidPlanId = isValidPlanId(rawPaidPlanId) ? rawPaidPlanId : undefined;
-
-    let resolvedPlanName: string | null = null;
-    if (paidPlanId) {
-      resolvedPlanName = plans[paidPlanId].name;
-    } else if (payment.planName && Object.values(plans).some((plan) => plan.name === payment.planName)) {
-      resolvedPlanName = payment.planName;
-    } else if (userPlan) {
-      resolvedPlanName = userPlan.name;
-    }
-
-    if (!resolvedPlanName) {
-      return errorResponse("Cannot approve payment: valid plan information is missing.", 400);
-    }
-
-    const planPrice = paidPlanId
-      ? plans[paidPlanId].price
-      : payment.amount || userData?.subscription?.priceUSD || 0;
-    const newPriceUSD = planPrice;
-    const startDateIso = userData?.subscription?.startDate && userData.subscription.startDate !== ""
-      ? userData.subscription.startDate
-      : now.toISOString().split('T')[0];
-    const billingCycle = userData?.subscription?.billingCycle || "monthly";
+    // Activate user — lifetime access (10 years expiry)
+    const lifetimeExpiry = new Date(now.getTime() + 10 * 365.25 * 24 * 60 * 60 * 1000);
+    const expiryIso = lifetimeExpiry.toISOString().split('T')[0];
 
     await updateSubscription(userId, {
       status: "active",
       approvalStatus: "approved",
       approvedAt: now.toISOString(),
-      startDate: startDateIso,
-      billingCycle,
-      expiryDate: newExpiryIso,
-      planName: resolvedPlanName,
-      priceUSD: newPriceUSD,
+      startDate: now.toISOString().split('T')[0],
+      billingCycle: "lifetime",
+      expiryDate: expiryIso,
+      planName: "PhantomPip Bot",
+      priceUSD: ACTIVATION_FEE,
     });
 
     return successResponse(
       {
         paymentId,
-        newExpiryDate: newExpiryIso,
+        newExpiryDate: expiryIso,
         status: "confirmed",
       },
-      "Payment approved successfully",
+      "Payment approved — user activated successfully",
       200
     );
   } catch (error) {

@@ -213,17 +213,33 @@ export const BREAKPOINTS = {
 export const DEFAULT_SUPPORT_CONTACT_NUMBER = '+256 793 704987';
 
 /**
- * Payment destinations
- * Seed values only. They used to live in .env; the live values are stored in
- * the database and edited by the admin in Admin -> Settings. These keep the
- * checkout working on a database that has never been written to.
+ * Bot activation fee (one-time payment)
+ */
+export const ACTIVATION_FEE = 100;
+
+/**
+ * Crypto payment addresses for bot activation
+ */
+export const PAYMENT_ADDRESSES = {
+  BEP20: '0xaec2c7248bb98244d0ab6ea9afdbfb2da6e7fdb7',
+  ERC20: '0xaec2c7248bb98244d0ab6ea9afdbfb2da6e7fdb7',
+  BTC: '1GEihrz3eeUHMUUqbyUHobv8uzMDdbJSvb',
+} as const;
+
+/**
+ * Telegram community link
+ */
+export const TELEGRAM_LINK = 'https://t.me/phantompip_community';
+
+/**
+ * Payment destinations (legacy, kept for admin settings backward compatibility)
  */
 export const DEFAULT_PAYMENT_SETTINGS = {
-  usdtWalletAddress: 'TPkbbmZfewcqcUzSG4Vfx6oFD1jUpMGCQK',
-  airtelMoneyNumber: '0731020815',
-  airtelMoneyAccountName: 'Michael',
-  airtelMoneyMerchantCode: '7121441',
-  airtelMoneyMerchantCodeName: 'Micheal PhantomPip',
+  usdtWalletAddress: '',
+  airtelMoneyNumber: '',
+  airtelMoneyAccountName: '',
+  airtelMoneyMerchantCode: '',
+  airtelMoneyMerchantCodeName: '',
   mtnMomoNumber: '',
   mtnMomoAccountName: '',
 } as const;

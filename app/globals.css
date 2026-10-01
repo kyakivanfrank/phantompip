@@ -3,100 +3,121 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --bg: #09090B;
+    --surface-1: #0F0F12;
+    --surface-2: #18181B;
+    --surface-3: #27272A;
+    
+    --brand-400: #22D3EE;
+    --brand-500: #06B6D4;
+    --brand-600: #0891B2;
+    --blue-600: #2563EB;
+    --violet-500: #8B5CF6;
+    
+    --text-1: #FAFAFA;
+    --text-2: #A1A1AA;
+    --text-3: #71717A;
+    
+    --line-1: rgba(255,255,255,.06);
+    --line-2: rgba(255,255,255,.10);
+    --line-3: rgba(255,255,255,.16);
+    --highlight: rgba(255,255,255,.07);
+    --glass-fill: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.02));
+    
+    --ease-out: cubic-bezier(.22, 1, .36, 1);
+  }
+
   html {
     @apply scroll-smooth;
   }
 
   body {
-    @apply bg-black text-white font-sans antialiased;
+    @apply antialiased;
+    background-color: var(--bg);
+    color: var(--text-1);
+    font-family: theme('fontFamily.sans');
   }
 
   /* Scrollbar styling */
   ::-webkit-scrollbar {
     @apply w-2 h-2;
   }
-
   ::-webkit-scrollbar-track {
-    @apply bg-gray-900;
+    background: var(--bg);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--surface-3);
+    @apply rounded;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-3);
   }
 
-  ::-webkit-scrollbar-thumb {
-    @apply bg-gray-700 rounded hover:bg-gray-600;
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; }
+    .spotlight::after { display:none; }
   }
 }
 
 @layer components {
-  .bg-grid {
-    background-image: 
-      linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px);
-    background-size: 50px 50px;
+  /* Signature text treatments */
+  .text-gradient { 
+    background: linear-gradient(180deg,#fff 20%,#A1A1AA 100%); 
+    -webkit-background-clip:text; 
+    background-clip:text; 
+    color:transparent; 
+  }
+  .text-brand-glow { 
+    background: linear-gradient(90deg,#67E8F9,#22D3EE 40%,#3B82F6); 
+    -webkit-background-clip:text; 
+    background-clip:text; 
+    color:transparent; 
   }
 
-  .radial-glow {
-    background: radial-gradient(
-      circle at center,
-      rgba(59, 130, 246, 0.15) 0%,
-      rgba(168, 85, 247, 0.05) 50%,
-      transparent 100%
-    );
+  /* GLASS: the signature surface */
+  .glass {
+    position: relative;
+    border-radius: 1rem;
+    background: var(--glass-fill);
+    box-shadow:
+      inset 0 1px 0 0 var(--highlight),          /* top-edge light */
+      0 0 0 1px rgba(255,255,255,.07),           /* hairline edge */
+      0 24px 48px -16px rgba(0,0,0,.65);         /* depth */
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+            backdrop-filter: blur(20px) saturate(140%);
+  }
+  @supports not (backdrop-filter: blur(1px)) { .glass { background: rgb(24 24 27 / .92); } }
+
+  /* GRADIENT BORDER: for hero / selected / premium cards */
+  .glass-edge::before {
+    content: ""; position: absolute; inset: 0; padding: 1px; border-radius: inherit; pointer-events: none;
+    background: linear-gradient(160deg, rgba(34,211,238,.55), rgba(255,255,255,.08) 35%, rgba(139,92,246,.35));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
   }
 
-  .animate-scroll {
-    animation: scroll 30s linear infinite;
+  /* SPOTLIGHT: soft light follows the cursor (set --mx/--my with the hook in §4.3) */
+  .spotlight::after {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0;
+    background: radial-gradient(360px circle at var(--mx,50%) var(--my,0%), rgba(34,211,238,.10), transparent 60%);
+    transition: opacity .3s var(--ease-out);
+  }
+  .spotlight:hover::after { opacity: 1; }
+
+  /* SOLID PANEL: dense data, dropdowns, tooltips */
+  .panel { 
+    background: var(--surface-2); 
+    border-radius: .75rem; 
+    box-shadow: 0 0 0 1px var(--line-2), 0 16px 40px -12px rgba(0,0,0,.7); 
   }
 
-  @keyframes scroll {
-    0% {
-      transform: translateX(0);
-    }
-    100% {
-      transform: translateX(-50%);
-    }
+  /* SHIMMER: skeleton loading */
+  .shimmer { 
+    background: linear-gradient(100deg, rgba(255,255,255,.04) 30%, rgba(255,255,255,.10) 50%, rgba(255,255,255,.04) 70%); 
+    background-size: 200% 100%; 
+    animation: shimmer 1.6s linear infinite; 
   }
-
-  .card {
-    @apply bg-dark-secondary border border-dark-border rounded-lg p-4;
-  }
-
-  .card-hover {
-    @apply card transition-all duration-300 hover:border-accent-blue hover:shadow-lg hover:shadow-accent-blue/10;
-  }
-
-  .input {
-    @apply bg-dark-tertiary border border-dark-border rounded-lg px-4 py-2 text-light-primary placeholder-slate-500 transition-colors duration-200 focus:outline-none focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/20;
-  }
-
-  .btn-primary {
-    @apply px-6 py-2 bg-accent-blue text-white rounded-lg font-medium transition-all duration-200 hover:bg-blue-600 hover:shadow-lg hover:shadow-accent-blue/30 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
-  }
-
-  .btn-secondary {
-    @apply px-6 py-2 bg-dark-tertiary border border-dark-border text-light-primary rounded-lg font-medium transition-all duration-200 hover:border-accent-blue hover:bg-dark-secondary active:scale-95;
-  }
-
-  .badge-success {
-    @apply inline-flex items-center px-3 py-1 bg-green-500/20 text-accent-green rounded-full text-xs font-semibold;
-  }
-
-  .badge-danger {
-    @apply inline-flex items-center px-3 py-1 bg-red-500/20 text-accent-red rounded-full text-xs font-semibold;
-  }
-
-  .text-glow {
-    @apply text-accent-cyan drop-shadow-[0_0_8px_rgba(6,182,212,0.3)];
-  }
-
-  .shimmer {
-    animation: shimmer 2s infinite;
-  }
-
-  @keyframes shimmer {
-    0% {
-      background-position: -1000px 0;
-    }
-    100% {
-      background-position: 1000px 0;
-    }
-  }
+  @keyframes shimmer { to { background-position: -200% 0; } }
 }

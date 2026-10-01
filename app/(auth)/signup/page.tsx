@@ -6,8 +6,10 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useSupportContact } from '@/lib/hooks';
+import { useSpotlight } from '@/lib/hooks';
 
 export default function SignupPage() {
+  const spotlight = useSpotlight<HTMLDivElement>();
   const supportContactNumber = useSupportContact();
   const router = useRouter();
   const [formData, setFormData] = useState({
@@ -86,44 +88,20 @@ export default function SignupPage() {
       transition={{ duration: 0.5 }}
       className="w-full"
     >
-      <div className="rounded-2xl p-6 sm:p-8 border border-white/[0.1] bg-dark-secondary/40 backdrop-blur-xl shadow-2xl">
-        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-white">
+      <div className="glass glass-edge spotlight p-6 sm:p-8" {...spotlight}>
+        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-[--text-1]">
           Join Phantompip
         </h1>
-        <p className="mt-2 text-xs sm:text-sm text-gray-400 leading-relaxed">
-          Step 1 of 2 — next, activate your subscription (or wait for admin activation).
+        <p className="mt-2 text-sm text-[--text-2]">
+          Create an account to get started.
         </p>
 
-        <div className="mt-6 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-4 text-center">
-          <p className="text-xs sm:text-sm text-yellow-400 font-medium leading-relaxed">
-            ⚠️ <strong>SECURITY WARNING:</strong> Never send money to personal numbers, so anyone asking for manual transfers is a scammer. Our only support contact is
-            <span className="mt-2 block text-sm sm:text-base font-bold tracking-wide text-white">{supportContactNumber}</span>
-            <span className="mt-3 flex flex-wrap items-center justify-center gap-2">
-              Join our official Telegram channel:
-              <a
-                href="https://t.me/+lfUKwHk6zZA3MDRk"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 break-all font-semibold text-white underline decoration-cyan-400 underline-offset-4 transition hover:text-cyan-300"
-              >
-                <Image
-                  src="/telegram-icon.webp"
-                  alt=""
-                  width={16}
-                  height={16}
-                  className="h-4 w-4 flex-shrink-0"
-                />
-                https://t.me/+lfUKwHk6zZA3MDRk
-              </a>
-            </span>
-          </p>
-        </div>
 
         {error && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="mt-4 rounded-md border border-red-500/30 bg-red-500/10 p-3"
+            className="mt-4 rounded-md ring-1 ring-red-500/25 bg-red-500/10 p-3"
           >
             <p className="text-xs text-red-400">{error}</p>
           </motion.div>
@@ -131,7 +109,7 @@ export default function SignupPage() {
 
         <form onSubmit={handleSubmit} className="mt-6 sm:mt-8 space-y-4">
           <label className="block">
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-gray-400">Full Name</span>
+            <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-[--text-2]">Full Name</span>
             <input
               type="text"
               name="fullName"
@@ -139,12 +117,12 @@ export default function SignupPage() {
               value={formData.fullName}
               onChange={handleChange}
               required
-              className="mt-2 h-11 w-full rounded-md border border-white/[0.1] bg-dark-tertiary/50 px-3 text-sm text-white outline-none transition-colors focus:border-cyan-500 focus:bg-dark-tertiary"
+              className="mt-2 h-11 w-full rounded-md bg-white/[0.04] px-3 text-sm text-[--text-1] placeholder:text-[--text-3] shadow-[inset_0_1px_2px_rgba(0,0,0,.4),0_0_0_1px_rgba(255,255,255,.10)] outline-none transition-all duration-150 hover:shadow-[inset_0_1px_2px_rgba(0,0,0,.4),0_0_0_1px_rgba(255,255,255,.18)] focus:bg-white/[0.06] focus:shadow-[inset_0_1px_2px_rgba(0,0,0,.4),0_0_0_1px_rgba(99,102,241,.9),0_0_0_4px_rgba(99,102,241,.15)] aria-[invalid=true]:shadow-[0_0_0_1px_rgba(239,68,68,.9),0_0_0_4px_rgba(239,68,68,.15)] disabled:cursor-not-allowed disabled:opacity-50"
             />
           </label>
 
           <label className="block">
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-gray-400">Email</span>
+            <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-[--text-2]">Email</span>
             <input
               type="email"
               name="email"
@@ -152,13 +130,13 @@ export default function SignupPage() {
               value={formData.email}
               onChange={handleChange}
               required
-              className="mt-2 h-11 w-full rounded-md border border-white/[0.1] bg-dark-tertiary/50 px-3 text-sm text-white outline-none transition-colors focus:border-cyan-500 focus:bg-dark-tertiary"
+              className="mt-2 h-11 w-full rounded-md bg-white/[0.04] px-3 text-sm text-[--text-1] placeholder:text-[--text-3] shadow-[inset_0_1px_2px_rgba(0,0,0,.4),0_0_0_1px_rgba(255,255,255,.10)] outline-none transition-all duration-150 hover:shadow-[inset_0_1px_2px_rgba(0,0,0,.4),0_0_0_1px_rgba(255,255,255,.18)] focus:bg-white/[0.06] focus:shadow-[inset_0_1px_2px_rgba(0,0,0,.4),0_0_0_1px_rgba(99,102,241,.9),0_0_0_4px_rgba(99,102,241,.15)] aria-[invalid=true]:shadow-[0_0_0_1px_rgba(239,68,68,.9),0_0_0_4px_rgba(239,68,68,.15)] disabled:cursor-not-allowed disabled:opacity-50"
             />
           </label>
 
           {/* Password Input with Toggle */}
           <label className="block">
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-gray-400">Password</span>
+            <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-[--text-2]">Password</span>
             <div className="relative mt-2">
               <input
                 type={showPassword ? 'text' : 'password'}
@@ -169,12 +147,12 @@ export default function SignupPage() {
                 onFocus={() => setIsPasswordFocused(true)}
                 onBlur={() => setIsPasswordFocused(false)}
                 required
-                className="h-11 w-full rounded-md border border-white/[0.1] bg-dark-tertiary/50 pl-3 pr-12 text-sm text-white outline-none transition-colors focus:border-cyan-500 focus:bg-dark-tertiary"
+                className="h-11 w-full rounded-md bg-white/[0.04] pl-3 pr-12 text-sm text-[--text-1] placeholder:text-[--text-3] shadow-[inset_0_1px_2px_rgba(0,0,0,.4),0_0_0_1px_rgba(255,255,255,.10)] outline-none transition-all duration-150 hover:shadow-[inset_0_1px_2px_rgba(0,0,0,.4),0_0_0_1px_rgba(255,255,255,.18)] focus:bg-white/[0.06] focus:shadow-[inset_0_1px_2px_rgba(0,0,0,.4),0_0_0_1px_rgba(99,102,241,.9),0_0_0_4px_rgba(99,102,241,.15)] aria-[invalid=true]:shadow-[0_0_0_1px_rgba(239,68,68,.9),0_0_0_4px_rgba(239,68,68,.15)] disabled:cursor-not-allowed disabled:opacity-50"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 font-mono text-[10px] font-semibold tracking-wider text-gray-400 transition-colors hover:text-cyan-400 select-none"
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded font-mono text-[11px] font-semibold tracking-wider text-[--text-2] transition-colors hover:text-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70 select-none"
               >
                 {showPassword ? 'HIDE' : 'SHOW'}
               </button>
@@ -191,12 +169,12 @@ export default function SignupPage() {
                 className="overflow-hidden"
               >
                 <div className="rounded-md border border-white/[0.05] bg-dark-tertiary/20 p-3 space-y-2">
-                  <p className="text-[10px] text-gray-500 font-mono uppercase">Security Check</p>
+                  <p className="text-[11px] text-light-muted font-mono uppercase">Security Check</p>
                   <div className="space-y-1">
                     {requirements.map((req, i) => (
                       <div key={i} className="flex items-center gap-2 text-[11px] transition-colors">
-                        <div className={`size-1 rounded-full ${req.met ? 'bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.5)]' : 'bg-gray-600'}`} />
-                        <span className={req.met ? 'text-gray-200' : 'text-gray-500'}>
+                        <div className={`size-1 rounded-full ${req.met ? 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]' : 'bg-zinc-600'}`} />
+                        <span className={req.met ? 'text-light-primary' : 'text-light-muted'}>
                           {req.label}
                         </span>
                       </div>
@@ -209,7 +187,7 @@ export default function SignupPage() {
 
           {/* Confirm Password Input with Toggle */}
           <label className="block">
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-gray-400">Confirm Password</span>
+            <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-[--text-2]">Confirm Password</span>
             <div className="relative mt-2">
               <input
                 type={showConfirmPassword ? 'text' : 'password'}
@@ -218,38 +196,43 @@ export default function SignupPage() {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 required
-                className="h-11 w-full rounded-md border border-white/[0.1] bg-dark-tertiary/50 pl-3 pr-12 text-sm text-white outline-none transition-colors focus:border-cyan-500 focus:bg-dark-tertiary"
+                className="h-11 w-full rounded-md bg-white/[0.04] pl-3 pr-12 text-sm text-[--text-1] placeholder:text-[--text-3] shadow-[inset_0_1px_2px_rgba(0,0,0,.4),0_0_0_1px_rgba(255,255,255,.10)] outline-none transition-all duration-150 hover:shadow-[inset_0_1px_2px_rgba(0,0,0,.4),0_0_0_1px_rgba(255,255,255,.18)] focus:bg-white/[0.06] focus:shadow-[inset_0_1px_2px_rgba(0,0,0,.4),0_0_0_1px_rgba(99,102,241,.9),0_0_0_4px_rgba(99,102,241,.15)] aria-[invalid=true]:shadow-[0_0_0_1px_rgba(239,68,68,.9),0_0_0_4px_rgba(239,68,68,.15)] disabled:cursor-not-allowed disabled:opacity-50"
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 font-mono text-[10px] font-semibold tracking-wider text-gray-400 transition-colors hover:text-cyan-400 select-none"
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded font-mono text-[11px] font-semibold tracking-wider text-[--text-2] transition-colors hover:text-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70 select-none"
               >
                 {showConfirmPassword ? 'HIDE' : 'SHOW'}
               </button>
             </div>
           </label>
 
-          <p className="text-[10px] text-gray-400 leading-relaxed pt-2">
-            By signing up you agree to our Terms of Service and Privacy Policy. Trading involves substantial risk of loss.
+          <p className="text-[11px] text-light-secondary leading-relaxed pt-2">
+            By signing up, you accept our Terms & Privacy Policy. Trading involves risk.
           </p>
-
           <button
             type="submit"
             disabled={isLoading}
-            className="h-11 w-full rounded-md bg-cyan-500 text-sm font-medium text-white transition-all hover:opacity-90 active:scale-[0.99] disabled:opacity-50 mt-6"
+            className="mt-6 relative inline-flex h-11 w-full items-center justify-center gap-2 rounded-md px-5 text-sm font-semibold text-white bg-indigo-600 shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_1px_2px_rgba(0,0,0,0.4)] transition-all duration-150 hover:bg-indigo-500 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_1px_3px_rgba(0,0,0,0.5)] active:translate-y-px active:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090B] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
           >
             {isLoading ? 'Creating account...' : 'Sign Up'}
           </button>
         </form>
       </div>
 
-      <p className="mt-6 text-center text-xs text-gray-400">
-        Already a member?{' '}
-        <Link href="/login" className="text-cyan-400 hover:underline transition-colors hover:text-cyan-300">
-          Log in
+      <div className="mt-8 flex justify-center">
+        <Link 
+          href="/login" 
+          className="group inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-medium text-[--text-2] bg-white/[0.05] shadow-[inset_0_1px_0_rgba(255,255,255,.07),0_0_0_1px_rgba(255,255,255,.10)] transition-all duration-150 hover:text-white hover:bg-indigo-500/10 hover:shadow-[inset_0_1px_0_rgba(255,255,255,.08),0_0_0_1px_rgba(99,102,241,.35)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70"
+        >
+          <span>Already a member?</span>
+          <span className="text-indigo-400 font-semibold group-hover:text-indigo-300 transition-colors">Log in</span>
+          <svg className="h-4 w-4 text-indigo-400 transition-transform group-hover:translate-x-1 group-hover:text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
         </Link>
-      </p>
+      </div>
     </motion.div>
   );
 }

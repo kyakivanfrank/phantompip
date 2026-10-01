@@ -6,3 +6,4 @@ export {
   usePlans,
   invalidatePublicSettings,
 } from './usePublicSettings';
+export { useSpotlight } from './useSpotlight';

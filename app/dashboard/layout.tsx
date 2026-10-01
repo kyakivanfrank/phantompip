@@ -7,24 +7,19 @@ import { LogOut, Home, Plug, CreditCard, Settings, User, ChevronDown, Cpu, Alert
 import { motion, AnimatePresence } from 'framer-motion';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { ToastProvider } from '@/components/Toast';
-import { useSupportContact } from '@/lib/hooks';
 
 const NAV_LINKS = [
   { href: '/dashboard', label: 'Dashboard', icon: Home, exact: true },
-  { href: '/dashboard/plans', label: 'Bots', icon: Cpu },
   { href: '/dashboard/mt5', label: 'MT5 Account', icon: Plug },
-  { href: '/dashboard/subscription', label: 'Subscription', icon: CreditCard },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const supportContactNumber = useSupportContact();
   const router = useRouter();
   const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(true);
   const [userData, setUserData] = useState<any>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [showWarningModal, setShowWarningModal] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -41,8 +36,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           } else {
             setUserData(user);
             setIsLoading(false);
-            if (!sessionStorage.getItem('scamWarningShown')) {
-              setShowWarningModal(true);
+
+            // Gate: redirect non-activated users to /dashboard/activate
+            const isActivated =
+              user.subscription?.isActive === true;
+            if (!isActivated && pathname !== '/dashboard/activate') {
+              router.push('/dashboard/activate');
             }
           }
         } else {
@@ -50,12 +49,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }
       })
       .catch(() => router.push('/login'));
-  }, [router]);
+  }, [router, pathname]);
 
-  const handleCloseWarning = () => {
-    sessionStorage.setItem('scamWarningShown', 'true');
-    setShowWarningModal(false);
-  };
+
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -85,6 +81,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const userInitials = userData?.email?.substring(0, 2).toUpperCase() || 'US';
 
+  // Non-activated users on /dashboard/activate get a bare layout (no sidebar/nav)
+  const isActivated = userData?.subscription?.isActive === true;
+  if (!isActivated && pathname === '/dashboard/activate') {
+    return (
+      <ToastProvider>
+        {children}
+      </ToastProvider>
+    );
+  }
+
   return (
     <ToastProvider>
       <div className="flex h-screen w-screen overflow-hidden flex-col md:flex-row bg-dark">
@@ -92,7 +98,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <aside className="hidden md:flex fixed md:relative w-64 h-full border-r border-white/10 bg-dark-secondary/40 backdrop-blur-xl z-40 flex-shrink-0 flex-col">
           <div className="p-6 border-b border-white/10">
             <Link href="/dashboard" className="flex items-center justify-center">
-              <img src="/phantompip-logo.png" alt="Phantompip" className="h-40 w-auto" />
+              <img src="/phantompip-logo.png" alt="Phantompip" className="h-40 w-auto rounded-[33%]" />
             </Link>
           </div>
 
@@ -132,7 +138,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               {/* Left */}
               <div className="flex items-center gap-3">
                 <Link href="/dashboard" className="block md:hidden">
-                  <img src="/phantompip-logo.png" alt="Phantompip" className="h-8 w-auto" />
+                  <img src="/phantompip-logo.png" alt="Phantompip" className="h-8 w-auto rounded-[33%]" />
                 </Link>
                 <div className="hidden sm:flex items-center gap-2">
                   {userData?.subscription?.isActive && (
@@ -150,7 +156,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     className="flex items-center gap-2 p-1.5 rounded-full md:rounded-xl md:bg-white/5 hover:bg-white/10 md:border border-white/5 transition-all focus:outline-none"
                   >
-                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-xs font-bold text-white shadow-md">
+                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center text-xs font-bold text-white shadow-md">
                       {userInitials}
                     </div>
                     <div className="hidden sm:block max-w-[120px]">
@@ -202,44 +208,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         <MobileBottomNav userData={userData} onLogout={handleLogout} />
 
-        {/* Warning Modal */}
-        <AnimatePresence>
-          {showWarningModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-            >
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0, y: 20 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.95, opacity: 0, y: -20 }}
-                className="w-full max-w-md rounded-2xl border border-red-500/30 bg-dark-secondary shadow-2xl overflow-hidden"
-              >
-                <div className="bg-red-500/10 p-6 border-b border-red-500/20 text-center">
-                  <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-                  <h2 className="text-2xl font-bold text-white tracking-tight uppercase">Security Warning</h2>
-                </div>
-                <div className="p-6 space-y-4">
-                  <p className="text-gray-300 text-sm md:text-base leading-relaxed text-center">
-                    Please remember: <strong>NEVER</strong> send money to personal numbers. Our system is automated, so anyone asking for manual transfers to them is a scammer.
-                  </p>
-                  <div className="bg-dark-tertiary/50 p-4 rounded-lg border border-white/5 text-center">
-                    <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Official Support Contact</p>
-                    <p className="text-xl font-bold text-cyan-400">{supportContactNumber}</p>
-                  </div>
-                  <button
-                    onClick={handleCloseWarning}
-                    className="w-full py-3 mt-2 bg-red-600 hover:bg-green-700 text-white font-bold rounded-xl transition-all active:scale-[0.98]"
-                  >
-                    I Understand
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+
       </div>
     </ToastProvider>
   );

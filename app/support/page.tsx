@@ -51,7 +51,7 @@ export default function Support() {
       <nav className="sticky top-0 z-40 transition-colors duration-300 border-b border-white/[0.06] bg-dark/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <Link href="/" className="flex items-center active" aria-current="page">
-            <img src="/phantompip-logo.png" alt="Phantompip" className="h-10 w-auto" />
+            <img src="/phantompip-logo.png" alt="Phantompip" className="h-10 w-auto rounded-[33%]" />
           </Link>
           <div className="hidden items-center gap-9 md:flex">
             <a href="/#capabilities" className="text-xs font-medium text-gray-400 hover:text-white transition">
@@ -89,7 +89,7 @@ export default function Support() {
         {/* Background Elements */}
         <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
           <div className="absolute top-0 -right-32 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 -left-32 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 -left-32 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
         </div>
         <div className="bg-grid pointer-events-none absolute inset-0 -z-10 opacity-20"></div>
 
@@ -106,7 +106,7 @@ export default function Support() {
               Back
             </Link>
             <Link href="/" className="flex items-center">
-              <img src="/phantompip-logo.png" alt="Phantompip" className="h-8 w-auto" />
+              <img src="/phantompip-logo.png" alt="Phantompip" className="h-8 w-auto rounded-[33%]" />
             </Link>
             <div className="w-12"></div>
           </motion.div>
@@ -301,3 +301,4 @@ export default function Support() {
     </div>
   );
 }
+

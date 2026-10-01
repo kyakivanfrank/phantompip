@@ -66,7 +66,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <aside className="hidden md:flex fixed md:relative w-64 h-full border-r border-white/10 bg-dark-secondary/40 backdrop-blur-xl z-40 flex-shrink-0 flex-col">
           <div className="p-6 border-b border-white/10">
             <Link href="/admin" className="flex items-center justify-center">
-              <img src="/phantompip-logo.png" alt="Phantompip" className="h-40 w-auto" />
+              <img src="/phantompip-logo.png" alt="Phantompip" className="h-40 w-auto rounded-[33%]" />
             </Link>
           </div>
 
@@ -105,7 +105,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="items-center px-4 md:px-0 justify-between h-16 flex flex-shrink-0 max-w-7xl mx-auto">
               <div className="flex items-center gap-3">
                 <Link href="/admin" className="block md:hidden">
-                  <img src="/phantompip-logo.png" alt="Phantompip" className="h-8 w-auto" />
+                  <img src="/phantompip-logo.png" alt="Phantompip" className="h-8 w-auto rounded-[33%]" />
                 </Link>
                 <span className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                   <CheckCircle className="h-3.5 w-3.5" /> Admin Panel
@@ -118,7 +118,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     className="flex items-center gap-2 p-1.5 rounded-full md:rounded-xl md:bg-white/5 hover:bg-white/10 md:border border-white/5 transition-all focus:outline-none"
                   >
-                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-xs font-bold text-white shadow-md">
+                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center text-xs font-bold text-white shadow-md">
                       {userData?.email?.substring(0, 2).toUpperCase() || 'AD'}
                     </div>
                     <div className="hidden sm:block max-w-[120px]">

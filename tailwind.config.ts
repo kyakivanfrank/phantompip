@@ -8,44 +8,29 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['"DM Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['"Space Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        display: ['"Space Mono"', 'ui-monospace', 'monospace'],
+      },
       colors: {
-        slate: {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          750: '#1e293b',
-          800: '#1e293b',
-          900: '#0f172a',
-          950: '#020617',
+        dark: {
+          DEFAULT: '#09090B',
+          secondary: '#18181B',
+          tertiary: '#27272A',
         },
-        accent: {
-          green: '#10b981',
-          red: '#ef4444',
-          blue: '#3b82f6',
-          amber: '#f59e0b',
-          purple: '#a855f7',
-          cyan: '#06b6d4',
+        light: {
+          primary: '#FAFAFA',
+          secondary: '#A1A1AA',
+          muted: '#71717A',
         },
       },
-      backgroundColor: {
-        dark: '#0a0c11',
-        'dark-secondary': '#111827',
-        'dark-tertiary': '#1f2937',
-      },
-      borderColor: {
-        'dark-border': '#374151',
-      },
-      textColor: {
-        'light-primary': '#f3f4f6',
-        'light-secondary': '#d1d5db',
-      },
-      backdropBlur: {
-        xs: '2px',
+      boxShadow: {
+        'glow-subtle': '0 0 8px rgba(6, 182, 212, 0.15)', // cyan based glow
+        'glow-medium': '0 0 16px rgba(6, 182, 212, 0.25)',
+        'glow-large': '0 0 24px rgba(6, 182, 212, 0.35)',
+        'glow-profit': '0 0 12px rgba(34, 197, 94, 0.30)',
+        'glow-loss': '0 0 12px rgba(239, 68, 68, 0.30)',
       },
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',

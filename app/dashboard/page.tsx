@@ -127,41 +127,6 @@ export default function DashboardPage() {
         </div>
       </motion.div>
 
-      {/* Security Warning Banner */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.05 }}
-        className="rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-4 md:p-5 flex flex-col md:flex-row items-start md:items-center gap-4 shadow-lg"
-      >
-        <div className="flex-shrink-0 h-10 w-10 rounded-full bg-yellow-500/20 flex items-center justify-center border border-yellow-500/30">
-          <AlertCircle className="h-5 w-5 text-yellow-400" />
-        </div>
-        <div className="flex-1">
-          <p className="text-sm text-yellow-400 leading-relaxed font-medium">
-            <strong className="tracking-wider uppercase text-yellow-300">SECURITY WARNING:</strong> Never send money to personal numbers, so anyone asking for manual transfers is a scammer. Our only support contact is
-            <span className="mt-2 block w-fit rounded bg-black/20 px-2 py-1 font-bold tracking-wide text-white">{supportContactNumber}</span>
-            <span className="mt-3 flex flex-wrap items-center gap-2 text-yellow-300">
-              Join our official Telegram channel:
-              <a
-                href="https://t.me/+lfUKwHk6zZA3MDRk"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 break-all rounded bg-black/20 px-2 py-1 font-semibold text-white underline decoration-cyan-400 underline-offset-4 transition hover:text-cyan-300"
-              >
-                <Image
-                  src="/telegram-icon.webp"
-                  alt=""
-                  width={16}
-                  height={16}
-                  className="h-4 w-4 flex-shrink-0"
-                />
-                https://t.me/+lfUKwHk6zZA3MDRk
-              </a>
-            </span>
-          </p>
-        </div>
-      </motion.div>
 
       <div className="grid gap-8 md:grid-cols-12">
         

@@ -2,7 +2,6 @@
  * Common types used throughout the application
  */
 
-import { PlanId } from "@/lib/plans";
 
 // -----------------------------------------------------------------------------
 // REDIS JSON SCHEMA TYPES
@@ -12,13 +11,11 @@ import { PlanId } from "@/lib/plans";
 export interface Payment {
   paymentId: string;
   amount: number;
-  method: "USDT" | "AirtelMoney" | "MTNMobileMoney";
-  network: "TRON (TRC20)" | "MTN" | "Airtel" | string;
+  method: "BTC" | "BEP20" | "ERC20";
+  network: "Bitcoin" | "BNB Smart Chain (BEP20)" | "Ethereum (ERC20)";
   transactionRef: string;
   status: "pending" | "confirmed" | "rejected";
   submittedAt: string; // ISO datetime
-  planId?: PlanId;
-  planName?: string;
 }
 
 export interface Subscription {

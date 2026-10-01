@@ -412,8 +412,8 @@ export default function PaymentsPage() {
                           disabled={!!actionTracking}
                           className={`flex items-center justify-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
                             actionTracking?.id === sub.userId && actionTracking?.type === 'extend'
-                              ? 'bg-blue-500/30 text-blue-200 cursor-not-allowed'
-                              : 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 disabled:opacity-40'
+                              ? 'bg-cyan-500/30 text-cyan-200 cursor-not-allowed'
+                              : 'bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 disabled:opacity-40'
                           }`}
                         >
                           Extend

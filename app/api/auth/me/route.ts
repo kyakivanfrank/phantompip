@@ -54,6 +54,8 @@ export async function GET(_req: NextRequest) {
             latestPaymentStatus: latestPayment?.status ?? null,
             latestPaymentMethod: latestPayment?.method ?? null,
             latestPaymentSubmittedAt: latestPayment?.submittedAt ?? null,
+            latestPaymentTransactionRef: latestPayment?.transactionRef ?? null,
+            latestPaymentNetwork: latestPayment?.network ?? null,
           },
           mt5: {
             isConnected: user.mt5?.isConnected ?? false,

@@ -164,7 +164,7 @@ export default function AdminDashboard() {
         >
           <div className="border-b border-white/[0.1] p-5 flex justify-between items-center bg-white/[0.02]">
             <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-blue-500/20 p-2"><Users className="h-5 w-5 text-blue-400" /></div>
+              <div className="rounded-lg bg-cyan-500/20 p-2"><Users className="h-5 w-5 text-cyan-400" /></div>
               <h2 className="font-semibold text-white">User Management</h2>
             </div>
             <Link href="/admin/users" className="group flex items-center text-sm text-gray-400 hover:text-white transition-colors">

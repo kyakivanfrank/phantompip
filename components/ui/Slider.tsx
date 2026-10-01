@@ -79,3 +79,4 @@ Slider.displayName = 'Slider';
 
 
 export default Slider;
+

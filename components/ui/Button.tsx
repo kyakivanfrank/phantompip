@@ -36,7 +36,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variantStyles = {
       primary:
-        'bg-accent-blue text-white hover:bg-blue-600 focus:ring-accent-blue/50 active:scale-95',
+        'bg-accent-blue text-white hover:bg-cyan-600 focus:ring-accent-blue/50 active:scale-95',
       secondary:
         'bg-dark-tertiary text-light-primary border border-dark-border hover:border-accent-blue hover:text-light-primary focus:ring-accent-blue/50',
       danger:
@@ -71,3 +71,4 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = 'Button';
 
 export default Button;
+
