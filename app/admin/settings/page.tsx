@@ -78,8 +78,8 @@ function toPlanPayload(planForms: Record<PlanId, PlanForm>) {
 }
 
 type PlatformSettingsForm = {
-  supportContactNumber: string;
-  usdtWalletAddress: string;
+  telegramSupportLink: string;
+
   cryptoBtcAddress: string;
   cryptoBep20Address: string;
   cryptoErc20Address: string;
@@ -87,8 +87,8 @@ type PlatformSettingsForm = {
 };
 
 const EMPTY_SETTINGS: PlatformSettingsForm = {
-  supportContactNumber: '',
-  usdtWalletAddress: '',
+  telegramSupportLink: '',
+
   cryptoBtcAddress: '',
   cryptoBep20Address: '',
   cryptoErc20Address: '',
@@ -104,14 +104,7 @@ const SETTINGS_GROUPS: Array<{
     title: 'Support',
     hint: 'Shown on the login, signup, dashboard and support pages.',
     fields: [
-      { field: 'supportContactNumber', label: 'Official support number', placeholder: '+256 793 704987', type: 'tel' },
-    ],
-  },
-  {
-    title: 'USDT (TRC20)',
-    hint: 'Leave blank to hide this payment option from subscribers.',
-    fields: [
-      { field: 'usdtWalletAddress', label: 'USDT wallet address (TRON)', placeholder: 'TPkbb...' },
+      { field: 'telegramSupportLink', label: 'Official Telegram link', placeholder: 'https://t.me/phantompip_community', type: 'url' },
     ],
   },
 
@@ -199,34 +192,12 @@ export default function AdminSettingsPage() {
     setSettingsMessage('');
     setSettingsError('');
 
-    const digits = settings.supportContactNumber.replace(/\D/g, '');
-    if (digits.length < 7 || digits.length > 15) {
-      setSettingsError('Enter a valid support number (7-15 digits, e.g. +256 793 704987)');
+    if (!settings.telegramSupportLink.trim()) {
+      setSettingsError('Enter a valid Telegram link');
       return;
     }
 
-    const planPayload = toPlanPayload(plans);
-    for (const planId of PLAN_ORDER) {
-      const plan = planPayload[planId];
-      if (!plan.name) {
-        setSettingsError('Every plan needs a name');
-        return;
-      }
-      if (!Number.isFinite(plan.price) || plan.price <= 0) {
-        setSettingsError(`Enter a valid price for "${plan.name}"`);
-        return;
-      }
-      if (!plan.features.length) {
-        setSettingsError(`"${plan.name}" needs at least one feature`);
-        return;
-      }
-    }
 
-    const planNames = PLAN_ORDER.map((planId) => planPayload[planId].name);
-    if (new Set(planNames).size !== planNames.length) {
-      setSettingsError('Each plan needs a distinct name');
-      return;
-    }
 
     if (!adminPassword) {
       setSettingsError('Enter your admin password to save changes');
@@ -241,7 +212,7 @@ export default function AdminSettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           adminPassword,
-          settings: { ...settings, plans: planPayload },
+          settings: { ...settings },
         }),
       });
 
@@ -367,66 +338,7 @@ export default function AdminSettingsPage() {
             </div>
           ))}
 
-          <div className="rounded-md border border-white/[0.05] bg-dark-tertiary/20 p-4">
-            <div className="flex items-center gap-2">
-              <Layers className="h-4 w-4 text-purple-400" />
-              <p className="text-[10px] font-mono uppercase tracking-wider text-gray-500">Subscription Plans</p>
-            </div>
-            <p className="mt-1 text-[11px] text-gray-500">
-              Prices, expected profits and features shown on the landing page, the plans page and at checkout.
-              Renaming a plan also moves existing subscribers to the new name.
-            </p>
 
-            <div className="mt-4 space-y-4">
-              {PLAN_ORDER.map((planId) => (
-                <div key={planId} className="rounded-md border border-white/[0.06] bg-dark/40 p-4">
-                  <p className="text-xs font-semibold text-purple-300">
-                    {plans[planId].name || planId}
-                  </p>
-
-                  <div className="mt-3 grid gap-4 sm:grid-cols-2">
-                    {PLAN_FIELDS.map(({ field, label, placeholder }) => (
-                      <div key={field}>
-                        <label className="block text-sm text-gray-400 mb-2">{label}</label>
-                        <input
-                          type={field === 'price' ? 'number' : 'text'}
-                          step={field === 'price' ? '0.01' : undefined}
-                          min={field === 'price' ? '0' : undefined}
-                          value={plans[planId][field]}
-                          onChange={(e) => updatePlan(planId, field, e.target.value)}
-                          placeholder={isLoadingSettings ? 'Loading...' : placeholder}
-                          disabled={isLoadingSettings}
-                          className="w-full rounded-lg border border-white/[0.1] bg-dark px-3 py-2 text-sm text-white outline-none focus:border-cyan-500 transition disabled:opacity-60"
-                        />
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-4">
-                    <label className="block text-sm text-gray-400 mb-2">Description</label>
-                    <textarea
-                      value={plans[planId].description}
-                      onChange={(e) => updatePlan(planId, 'description', e.target.value)}
-                      rows={2}
-                      disabled={isLoadingSettings}
-                      className="w-full rounded-lg border border-white/[0.1] bg-dark px-3 py-2 text-sm text-white outline-none focus:border-cyan-500 transition disabled:opacity-60"
-                    />
-                  </div>
-
-                  <div className="mt-4">
-                    <label className="block text-sm text-gray-400 mb-2">Features (one per line)</label>
-                    <textarea
-                      value={plans[planId].features}
-                      onChange={(e) => updatePlan(planId, 'features', e.target.value)}
-                      rows={6}
-                      disabled={isLoadingSettings}
-                      className="w-full rounded-lg border border-white/[0.1] bg-dark px-3 py-2 font-mono text-xs text-white outline-none focus:border-cyan-500 transition disabled:opacity-60"
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
 
           <div className="rounded-md border border-cyan-500/20 bg-cyan-500/[0.04] p-4">
             <div className="flex items-center gap-2">

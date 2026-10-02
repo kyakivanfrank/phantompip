@@ -143,26 +143,7 @@ export default function DashboardPage() {
               {userData?.subscription ? (
                 <>
                   <div className="grid grid-cols-2 gap-6">
-                    <div className="col-span-2 sm:col-span-1">
-                      <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Current Trading Plan</p>
-                      {resolvedPlan ? (
-                        <div className="rounded-lg border border-purple-500/20 bg-purple-500/5 px-4 py-3">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="font-semibold text-purple-300">{resolvedPlan.name}</span>
-                            <Zap className="w-4 h-4 text-purple-400" />
-                          </div>
-                          <div className="rounded border border-green-500/[0.15] bg-green-500/[0.05] px-2 py-1.5 w-fit mt-2">
-                            <p className="text-[9px] font-mono uppercase tracking-[0.1em] text-green-500/70 mb-0.5">Expected daily profit</p>
-                            <p className="text-xs font-semibold text-green-400">{resolvedPlan.expectedProfit}</p>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="rounded-lg border border-gray-500/20 bg-gray-500/5 px-4 py-3 flex flex-col justify-center h-[90px]">
-                          <span className="font-semibold text-gray-400">No Plan Selected</span>
-                          <p className="text-xs text-gray-500 mt-1">Visit subscription page to get started.</p>
-                        </div>
-                      )}
-                    </div>
+
                     <div className="col-span-2 sm:col-span-1 flex flex-col justify-center">
                       <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Billing Cycle</p>
                       <p className="text-base font-medium text-white capitalize">{displayBillingCycle}</p>
@@ -272,7 +253,7 @@ export default function DashboardPage() {
                       href="/dashboard/mt5"
                       className="inline-block bg-cyan-500 hover:bg-cyan-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
                     >
-                      Connect MT5 Account
+                      Activate Bot
                     </Link>
                   ) : (
                     <Link

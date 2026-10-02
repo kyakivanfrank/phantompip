@@ -8,7 +8,7 @@ import {
   mapWithConcurrency,
 } from "./db";
 import { verifyPassword } from "./hashing";
-import { DEFAULT_PAYMENT_SETTINGS, DEFAULT_SUPPORT_CONTACT_NUMBER } from "@/lib/constants";
+import { DEFAULT_PAYMENT_SETTINGS, DEFAULT_TELEGRAM_LINK } from "@/lib/constants";
 import { PLANS, PLAN_ORDER, type PlanDefinition, type PlanId } from "@/lib/plans";
 
 /**
@@ -17,7 +17,7 @@ import { PLANS, PLAN_ORDER, type PlanDefinition, type PlanId } from "@/lib/plans
  * The support contact, the payment destinations and the subscription plan
  * details used to live in .env / lib/plans.ts. They now live in Redis so an
  * admin can change them at any time from Admin -> Settings without a redeploy.
- * DEFAULT_SUPPORT_CONTACT_NUMBER / DEFAULT_PAYMENT_SETTINGS (lib/constants.ts)
+ * DEFAULT_TELEGRAM_LINK / DEFAULT_PAYMENT_SETTINGS (lib/constants.ts)
  * and PLANS (lib/plans.ts) are the seed for a database never written to.
  *
  * Editing requires the admin to re-enter their own login password.
@@ -40,8 +40,8 @@ export const EDITABLE_PLAN_FIELDS = [
 export type EditablePlan = Pick<PlanDefinition, (typeof EDITABLE_PLAN_FIELDS)[number]>;
 
 export interface PlatformSettings {
-  supportContactNumber: string;
-  usdtWalletAddress: string;
+  telegramSupportLink: string;
+
   cryptoBtcAddress: string;
   cryptoBep20Address: string;
   cryptoErc20Address: string;
@@ -50,8 +50,8 @@ export interface PlatformSettings {
 }
 
 export const SETTINGS_TEXT_FIELDS = [
-  "supportContactNumber",
-  "usdtWalletAddress",
+  "telegramSupportLink",
+
   "cryptoBtcAddress",
   "cryptoBep20Address",
   "cryptoErc20Address",
@@ -61,7 +61,7 @@ export const SETTINGS_TEXT_FIELDS = [
 export type SettingsTextField = (typeof SETTINGS_TEXT_FIELDS)[number];
 
 const PHONE_FIELDS: SettingsTextField[] = [
-  "supportContactNumber",
+  "telegramSupportLink",
 ];
 
 export function normalizeContactNumber(value: string): string {
@@ -93,7 +93,7 @@ function seedPlans(): Record<PlanId, EditablePlan> {
 /** Seed values, used only until an admin saves settings for the first time. */
 function seedDefaults(): PlatformSettings {
   return {
-    supportContactNumber: DEFAULT_SUPPORT_CONTACT_NUMBER,
+    telegramSupportLink: DEFAULT_TELEGRAM_LINK,
     ...DEFAULT_PAYMENT_SETTINGS,
     plans: seedPlans(),
   };
@@ -168,7 +168,7 @@ export async function getPlatformSettings(): Promise<PlatformSettings> {
       // Pre-dates the combined settings key; keep honouring the old standalone value.
       const legacy = await attempt(() => redis.get(LEGACY_SUPPORT_CONTACT_KEY));
       if (typeof legacy === "string" && legacy.trim()) {
-        settings.supportContactNumber = legacy.trim();
+        settings.telegramSupportLink = legacy.trim();
       }
     }
 
@@ -179,9 +179,9 @@ export async function getPlatformSettings(): Promise<PlatformSettings> {
   }
 }
 
-export async function getSupportContactNumber(): Promise<string> {
+export async function gettelegramSupportLink(): Promise<string> {
   const settings = await getPlatformSettings();
-  return settings.supportContactNumber;
+  return settings.telegramSupportLink;
 }
 
 /**

@@ -2,6 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   compress: true,
+  allowedDevOrigins: ['beads-architect-terminal-advantages.trycloudflare.com'],
 };
 
 module.exports = nextConfig;

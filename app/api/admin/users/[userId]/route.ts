@@ -71,32 +71,6 @@ export async function PATCH(
         status: "expired",
         expiryDate: toExpiryDateIso(Date.now()),
       });
-    } else if (action === "changePlan") {
-      const newPlanName = body?.planName;
-      let updates: Record<string, any> = {};
-
-      if (newPlanName === "No Plan") {
-        updates = {
-          status: "inactive",
-          approvalStatus: "none",
-          planName: "No Plan",
-          priceUSD: 0,
-          expiryDate: "",
-        };
-      } else {
-        let newPriceUSD = 50; // default Starter price
-        if (newPlanName === "Elite Scalper") newPriceUSD = 120;
-        if (newPlanName === "Pulse Pro Scalper") newPriceUSD = 200;
-
-        updates = {
-          planName: newPlanName,
-          priceUSD: newPriceUSD,
-        };
-      }
-
-      if (newPlanName) {
-        await updateSubscription(userId, updates);
-      }
     } else {
       return errorResponse("Unsupported admin action", 400);
     }

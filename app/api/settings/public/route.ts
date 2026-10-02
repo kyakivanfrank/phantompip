@@ -13,7 +13,7 @@ export async function GET() {
     const settings = await getPlatformSettings();
     return successResponse(
       {
-        supportContactNumber: settings.supportContactNumber,
+        telegramSupportLink: settings.telegramSupportLink,
         plans: resolvePlans(settings),
         cryptoBtcAddress: settings.cryptoBtcAddress,
         cryptoBep20Address: settings.cryptoBep20Address,

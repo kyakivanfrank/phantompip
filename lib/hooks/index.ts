@@ -2,7 +2,7 @@ export { useApi, usePost, useGet, usePut, useDelete } from './useApi';
 export { useForm } from './useForm';
 export {
   usePublicSettings,
-  useSupportContact,
+  useTelegramLink,
   usePlans,
   invalidatePublicSettings,
 } from './usePublicSettings';

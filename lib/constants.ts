@@ -210,12 +210,12 @@ export const BREAKPOINTS = {
  * Support contact
  * Fallback used until an admin sets the live number in Admin → Settings.
  */
-export const DEFAULT_SUPPORT_CONTACT_NUMBER = '+256 793 704987';
+export const DEFAULT_TELEGRAM_LINK = 'https://t.me/phantompip_community';
 
 /**
  * Bot activation fee (one-time payment)
  */
-export const ACTIVATION_FEE = 100;
+export const ACTIVATION_FEE = 150;
 
 /**
  * Crypto payment addresses for bot activation
@@ -235,10 +235,9 @@ export const TELEGRAM_LINK = 'https://t.me/phantompip_community';
  * Payment destinations (legacy, kept for admin settings backward compatibility)
  */
 export const DEFAULT_PAYMENT_SETTINGS = {
-  usdtWalletAddress: '',
   cryptoBtcAddress: '1GEihrz3eeUHMUUqbyUHobv8uzMDdbJSvb',
   cryptoBep20Address: '0xaec2c7248bb98244d0ab6ea9afdbfb2da6e7fdb7',
   cryptoErc20Address: '0xaec2c7248bb98244d0ab6ea9afdbfb2da6e7fdb7',
-  activationFee: '100',
+  activationFee: '150',
 } as const;
 

@@ -142,7 +142,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div className="hidden sm:flex items-center gap-2">
                   {userData?.subscription?.isActive && (
                     <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                      Active Plan
+                      Active
                     </span>
                   )}
                 </div>

@@ -4,8 +4,8 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plug, Check, AlertCircle, Lock, Eye, EyeOff, Zap } from 'lucide-react';
-import { PlanDefinition } from '@/lib/plans';
-import { usePlans } from '@/lib/hooks';
+
+
 
 interface ExistingCredentials {
   loginId: string;
@@ -36,12 +36,12 @@ export default function Mt5Page() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const [showWarningOverlay, setShowWarningOverlay] = useState(false);
-  const [activePlanData, setActivePlanData] = useState<PlanDefinition | null>(null);
-  const plans = usePlans();
+  
+  
   // The access check runs once, so read the catalogue through a ref to avoid
   // matching against a stale copy once the live plans arrive.
-  const plansRef = useRef(plans);
-  plansRef.current = plans;
+  
+  
 
   useEffect(() => {
     const checkAccess = async () => {
@@ -56,7 +56,7 @@ export default function Mt5Page() {
         const isActive = subscription?.isActive === true;
         setCanConnect(isActive);
 
-        if (isActive && subscription?.planName) {
+        if (false) {
           const matchedPlan = Object.values(plansRef.current).find(p => p.name === subscription.planName);
           setActivePlanData(matchedPlan || null);
         } else {
@@ -98,7 +98,7 @@ export default function Mt5Page() {
     e.preventDefault();
 
     if (!canConnect) {
-      router.replace('/dashboard/plans');
+      router.replace('/dashboard/activate');
       return;
     }
 
@@ -134,10 +134,10 @@ export default function Mt5Page() {
           router.replace(data.details.redirectTo);
           return;
         }
-        setError(data.error || 'Failed to connect MT5 account');
+        setError(data.error || 'Failed to activate bot');
       }
     } catch (_err) {
-      setError('Error connecting to MT5 account');
+      setError('Error activating bot');
     } finally {
       setIsLoading(false);
     }
@@ -311,16 +311,16 @@ export default function Mt5Page() {
                     <Lock className="mb-4 h-12 w-12 text-cyan-400 drop-shadow-lg" />
                     <h3 className="mb-2 text-xl font-semibold text-white">Subscription Required</h3>
                     <p className="mb-2 max-w-sm text-sm text-gray-300">
-                      Choose a subscription plan to activate trading automation on your MT5 account.
+                      Activate your subscription to activate trading automation on your MT5 account.
                     </p>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        router.replace('/dashboard/plans');
+                        router.replace('/dashboard/activate');
                       }}
                       className="rounded-lg bg-cyan-500 px-6 py-2.5 font-medium text-white transition-colors hover:bg-cyan-600 shadow-[0_0_15px_rgba(6,182,212,0.3)]"
                     >
-                      Choose a Plan
+                      Activate Account
                     </button>
                   </motion.div>
                 )}
@@ -406,29 +406,7 @@ export default function Mt5Page() {
                 <p className="mt-1 text-xs text-gray-400">Your broker's MT5 server name (e.g., ICMarketsSC-Demo)</p>
               </div>
 
-              {/* Active Plan Strategy info */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300">
-                  Active Trading Plan
-                </label>
-                <div className="mt-2 w-full rounded-lg border border-purple-500/20 bg-purple-500/5 px-4 py-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-semibold text-purple-300">{activePlanData?.name ?? 'No Active Plan'}</span>
-                    <Zap className="w-4 h-4 text-purple-400" />
-                  </div>
-                  {activePlanData ? (
-                    <>
-                      <p className="text-sm text-gray-300 mb-3">{activePlanData.description}</p>
-                      <div className="rounded border border-green-500/[0.15] bg-green-500/[0.05] px-3 py-2 w-fit">
-                        <p className="text-[10px] font-mono uppercase tracking-[0.1em] text-green-500/70 mb-0.5">Target Strategy Profit</p>
-                        <p className="text-sm font-semibold text-green-400">{activePlanData.expectedProfit}</p>
-                      </div>
-                    </>
-                  ) : (
-                    <p className="text-sm text-gray-400">You currently have no approved trading plan. Select a subscription plan to activate MT5 access.</p>
-                  )}
-                </div>
-              </div>
+
             </div>
 
             {/* Submit Button */}
@@ -446,7 +424,7 @@ export default function Mt5Page() {
               ) : (
                 <span className="inline-flex items-center gap-2">
                   <Plug className="h-4 w-4" />
-                  {existingCredentials ? 'Update Credentials' : 'Connect MT5 Account'}
+                  {existingCredentials ? 'Update Credentials' : 'Activate Bot'}
                 </span>
               )}
             </button>
@@ -472,7 +450,7 @@ export default function Mt5Page() {
               </li>
               <li className="flex gap-3">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cyan-500/20 text-cyan-400 font-medium">4</span>
-                <span>Enter the details above and click <strong className="text-white">Connect MT5 Account</strong></span>
+                <span>Enter the details above and click <strong className="text-white">Activate Bot</strong></span>
               </li>
             </ol>
           </div>

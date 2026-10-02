@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { ArrowLeft, Mail, MessageCircle, Copy, ChevronRight, Phone } from 'lucide-react';
-import { useSupportContact } from '@/lib/hooks';
+import { ArrowLeft, Mail, MessageCircle, Copy, ChevronRight } from 'lucide-react';
+import { useTelegramLink } from '@/lib/hooks';
 
 const supportTopics = [
   {
@@ -28,10 +28,11 @@ const supportTopics = [
 ];
 
 export default function Support() {
-  const supportContactNumber = useSupportContact();
+
   const [openTopic, setOpenTopic] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '' });
+  const telegramLink = useTelegramLink();
 
   const handleCopyEmail = () => {
     navigator.clipboard.writeText('support@phantompip.com');
@@ -208,22 +209,10 @@ export default function Support() {
                 </button>
               </a>
 
-              {/* Helpline */}
-              <a
-                href={`tel:${supportContactNumber.replace(/\s/g, '')}`}
-                className="group rounded-xl border border-white/[0.1] bg-dark-secondary/40 p-4 hover:border-cyan-500/30 transition"
-              >
-                <div className="flex items-center gap-2 text-cyan-400">
-                  <Phone className="size-4" />
-                  <span className="font-mono text-[10px] uppercase tracking-widest">Customer Care</span>
-                </div>
-                <p className="mt-3 font-mono text-xs text-white">{supportContactNumber}</p>
-                <p className="mt-2 text-[10px] text-gray-400">Call us for direct support</p>
-              </a>
 
               {/* Telegram */}
               <a
-                href="https://t.me/phantompip"
+                href={telegramLink}
                 target="_blank"
                 rel="noreferrer"
                 className="group rounded-xl border border-white/[0.1] bg-dark-secondary/40 p-4 hover:border-cyan-500/30 transition"
@@ -232,8 +221,8 @@ export default function Support() {
                   <MessageCircle className="size-4" />
                   <span className="font-mono text-[10px] uppercase tracking-widest">Telegram</span>
                 </div>
-                <p className="mt-3 font-mono text-xs text-white">@phantompip</p>
-                <p className="mt-2 text-[10px] text-gray-400">Join our community for updates</p>
+                <p className="mt-3 font-mono text-xs text-white break-all">{telegramLink}</p>
+                <p className="mt-2 text-[10px] text-gray-400">Join our community</p>
               </a>
             </div>
           </motion.div>

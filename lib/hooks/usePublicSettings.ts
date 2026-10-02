@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { DEFAULT_SUPPORT_CONTACT_NUMBER } from '@/lib/constants';
+import { DEFAULT_TELEGRAM_LINK } from '@/lib/constants';
 import { PLANS, type PlanDefinition, type PlanId } from '@/lib/plans';
 
 /**
@@ -12,12 +12,12 @@ import { PLANS, type PlanDefinition, type PlanId } from '@/lib/plans';
  */
 
 export interface PublicSettings {
-  supportContactNumber: string;
+  telegramSupportLink: string;
   plans: Record<PlanId, PlanDefinition>;
 }
 
 const FALLBACK: PublicSettings = {
-  supportContactNumber: DEFAULT_SUPPORT_CONTACT_NUMBER,
+  telegramSupportLink: DEFAULT_TELEGRAM_LINK,
   plans: PLANS,
 };
 
@@ -34,10 +34,10 @@ function fetchPublicSettings(): Promise<PublicSettings> {
       .then((payload) => {
         const data = payload?.data;
         cached = {
-          supportContactNumber:
-            typeof data?.supportContactNumber === 'string' && data.supportContactNumber.trim()
-              ? data.supportContactNumber.trim()
-              : FALLBACK.supportContactNumber,
+          telegramSupportLink:
+            typeof data?.telegramSupportLink === 'string' && data.telegramSupportLink.trim()
+              ? data.telegramSupportLink.trim()
+              : FALLBACK.telegramSupportLink,
           plans: data?.plans && typeof data.plans === 'object' ? data.plans : FALLBACK.plans,
         };
         return cached;
@@ -68,8 +68,8 @@ export function usePublicSettings(): PublicSettings {
 }
 
 /** Live official support number, editable by an admin in Admin -> Settings. */
-export function useSupportContact(): string {
-  return usePublicSettings().supportContactNumber;
+export function useTelegramLink(): string {
+  return usePublicSettings().telegramSupportLink;
 }
 
 /** Live plan catalogue (names, prices, expected profits, features). */

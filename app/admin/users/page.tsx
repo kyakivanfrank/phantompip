@@ -26,6 +26,7 @@ export default function UsersPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteError, setDeleteError] = useState('');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchUsers();
@@ -80,6 +81,39 @@ export default function UsersPage() {
       }
     } catch (error) {
       alert('Error performing action');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleBulkAction = async (action: string) => {
+    if (selectedUserIds.size === 0) return;
+    
+    if (action === 'delete') {
+      if (!confirm(`Are you sure you want to delete ${selectedUserIds.size} users?`)) return;
+    } else {
+      if (!confirm(`Are you sure you want to ${action} ${selectedUserIds.size} users?`)) return;
+    }
+
+    setActionLoading('bulk');
+    try {
+      const promises = Array.from(selectedUserIds).map(userId => {
+        if (action === 'delete') {
+          return fetch(`/api/admin/users/${userId}`, { method: 'DELETE' });
+        } else {
+          return fetch(`/api/admin/users/${userId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action, days: 30 }),
+          });
+        }
+      });
+      
+      await Promise.allSettled(promises);
+      await fetchUsers();
+      setSelectedUserIds(new Set());
+    } catch (error) {
+      alert('Error performing bulk action');
     } finally {
       setActionLoading(null);
     }
@@ -196,6 +230,61 @@ export default function UsersPage() {
         </div>
       </motion.div>
 
+      {/* Bulk Actions */}
+      {selectedUserIds.size > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between rounded-2xl border border-cyan-500/30 bg-cyan-500/10 p-4 backdrop-blur-xl"
+        >
+          <span className="text-sm font-medium text-cyan-400">
+            {selectedUserIds.size} user{selectedUserIds.size > 1 ? 's' : ''} selected
+          </span>
+          <div className="flex gap-3">
+            <button
+              onClick={() => handleBulkAction('extendSubscription')}
+              disabled={actionLoading === 'bulk'}
+              className="px-4 py-2 text-sm font-medium rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-colors"
+            >
+              {actionLoading === 'bulk' ? 'Processing...' : 'Approve (+30 Days)'}
+            </button>
+            <button
+              onClick={() => handleBulkAction('expireSubscription')}
+              disabled={actionLoading === 'bulk'}
+              className="px-4 py-2 text-sm font-medium rounded-lg bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30 transition-colors"
+            >
+              Reject (Force Expire)
+            </button>
+            <button
+              onClick={() => handleBulkAction('delete')}
+              disabled={actionLoading === 'bulk'}
+              className="px-4 py-2 text-sm font-medium rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+            >
+              Delete
+            </button>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Select All Row */}
+      {filteredUsers.length > 0 && (
+        <div className="flex items-center px-6 py-2">
+          <input
+            type="checkbox"
+            checked={selectedUserIds.size === filteredUsers.length}
+            onChange={(e) => {
+              if (e.target.checked) {
+                setSelectedUserIds(new Set(filteredUsers.map(u => u.id)));
+              } else {
+                setSelectedUserIds(new Set());
+              }
+            }}
+            className="h-4 w-4 rounded border-gray-600 bg-dark-tertiary focus:ring-cyan-500 mr-4 cursor-pointer"
+          />
+          <span className="text-sm text-gray-400">Select All ({filteredUsers.length})</span>
+        </div>
+      )}
+
       {/* Users Accordion */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -213,11 +302,24 @@ export default function UsersPage() {
                 exit={{ opacity: 0, height: 0 }}
                 className="border-b border-white/[0.1] last:border-b-0"
               >
-                {/* Accordion Header */}
-                <button
-                  onClick={() => setExpandedUserId(expandedUserId === user.id ? null : user.id)}
-                  className="w-full px-6 py-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors"
-                >
+                <div className="w-full flex items-center hover:bg-white/[0.02] transition-colors">
+                  <div className="pl-6 py-4 flex items-center justify-center">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedUserIds.has(user.id)}
+                      onChange={(e) => {
+                        const newSet = new Set(selectedUserIds);
+                        if (e.target.checked) newSet.add(user.id);
+                        else newSet.delete(user.id);
+                        setSelectedUserIds(newSet);
+                      }}
+                      className="h-4 w-4 rounded border-gray-600 bg-dark-tertiary focus:ring-cyan-500 cursor-pointer"
+                    />
+                  </div>
+                  <button
+                    onClick={() => setExpandedUserId(expandedUserId === user.id ? null : user.id)}
+                    className="flex-1 px-4 pr-6 py-4 flex items-center justify-between"
+                  >
                   <div className="flex items-center gap-4 flex-1">
                     <div className="text-left">
                       <p className="font-medium text-white">{user.fullName}</p>
@@ -233,6 +335,7 @@ export default function UsersPage() {
                     />
                   </div>
                 </button>
+                </div>
 
                 {/* Accordion Content */}
                 <AnimatePresence>
@@ -264,10 +367,7 @@ export default function UsersPage() {
                           <div>
                             <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Subscription & Plan</p>
                             <div className="rounded-lg border border-purple-500/20 bg-purple-500/5 p-3 space-y-2">
-                              <div className="flex justify-between items-center gap-4">
-                                <span className="text-sm text-gray-400">Trading Plan:</span>
-                                <span className="text-sm font-semibold text-purple-300 text-right">{user.planName}</span>
-                              </div>
+
                               <div className="flex justify-between items-center gap-4">
                                 <span className="text-sm text-gray-400">Monthly Payment:</span>
                                 <span className="text-sm font-medium text-gray-300 text-right">${user.paidAmount}/mo</span>
@@ -296,22 +396,7 @@ export default function UsersPage() {
                                 {actionLoading === `${user.id}-extendSubscription` ? 'Extending...' : '+30 Days Subscription'}
                               </button>
                               
-                              <select 
-                                className="px-4 py-2 text-sm font-medium rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 outline-none hover:bg-purple-500/20 cursor-pointer disabled:opacity-50 transition-colors"
-                                onChange={(e) => {
-                                  if (e.target.value) {
-                                    handleAdminAction(user.id, 'changePlan', { planName: e.target.value });
-                                    e.target.value = "";
-                                  }
-                                }}
-                                disabled={actionLoading === `${user.id}-changePlan`}
-                              >
-                                <option value="" className="bg-dark-secondary">Change Plan...</option>
-                                <option value="Starter Scalper" className="bg-dark-secondary">Starter Scalper ($50)</option>
-                                <option value="Elite Scalper" className="bg-dark-secondary">Elite Scalper ($120)</option>
-                                <option value="Pulse Pro Scalper" className="bg-dark-secondary">Pulse Pro Scalper ($200)</option>
-                                <option value="No Plan" className="bg-dark-secondary">No Plan</option>
-                              </select>
+
 
                               <button
                                 onClick={() => handleAdminAction(user.id, 'resetMt5')}
