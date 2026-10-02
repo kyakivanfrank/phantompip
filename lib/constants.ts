@@ -215,7 +215,7 @@ export const DEFAULT_TELEGRAM_LINK = 'https://t.me/phantompip_community';
 /**
  * Bot activation fee (one-time payment)
  */
-export const ACTIVATION_FEE = 150;
+export const ACTIVATION_FEE = Number(process.env.NEXT_PUBLIC_ACTIVATION_FEE || '150');
 
 /**
  * Crypto payment addresses for bot activation

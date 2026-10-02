@@ -14,7 +14,7 @@ import { useSpotlight } from '@/lib/hooks';
 
 type NetworkId = 'BTC' | 'BEP20' | 'ERC20';
 
-const ACTIVATION_FEE = 100;
+const ACTIVATION_FEE = Number(process.env.NEXT_PUBLIC_ACTIVATION_FEE || '150');
 const TELEGRAM_LINK = 'https://t.me/phantompip_community';
 
 const NETWORKS: Record<NetworkId, {
@@ -28,21 +28,21 @@ const NETWORKS: Record<NetworkId, {
     name: 'BTC',
     fullName: 'Bitcoin',
     symbol: '₿',
-    address: '1GEihrz3eeUHMUUqbyUHobv8uzMDdbJSvb',
+    address: process.env.NEXT_PUBLIC_CRYPTO_BTC_ADDRESS || '1GEihrz3eeUHMUUqbyUHobv8uzMDdbJSvb',
     description: 'Send the displayed payment amount using the Bitcoin network.',
   },
   BEP20: {
     name: 'BEP20',
     fullName: 'BNB Smart Chain (BEP20)',
     symbol: 'B',
-    address: '0xaec2c7248bb98244d0ab6ea9afdbfb2da6e7fdb7',
+    address: process.env.NEXT_PUBLIC_CRYPTO_BEP20_ADDRESS || '0xaec2c7248bb98244d0ab6ea9afdbfb2da6e7fdb7',
     description: 'Send the displayed payment amount using the BEP20 (BSC) network.',
   },
   ERC20: {
     name: 'ERC20',
     fullName: 'Ethereum (ERC20)',
     symbol: 'Ξ',
-    address: '0xaec2c7248bb98244d0ab6ea9afdbfb2da6e7fdb7',
+    address: process.env.NEXT_PUBLIC_CRYPTO_ERC20_ADDRESS || '0xaec2c7248bb98244d0ab6ea9afdbfb2da6e7fdb7',
     description: 'Send the displayed payment amount using the ERC20 network.',
   },
 };
@@ -136,7 +136,7 @@ function PendingView({ userData, isChecking, onRefresh, activationFee }: {
         </div>
 
         {/* Animated pulse rings */}
-        <div className="relative mx-auto h-32 w-32">
+        <div className="relative mx-auto h-16 w-16">
           {[0, 1, 2].map((i) => (
             <motion.div
               key={i}
@@ -154,10 +154,10 @@ function PendingView({ userData, isChecking, onRefresh, activationFee }: {
             />
           ))}
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="h-18 w-18 rounded-full bg-cyan-500/10 flex items-center justify-center ring-2 ring-cyan-500/30 shadow-[0_0_40px_rgba(6,182,212,.25)]"
-              style={{ height: '4.5rem', width: '4.5rem' }}
+            <div className="h-10 w-10 rounded-full bg-cyan-500/10 flex items-center justify-center ring-2 ring-cyan-500/30 shadow-[0_0_20px_rgba(6,182,212,.25)]"
+              style={{ height: '2.5rem', width: '2.5rem' }}
             >
-              <Clock className="h-8 w-8 text-cyan-400" />
+              <Clock className="h-5 w-5 text-cyan-400" />
             </div>
           </div>
         </div>
