@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       return errorResponse(
         "Active subscription required before connecting MT5",
         403,
-        { redirectTo: "/dashboard/subscription" }
+        { redirectTo: "/dashboard/activate" }
       );
     }
 
