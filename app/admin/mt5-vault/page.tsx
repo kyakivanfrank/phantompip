@@ -65,7 +65,7 @@ export default function Mt5VaultPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin">
-          <div className="h-12 w-12 rounded-full border-4 border-cyan-500 border-t-transparent"></div>
+          <div className="h-12 w-12 rounded-full border-4 border-rose-500 border-t-transparent"></div>
         </div>
       </div>
     );
@@ -140,7 +140,7 @@ export default function Mt5VaultPage() {
               />
               <button
                 onClick={() => copyToClipboard(item.mt5LoginId!, `login-${item.userId}`)}
-                className="text-gray-400 hover:text-cyan-400 transition-colors"
+                className="text-gray-400 hover:text-rose-400 transition-colors"
               >
                 <Copy className="h-4 w-4" />
               </button>
@@ -162,7 +162,7 @@ export default function Mt5VaultPage() {
               />
               <button
                 onClick={() => togglePasswordVisibility(item.userId)}
-                className="text-gray-400 hover:text-cyan-400 transition-colors"
+                className="text-gray-400 hover:text-rose-400 transition-colors"
               >
                 {visiblePasswords.has(item.userId) ? (
                   <EyeOff className="h-4 w-4" />
@@ -172,7 +172,7 @@ export default function Mt5VaultPage() {
               </button>
               <button
                 onClick={() => copyToClipboard(item.mt5Password!, `password-${item.userId}`)}
-                className="text-gray-400 hover:text-cyan-400 transition-colors"
+                className="text-gray-400 hover:text-rose-400 transition-colors"
               >
                 <Copy className="h-4 w-4" />
               </button>
@@ -194,7 +194,7 @@ export default function Mt5VaultPage() {
               />
               <button
                 onClick={() => copyToClipboard(item.brokerServer!, `server-${item.userId}`)}
-                className="text-gray-400 hover:text-cyan-400 transition-colors"
+                className="text-gray-400 hover:text-rose-400 transition-colors"
               >
                 <Copy className="h-4 w-4" />
               </button>
@@ -259,7 +259,7 @@ export default function Mt5VaultPage() {
           placeholder="Search by user name or email..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full rounded-lg border border-white/[0.1] bg-dark-secondary/20 py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-gray-500 focus:border-cyan-500/50 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 transition-all"
+          className="w-full rounded-lg border border-white/[0.1] bg-dark-secondary/20 py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-gray-500 focus:border-rose-500/50 focus:outline-none focus:ring-1 focus:ring-rose-500/50 transition-all"
         />
       </motion.div>
 

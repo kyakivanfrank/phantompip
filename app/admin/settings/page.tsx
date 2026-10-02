@@ -228,7 +228,7 @@ export default function AdminSettingsPage() {
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="glass rounded-xl border border-white/[0.08] bg-dark-secondary/40 p-6 backdrop-blur-xl">
         <div className="flex items-center gap-3">
-          <div className="rounded-full bg-cyan-500/10 p-3 text-cyan-400">
+          <div className="rounded-full bg-rose-500/10 p-3 text-rose-400">
             <SlidersHorizontal className="h-5 w-5" />
           </div>
           <div>
@@ -253,7 +253,7 @@ export default function AdminSettingsPage() {
                       onChange={(e) => updateSetting(field, e.target.value)}
                       placeholder={isLoadingSettings ? 'Loading...' : placeholder}
                       disabled={isLoadingSettings}
-                      className="w-full rounded-lg border border-white/[0.1] bg-dark px-3 py-2 text-sm text-white outline-none focus:border-cyan-500 transition disabled:opacity-60"
+                      className="w-full rounded-lg border border-white/[0.1] bg-dark px-3 py-2 text-sm text-white outline-none focus:border-rose-500 transition disabled:opacity-60"
                     />
                   </div>
                 ))}
@@ -263,9 +263,9 @@ export default function AdminSettingsPage() {
 
 
 
-          <div className="rounded-md border border-cyan-500/20 bg-cyan-500/[0.04] p-4">
+          <div className="rounded-md border border-rose-500/20 bg-rose-500/[0.04] p-4">
             <div className="flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-cyan-400" />
+              <ShieldCheck className="h-4 w-4 text-rose-400" />
               <p className="text-sm font-medium text-white">Confirm with your admin password</p>
             </div>
             <p className="mt-1 text-[11px] text-gray-500">
@@ -284,12 +284,12 @@ export default function AdminSettingsPage() {
                 placeholder="Admin password"
                 autoComplete="current-password"
                 disabled={isLoadingSettings}
-                className="w-full rounded-lg border border-white/[0.1] bg-dark px-3 py-2 pr-12 text-sm text-white outline-none focus:border-cyan-500 transition disabled:opacity-60"
+                className="w-full rounded-lg border border-white/[0.1] bg-dark px-3 py-2 pr-12 text-sm text-white outline-none focus:border-rose-500 transition disabled:opacity-60"
               />
               <button
                 type="button"
                 onClick={() => setShowAdminPassword(!showAdminPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-cyan-400 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-rose-400 transition-colors"
               >
                 {showAdminPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -299,7 +299,7 @@ export default function AdminSettingsPage() {
           <button
             type="submit"
             disabled={isSavingSettings || isLoadingSettings}
-            className="w-full rounded-lg bg-cyan-500 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-400 transition disabled:cursor-not-allowed disabled:bg-cyan-500/60"
+            className="w-full rounded-lg bg-rose-500 px-4 py-2 text-sm font-medium text-white hover:bg-rose-400 transition disabled:cursor-not-allowed disabled:bg-rose-500/60"
           >
             {isSavingSettings ? 'Saving...' : 'Save settings'}
           </button>
@@ -311,7 +311,7 @@ export default function AdminSettingsPage() {
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="glass rounded-xl border border-white/[0.08] bg-dark-secondary/40 p-6 backdrop-blur-xl">
         <div className="flex items-center gap-3">
-          <div className="rounded-full bg-cyan-500/10 p-3 text-cyan-400">
+          <div className="rounded-full bg-rose-500/10 p-3 text-rose-400">
             <Lock className="h-5 w-5" />
           </div>
           <div>
@@ -332,13 +332,13 @@ export default function AdminSettingsPage() {
                   setPasswordForm({ ...passwordForm, currentPassword: e.target.value });
                   setError('');
                 }}
-                className="w-full rounded-lg border border-white/[0.1] bg-dark px-3 py-2 pr-12 text-sm text-white outline-none focus:border-cyan-500 transition"
+                className="w-full rounded-lg border border-white/[0.1] bg-dark px-3 py-2 pr-12 text-sm text-white outline-none focus:border-rose-500 transition"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-cyan-400 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-rose-400 transition-colors"
               >
                 {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -358,14 +358,14 @@ export default function AdminSettingsPage() {
                 }}
                 onFocus={() => setIsNewPasswordFocused(true)}
                 onBlur={() => setIsNewPasswordFocused(false)}
-                className="w-full rounded-lg border border-white/[0.1] bg-dark px-3 py-2 pr-12 text-sm text-white outline-none focus:border-cyan-500 transition"
+                className="w-full rounded-lg border border-white/[0.1] bg-dark px-3 py-2 pr-12 text-sm text-white outline-none focus:border-rose-500 transition"
                 required
                 minLength={8}
               />
               <button
                 type="button"
                 onClick={() => setShowNewPassword(!showNewPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-cyan-400 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-rose-400 transition-colors"
               >
                 {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -386,7 +386,7 @@ export default function AdminSettingsPage() {
                   <div className="space-y-1.5">
                     {passwordRequirements.map((req, i) => (
                       <div key={i} className="flex items-center gap-2 text-[11px] transition-colors">
-                        <div className={`size-1.5 rounded-full ${req.met ? 'bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.5)]' : 'bg-gray-600'}`} />
+                        <div className={`size-1.5 rounded-full ${req.met ? 'bg-rose-500 shadow-[0_0_8px_rgba(6,182,212,0.5)]' : 'bg-gray-600'}`} />
                         <span className={req.met ? 'text-gray-200' : 'text-gray-500'}>
                           {req.label}
                         </span>
@@ -409,14 +409,14 @@ export default function AdminSettingsPage() {
                   setPasswordForm({ ...passwordForm, confirmPassword: e.target.value });
                   setError('');
                 }}
-                className="w-full rounded-lg border border-white/[0.1] bg-dark px-3 py-2 pr-12 text-sm text-white outline-none focus:border-cyan-500 transition"
+                className="w-full rounded-lg border border-white/[0.1] bg-dark px-3 py-2 pr-12 text-sm text-white outline-none focus:border-rose-500 transition"
                 required
                 minLength={8}
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-cyan-400 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-rose-400 transition-colors"
               >
                 {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -435,7 +435,7 @@ export default function AdminSettingsPage() {
           <button
             type="submit"
             disabled={isSaving}
-            className="w-full rounded-lg bg-cyan-500 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-400 transition disabled:cursor-not-allowed disabled:bg-cyan-500/60"
+            className="w-full rounded-lg bg-rose-500 px-4 py-2 text-sm font-medium text-white hover:bg-rose-400 transition disabled:cursor-not-allowed disabled:bg-rose-500/60"
           >
             {isSaving ? 'Saving...' : 'Update password'}
           </button>

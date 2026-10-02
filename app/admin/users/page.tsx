@@ -175,7 +175,7 @@ export default function UsersPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin">
-          <div className="h-12 w-12 rounded-full border-4 border-cyan-500 border-t-transparent"></div>
+          <div className="h-12 w-12 rounded-full border-4 border-rose-500 border-t-transparent"></div>
         </div>
       </div>
     );
@@ -208,7 +208,7 @@ export default function UsersPage() {
             placeholder="Search by email or name..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-lg border border-white/[0.1] bg-dark-tertiary/50 py-2 pl-10 pr-4 text-sm text-white placeholder:text-gray-500 outline-none transition-colors focus:border-cyan-500"
+            className="w-full rounded-lg border border-white/[0.1] bg-dark-tertiary/50 py-2 pl-10 pr-4 text-sm text-white placeholder:text-gray-500 outline-none transition-colors focus:border-rose-500"
           />
         </div>
 
@@ -220,8 +220,8 @@ export default function UsersPage() {
               onClick={() => setFilterStatus(status)}
               className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                 filterStatus === status
-                  ? 'bg-cyan-500 text-white'
-                  : 'border border-white/[0.1] text-gray-300 hover:border-cyan-500/50'
+                  ? 'bg-rose-500 text-white'
+                  : 'border border-white/[0.1] text-gray-300 hover:border-rose-500/50'
               }`}
             >
               {status === 'all' ? 'All Users' : status}
@@ -235,9 +235,9 @@ export default function UsersPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between rounded-2xl border border-cyan-500/30 bg-cyan-500/10 p-4 backdrop-blur-xl"
+          className="flex items-center justify-between rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 backdrop-blur-xl"
         >
-          <span className="text-sm font-medium text-cyan-400">
+          <span className="text-sm font-medium text-rose-400">
             {selectedUserIds.size} user{selectedUserIds.size > 1 ? 's' : ''} selected
           </span>
           <div className="flex gap-3">
@@ -279,7 +279,7 @@ export default function UsersPage() {
                 setSelectedUserIds(new Set());
               }
             }}
-            className="h-4 w-4 rounded border-gray-600 bg-dark-tertiary focus:ring-cyan-500 mr-4 cursor-pointer"
+            className="h-4 w-4 rounded border-gray-600 bg-dark-tertiary focus:ring-rose-500 mr-4 cursor-pointer"
           />
           <span className="text-sm text-gray-400">Select All ({filteredUsers.length})</span>
         </div>
@@ -313,7 +313,7 @@ export default function UsersPage() {
                         else newSet.delete(user.id);
                         setSelectedUserIds(newSet);
                       }}
-                      className="h-4 w-4 rounded border-gray-600 bg-dark-tertiary focus:ring-cyan-500 cursor-pointer"
+                      className="h-4 w-4 rounded border-gray-600 bg-dark-tertiary focus:ring-rose-500 cursor-pointer"
                     />
                   </div>
                   <button
@@ -354,7 +354,7 @@ export default function UsersPage() {
                             <div className="rounded-lg border border-white/[0.05] bg-black/20 p-3 space-y-2">
                               <div className="flex justify-between items-center gap-4">
                                 <span className="text-sm text-gray-400">Email:</span>
-                                <span className="text-sm font-mono text-cyan-400 break-all text-right">{user.email}</span>
+                                <span className="text-sm font-mono text-rose-400 break-all text-right">{user.email}</span>
                               </div>
                               <div className="flex justify-between items-center gap-4">
                                 <span className="text-sm text-gray-400">Password:</span>
@@ -391,7 +391,7 @@ export default function UsersPage() {
                               <button
                                 onClick={() => handleAdminAction(user.id, 'extendSubscription', { days: 30 })}
                                 disabled={actionLoading === `${user.id}-extendSubscription`}
-                                className="px-4 py-2 text-sm font-medium rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/20 disabled:opacity-50 transition-colors"
+                                className="px-4 py-2 text-sm font-medium rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 disabled:opacity-50 transition-colors"
                               >
                                 {actionLoading === `${user.id}-extendSubscription` ? 'Extending...' : '+30 Days Subscription'}
                               </button>

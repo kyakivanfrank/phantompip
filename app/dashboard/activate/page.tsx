@@ -454,10 +454,24 @@ export default function ActivatePage() {
   /* ── Submit payment ─────────────────────────────────────────── */
 
   const handleSubmit = async () => {
-    if (!transactionId.trim()) {
+    const txId = transactionId.trim();
+    if (!txId) {
       setError('Please enter your transaction ID');
       return;
     }
+
+    if (selectedNetwork === 'BTC') {
+      if (!/^[a-fA-F0-9]{64}$/.test(txId)) {
+        setError('Invalid BTC transaction ID. It should be a 64-character hex string.');
+        return;
+      }
+    } else if (selectedNetwork === 'BEP20' || selectedNetwork === 'ERC20') {
+      if (!/^0x[a-fA-F0-9]{64}$/.test(txId)) {
+        setError(`Invalid ${selectedNetwork} transaction ID. It should start with '0x' followed by 64 hex characters.`);
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     setError('');
     try {

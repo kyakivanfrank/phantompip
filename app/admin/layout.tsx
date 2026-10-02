@@ -55,7 +55,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (isLoading) return (
     <div className="flex items-center justify-center min-h-screen bg-dark">
-      <div className="h-12 w-12 rounded-full border-4 border-cyan-500 border-t-transparent animate-spin" />
+      <div className="h-12 w-12 rounded-full border-4 border-rose-500 border-t-transparent animate-spin" />
     </div>
   );
 
@@ -64,10 +64,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="flex h-screen w-screen overflow-hidden flex-col md:flex-row bg-dark">
         {/* Desktop Sidebar */}
         <aside className="hidden md:flex fixed md:relative w-64 h-full border-r border-white/10 bg-dark-secondary/40 backdrop-blur-xl z-40 flex-shrink-0 flex-col">
-          <div className="p-6 border-b border-white/10">
-            <Link href="/admin" className="flex items-center justify-center">
-              <img src="/phantompip-logo.png" alt="Phantompip" className="h-40 w-auto rounded-full" />
+          <div className="p-6">
+            <Link href="/admin" className="flex items-center justify-center pt-2 pb-6">
+              <img src="/phantompip-logo.png" alt="Phantompip" className="h-14 w-14 rounded-full object-cover" />
             </Link>
+            <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
           </div>
 
           <nav className="flex-1 space-y-1 p-4 overflow-y-auto custom-scrollbar">
@@ -79,8 +80,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   href={href}
                   className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
                     active
-                      ? 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/20'
-                      : 'text-gray-300 hover:bg-cyan-500/10 hover:text-cyan-400'
+                      ? 'bg-rose-500/15 text-rose-400 border border-rose-500/20'
+                      : 'text-gray-300 hover:bg-rose-500/10 hover:text-rose-400'
                   }`}
                 >
                   <Icon className="h-5 w-5 shrink-0" />
@@ -105,7 +106,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="items-center px-4 md:px-0 justify-between h-16 flex flex-shrink-0 max-w-7xl mx-auto">
               <div className="flex items-center gap-3">
                 <Link href="/admin" className="block md:hidden">
-                  <img src="/phantompip-logo.png" alt="Phantompip" className="h-8 w-auto rounded-full" />
+                  <img src="/phantompip-logo.png" alt="Phantompip" className="h-8 w-8 rounded-full object-cover" />
                 </Link>
                 <span className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                   <CheckCircle className="h-3.5 w-3.5" /> Admin Panel
@@ -118,7 +119,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     className="flex items-center gap-2 p-1.5 rounded-full md:rounded-xl hover:bg-white/10 transition-all focus:outline-none"
                   >
-                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center text-xs font-bold text-white shadow-md">
+                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-rose-500 to-rose-600 flex items-center justify-center text-xs font-bold text-white shadow-md">
                       {userData?.email?.substring(0, 2).toUpperCase() || 'AD'}
                     </div>
                     <div className="hidden sm:block max-w-[120px]">

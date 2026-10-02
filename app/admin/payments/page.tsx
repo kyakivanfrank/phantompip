@@ -34,6 +34,9 @@ export default function PaymentsPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [extendDays, setExtendDays] = useState<{ [key: string]: string }>({});
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const [selectedPayments, setSelectedPayments] = useState<Set<string>>(new Set());
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
 
   const filteredPending = pendingPayments.filter(p => 
     p.userFullName.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -61,6 +64,7 @@ export default function PaymentsPage() {
       const usersData = await allUsersRes.json();
 
       setPendingPayments(pendingData.data?.pendingPayments || []);
+      setSelectedPayments(new Set()); // Reset selections
 
       // Build subscriptions list from users
       const subs = (usersData.data?.users || [])
@@ -100,6 +104,11 @@ export default function PaymentsPage() {
 
       if (res.ok) {
         setPendingPayments(prev => prev.filter(p => p.id !== paymentId));
+        setSelectedPayments(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(paymentId);
+          return newSet;
+        });
       } else {
         const errorData = await res.json().catch(() => ({}));
         alert(`Failed to ${action} payment: ${errorData.error || 'Server rejected request'}`);
@@ -108,6 +117,52 @@ export default function PaymentsPage() {
       alert(`Network error during payment ${action} sequence.`);
     } finally {
       setActionTracking(null);
+    }
+  };
+
+  const togglePaymentSelection = (id: string) => {
+    setSelectedPayments(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) newSet.delete(id);
+      else newSet.add(id);
+      return newSet;
+    });
+  };
+
+  const toggleAllPayments = () => {
+    if (selectedPayments.size === filteredPending.length && filteredPending.length > 0) {
+      setSelectedPayments(new Set());
+    } else {
+      setSelectedPayments(new Set(filteredPending.map(p => p.id)));
+    }
+  };
+
+  const handleBulkAction = async (action: 'approve' | 'reject') => {
+    if (selectedPayments.size === 0) return;
+    setIsBulkProcessing(true);
+    
+    try {
+      const promises = Array.from(selectedPayments).map(paymentId =>
+        fetch(`/api/admin/payments/${action}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paymentId }),
+        })
+      );
+      
+      const results = await Promise.all(promises);
+      const failed = results.filter(r => !r.ok);
+      
+      if (failed.length > 0) {
+        alert(`${failed.length} out of ${selectedPayments.size} ${action}s failed.`);
+      }
+      
+      setPendingPayments(prev => prev.filter(p => !selectedPayments.has(p.id)));
+      setSelectedPayments(new Set());
+    } catch (error) {
+      alert(`Network error during bulk ${action}.`);
+    } finally {
+      setIsBulkProcessing(false);
     }
   };
 
@@ -158,7 +213,7 @@ export default function PaymentsPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-transparent">
-        <div className="h-12 w-12 rounded-full border-4 border-cyan-500 border-t-transparent animate-spin"></div>
+        <div className="h-12 w-12 rounded-full border-4 border-rose-500 border-t-transparent animate-spin"></div>
       </div>
     );
   }
@@ -178,10 +233,10 @@ export default function PaymentsPage() {
 
         <button
           onClick={fetchData}
-          disabled={!!actionTracking}
-          className="flex items-center gap-2 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-400 hover:bg-cyan-500/20 transition-all disabled:opacity-40"
+          disabled={!!actionTracking || isBulkProcessing}
+          className="flex items-center gap-2 rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-sm font-medium text-rose-400 hover:bg-rose-500/20 transition-all disabled:opacity-40"
         >
-          <RefreshCw className={`h-4 w-4 ${actionTracking ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`h-4 w-4 ${actionTracking || isBulkProcessing ? 'animate-spin' : ''}`} />
           Refresh
         </button>
       </motion.div>
@@ -197,7 +252,7 @@ export default function PaymentsPage() {
           onClick={() => setActiveTab('pending')}
           className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
             activeTab === 'pending'
-              ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+              ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
               : 'text-gray-400 hover:text-gray-300'
           }`}
         >
@@ -216,7 +271,7 @@ export default function PaymentsPage() {
           onClick={() => setActiveTab('history')}
           className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
             activeTab === 'history'
-              ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+              ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
               : 'text-gray-400 hover:text-gray-300'
           }`}
         >
@@ -245,7 +300,7 @@ export default function PaymentsPage() {
           placeholder="Search users by name or email..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full rounded-lg border border-white/[0.1] bg-dark-secondary/20 py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-gray-500 focus:border-cyan-500/50 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 transition-all"
+          className="w-full rounded-lg border border-white/[0.1] bg-dark-secondary/20 py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-gray-500 focus:border-rose-500/50 focus:outline-none focus:ring-1 focus:ring-rose-500/50 transition-all"
         />
       </motion.div>
 
@@ -259,6 +314,46 @@ export default function PaymentsPage() {
             exit={{ opacity: 0, y: -10 }}
             className="space-y-4"
           >
+            {filteredPending.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center justify-between rounded-xl border border-white/[0.08] bg-dark-secondary/60 p-4 mb-4 backdrop-blur-xl"
+              >
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={selectedPayments.size > 0 && selectedPayments.size === filteredPending.length}
+                    onChange={toggleAllPayments}
+                    className="h-4 w-4 rounded border-gray-600 bg-black/50 text-rose-500 focus:ring-rose-500 focus:ring-offset-gray-900 cursor-pointer"
+                  />
+                  <span className="text-sm font-medium text-gray-300">
+                    {selectedPayments.size} selected
+                  </span>
+                </div>
+                {selectedPayments.size > 0 && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleBulkAction('approve')}
+                      disabled={isBulkProcessing || !!actionTracking}
+                      className="flex items-center gap-2 rounded-lg bg-green-500/10 px-3 py-1.5 text-xs font-semibold text-green-400 hover:bg-green-500/20 disabled:opacity-40 transition-all"
+                    >
+                      {isBulkProcessing ? <RefreshCw className="h-3 w-3 animate-spin" /> : <CheckCircle className="h-3 w-3" />}
+                      Approve Selected
+                    </button>
+                    <button
+                      onClick={() => handleBulkAction('reject')}
+                      disabled={isBulkProcessing || !!actionTracking}
+                      className="flex items-center gap-2 rounded-lg bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-400 hover:bg-red-500/20 disabled:opacity-40 transition-all"
+                    >
+                      {isBulkProcessing ? <RefreshCw className="h-3 w-3 animate-spin" /> : <XCircle className="h-3 w-3" />}
+                      Reject Selected
+                    </button>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
             {filteredPending.length > 0 ? (
               filteredPending.map((payment) => (
                 <motion.div
@@ -266,9 +361,20 @@ export default function PaymentsPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  className="rounded-xl border border-white/[0.08] bg-dark-secondary/40 p-6 backdrop-blur-xl"
+                  className={`relative rounded-xl border transition-all duration-200 bg-dark-secondary/40 p-6 backdrop-blur-xl ${
+                    selectedPayments.has(payment.id) ? 'border-rose-500/50 shadow-[0_0_15px_rgba(6,182,212,0.1)]' : 'border-white/[0.08]'
+                  }`}
                 >
-                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="absolute top-6 left-6">
+                    <input
+                      type="checkbox"
+                      checked={selectedPayments.has(payment.id)}
+                      onChange={() => togglePaymentSelection(payment.id)}
+                      className="h-4 w-4 rounded border-gray-600 bg-black/50 text-rose-500 focus:ring-rose-500 focus:ring-offset-gray-900 cursor-pointer"
+                    />
+                  </div>
+                  
+                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 pl-8 sm:pl-10">
                     {/* User */}
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">User</p>
@@ -279,7 +385,7 @@ export default function PaymentsPage() {
                     {/* Method */}
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Payment Method</p>
-                      <p className="mt-2 font-bold text-cyan-400 text-base">{payment.method}</p>
+                      <p className="mt-2 font-bold text-rose-400 text-base">{payment.method}</p>
                       <p className="text-xs text-gray-400 mt-0.5">Submitted {payment.daysOld} day{payment.daysOld !== 1 ? 's' : ''} ago</p>
                     </div>
 
@@ -295,7 +401,7 @@ export default function PaymentsPage() {
                     {/* Transaction ID */}
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">TX ID (Click to Verify)</p>
-                      <div className="mt-2 relative flex items-center gap-1.5 rounded-lg border border-white/[0.06] bg-black/30 p-2 font-mono text-xs text-cyan-300">
+                      <div className="mt-2 relative flex items-center gap-1.5 rounded-lg border border-white/[0.06] bg-black/30 p-2 font-mono text-xs text-rose-300">
                         <a 
                           href={
                           payment.method === 'BTC' ? `https://mempool.space/tx/${payment.transactionId}` :
@@ -304,7 +410,7 @@ export default function PaymentsPage() {
                         }
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="break-all flex-1 pr-8 selection:bg-cyan-500/30 hover:underline hover:text-cyan-200"
+                          className="break-all flex-1 pr-8 selection:bg-rose-500/30 hover:underline hover:text-rose-200"
                         >
                           {payment.transactionId}
                         </a>
@@ -319,10 +425,10 @@ export default function PaymentsPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="mt-6 flex gap-4 border-t border-white/[0.06] pt-4">
+                  <div className="mt-6 flex gap-4 border-t border-white/[0.06] pt-4 pl-8 sm:pl-10">
                     <button
                       onClick={() => handlePaymentAction(payment.id, 'approve')}
-                      disabled={!!actionTracking}
+                      disabled={!!actionTracking || isBulkProcessing}
                       className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${
                         actionTracking?.id === payment.id && actionTracking?.type === 'approve'
                           ? 'bg-green-500/30 text-green-200 cursor-not-allowed'
@@ -335,7 +441,7 @@ export default function PaymentsPage() {
 
                     <button
                       onClick={() => handlePaymentAction(payment.id, 'reject')}
-                      disabled={!!actionTracking}
+                      disabled={!!actionTracking || isBulkProcessing}
                       className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${
                         actionTracking?.id === payment.id && actionTracking?.type === 'reject'
                           ? 'bg-red-500/30 text-red-200 cursor-not-allowed'
@@ -419,15 +525,15 @@ export default function PaymentsPage() {
                           placeholder="Days"
                           value={extendDays[sub.userId] || '30'}
                           onChange={(e) => setExtendDays(prev => ({ ...prev, [sub.userId]: e.target.value }))}
-                          className="flex-1 rounded-lg border border-white/[0.1] bg-dark-tertiary/50 px-2 py-1.5 text-xs text-white placeholder:text-gray-500 outline-none focus:border-cyan-500/50"
+                          className="flex-1 rounded-lg border border-white/[0.1] bg-dark-tertiary/50 px-2 py-1.5 text-xs text-white placeholder:text-gray-500 outline-none focus:border-rose-500/50"
                         />
                         <button
                           onClick={() => handleSubscriptionAction(sub.userId, 'extend')}
                           disabled={!!actionTracking}
                           className={`flex items-center justify-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
                             actionTracking?.id === sub.userId && actionTracking?.type === 'extend'
-                              ? 'bg-cyan-500/30 text-cyan-200 cursor-not-allowed'
-                              : 'bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 disabled:opacity-40'
+                              ? 'bg-rose-500/30 text-rose-200 cursor-not-allowed'
+                              : 'bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 disabled:opacity-40'
                           }`}
                         >
                           Extend

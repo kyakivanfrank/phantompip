@@ -75,7 +75,7 @@ export default function AdminDashboard() {
   if (isLoading && isInitialRender) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-4 border-cyan-500 border-t-transparent"></div>
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-rose-500 border-t-transparent"></div>
       </div>
     );
   }
@@ -107,7 +107,7 @@ export default function AdminDashboard() {
             <h2 className="text-lg font-semibold text-white">Admin Settings</h2>
             <p className="mt-1 text-sm text-gray-400">Use the Settings page to update admin credentials and account settings.</p>
           </div>
-          <Link href="/admin/settings" className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm text-cyan-400 hover:bg-cyan-500/20 transition">
+          <Link href="/admin/settings" className="rounded-full border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-sm text-rose-400 hover:bg-rose-500/20 transition">
             Go to Settings
           </Link>
         </div>
@@ -123,7 +123,7 @@ export default function AdminDashboard() {
         >
           <div className="border-b border-white/[0.1] p-5 flex justify-between items-center bg-white/[0.02]">
             <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-cyan-500/20 p-2"><Activity className="h-5 w-5 text-cyan-400" /></div>
+              <div className="rounded-lg bg-rose-500/20 p-2"><Activity className="h-5 w-5 text-rose-400" /></div>
               <h2 className="font-semibold text-white">MT5 Vault</h2>
             </div>
             <Link href="/admin/mt5-vault" className="group flex items-center text-sm text-gray-400 hover:text-white transition-colors">
@@ -133,13 +133,13 @@ export default function AdminDashboard() {
 
           <div className="p-5 flex-1 space-y-6">
             <div className="grid grid-cols-2 gap-3">
-              <MiniStat label="Connected Accounts" value={stats.mt5ConnectedUsers} colorClass="text-cyan-400" />
+              <MiniStat label="Connected Accounts" value={stats.mt5ConnectedUsers} colorClass="text-rose-400" />
               <MiniStat label="Disconnected" value={stats.totalUsers - stats.mt5ConnectedUsers} colorClass="text-gray-400" />
             </div>
 
             <div>
               <h3 className="mb-3 flex items-center gap-2 text-sm font-medium text-gray-300">
-                <KeyRound className="h-4 w-4 text-cyan-400" /> Recent Connections
+                <KeyRound className="h-4 w-4 text-rose-400" /> Recent Connections
               </h3>
               <div className="space-y-2">
                 {queues.mt5Channels.length > 0 ? queues.mt5Channels.map((vault: any) => (
@@ -148,7 +148,7 @@ export default function AdminDashboard() {
                       <p className="text-sm font-medium text-white">{vault.userFullName || 'Unknown'}</p>
                       <p className="text-xs text-gray-400 uppercase">{vault.brokerServer}</p>
                     </div>
-                    <span className="text-xs bg-cyan-500/10 text-cyan-400 px-2 py-1 rounded-full">{vault.mt5LoginId}</span>
+                    <span className="text-xs bg-rose-500/10 text-rose-400 px-2 py-1 rounded-full">{vault.mt5LoginId}</span>
                   </Link>
                 )) : <p className="text-sm text-gray-500">No active MT5 credentials stored.</p>}
               </div>
@@ -164,7 +164,7 @@ export default function AdminDashboard() {
         >
           <div className="border-b border-white/[0.1] p-5 flex justify-between items-center bg-white/[0.02]">
             <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-cyan-500/20 p-2"><Users className="h-5 w-5 text-cyan-400" /></div>
+              <div className="rounded-lg bg-rose-500/20 p-2"><Users className="h-5 w-5 text-rose-400" /></div>
               <h2 className="font-semibold text-white">User Management</h2>
             </div>
             <Link href="/admin/users" className="group flex items-center text-sm text-gray-400 hover:text-white transition-colors">
