@@ -64,11 +64,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="flex h-screen w-screen overflow-hidden flex-col md:flex-row bg-dark">
         {/* Desktop Sidebar */}
         <aside className="hidden md:flex fixed md:relative w-64 h-full border-r border-white/10 bg-dark-secondary/40 backdrop-blur-xl z-40 flex-shrink-0 flex-col">
-          <div className="p-6">
-            <Link href="/admin" className="flex items-center justify-center pt-2 pb-6">
-              <img src="/phantompip-logo.png" alt="Phantompip" className="h-14 w-14 rounded-full object-cover" />
+          <div className="p-6 border-b border-white/10">
+            <Link href="/admin" className="flex items-center justify-center">
+              <img src="/phantompip-logo.png" alt="Phantompip" className="h-32 w-32 mx-auto object-cover rounded-full" />
             </Link>
-            <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
           </div>
 
           <nav className="flex-1 space-y-1 p-4 overflow-y-auto custom-scrollbar">
