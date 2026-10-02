@@ -69,17 +69,7 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // Payment numbers are optional (an empty value hides that gateway), but a
-    // filled-in one must still be a real phone number.
-    for (const field of ['airtelMoneyNumber', 'mtnMomoNumber'] as const) {
-      const value = updates[field];
-      if (value && value.trim() && !isValidContactNumber(value)) {
-        return errorResponse(
-          `Enter a valid phone number for ${field === 'airtelMoneyNumber' ? 'Airtel Money' : 'MTN MoMo'}`,
-          400
-        );
-      }
-    }
+
 
     if (incoming.plans && typeof incoming.plans === 'object') {
       const plans: Partial<Record<PlanId, EditablePlan>> = {};

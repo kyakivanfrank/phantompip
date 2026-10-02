@@ -9,7 +9,7 @@ import { ToastProvider } from '@/components/Toast';
 
 const NAV_LINKS = [
   { href: '/dashboard', label: 'Dashboard', icon: Home, exact: true },
-  { href: '/dashboard/mt5', label: 'MT5 Account', icon: Plug },
+  { href: '/dashboard/mt5', label: 'Bot Activation', icon: Plug },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ];
 

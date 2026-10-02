@@ -20,7 +20,7 @@ export function isValidMt5LoginId(loginId: string): boolean {
 }
 
 // Transaction hash validation (for crypto or mobile money reference codes)
-// Accepts: TRC20 hashes (64 hex chars), MTN refs (10+ digits), Airtel refs (alphanumeric with dashes/slashes)
+// Accepts: TRC20 hashes (64 hex chars)
 export function isValidTransactionId(txId: string): boolean {
   const trimmed = txId.trim();
   // Must be 5–200 characters, allow alphanumeric, hyphens, underscores, slashes, dots, spaces

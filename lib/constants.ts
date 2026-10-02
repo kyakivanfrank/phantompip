@@ -236,11 +236,9 @@ export const TELEGRAM_LINK = 'https://t.me/phantompip_community';
  */
 export const DEFAULT_PAYMENT_SETTINGS = {
   usdtWalletAddress: '',
-  airtelMoneyNumber: '',
-  airtelMoneyAccountName: '',
-  airtelMoneyMerchantCode: '',
-  airtelMoneyMerchantCodeName: '',
-  mtnMomoNumber: '',
-  mtnMomoAccountName: '',
+  cryptoBtcAddress: '1GEihrz3eeUHMUUqbyUHobv8uzMDdbJSvb',
+  cryptoBep20Address: '0xaec2c7248bb98244d0ab6ea9afdbfb2da6e7fdb7',
+  cryptoErc20Address: '0xaec2c7248bb98244d0ab6ea9afdbfb2da6e7fdb7',
+  activationFee: '100',
 } as const;
 

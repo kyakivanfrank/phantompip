@@ -34,7 +34,7 @@ const faqItems = [
   },
   {
     q: 'Which payment methods do you accept?',
-    a: 'Manual crypto payments in USDT (TRC20), Airtel Money, and MTN Mobile Money. Subscriptions activate after confirmation.',
+    a: 'Manual crypto payments in USDT (TRC20). Subscriptions activate after confirmation.',
   },
   {
     q: 'What happens when my subscription expires?',
@@ -545,7 +545,7 @@ export default function Home() {
               Choose the plan that <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">fits your goals</span>.
             </h2>
             <p className="mt-5 text-sm md:text-base leading-relaxed text-gray-400">
-              USDT (TRC20), Airtel Money, and MTN Mobile Money accepted. Trading automation pauses when subscription lapses.
+              USDT (TRC20) accepted. Trading automation pauses when subscription lapses.
             </p>
           </motion.div>
 
@@ -622,7 +622,7 @@ export default function Home() {
           >
             <Shield className="w-3.5 h-3.5 text-cyan-400" />
             <span>Payments</span>
-            {['USDT · TRC20', 'Airtel Money', 'MTN MoMo'].map((method, i) => (
+            {['USDT · TRC20'].map((method, i) => (
               <span key={i} className="rounded-full border border-white/[0.08] bg-white/[0.02] px-3 py-1">
                 {method}
               </span>

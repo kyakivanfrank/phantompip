@@ -111,10 +111,11 @@ function PageHeader() {
 
 /* ── Pending approval view ─────────────────────────────────────── */
 
-function PendingView({ userData, isChecking, onRefresh }: {
+function PendingView({ userData, isChecking, onRefresh, activationFee }: {
   userData: any;
   isChecking: boolean;
   onRefresh: () => void;
+  activationFee: string | number;
 }) {
   const spotlight = useSpotlight();
   const sub = userData?.subscription;
@@ -232,7 +233,7 @@ function PendingView({ userData, isChecking, onRefresh }: {
               )}
               <div>
                 <p className="text-[--text-3] text-xs">Amount</p>
-                <p className="font-mono font-bold tabular-nums text-[--text-1]">${ACTIVATION_FEE}</p>
+                <p className="font-mono font-bold tabular-nums text-[--text-1]">${activationFee}</p>
               </div>
               {sub.latestPaymentTransactionRef && (
                 <div className="col-span-2">
@@ -380,6 +381,7 @@ export default function ActivatePage() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [error, setError] = useState('');
   const [userData, setUserData] = useState<any>(null);
+  const [settings, setSettings] = useState<any>(null);
   const [isChecking, setIsChecking] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -388,10 +390,20 @@ export default function ActivatePage() {
   const fetchStatus = useCallback(async (silent = false) => {
     if (!silent) setIsChecking(true);
     try {
-      const res = await fetch('/api/auth/me', { credentials: 'include', cache: 'no-store' });
-      if (!res.ok) { router.push('/login'); return; }
-      const data = await res.json();
-      const user = data?.data?.user;
+      const [authRes, settingsRes] = await Promise.all([
+        fetch('/api/auth/me', { credentials: 'include', cache: 'no-store' }),
+        fetch('/api/settings/public', { cache: 'no-store' })
+      ]);
+
+      if (!authRes.ok) { router.push('/login'); return; }
+      
+      const authData = await authRes.json();
+      const user = authData?.data?.user;
+      
+      if (settingsRes.ok) {
+        const settingsData = await settingsRes.json();
+        setSettings(settingsData?.data || null);
+      }
       if (!user) { router.push('/login'); return; }
       if (user.isAdmin) { router.push('/admin'); return; }
 
@@ -431,8 +443,15 @@ export default function ActivatePage() {
 
   /* ── Copy address ───────────────────────────────────────────── */
 
+  const getAddress = (network: NetworkId) => {
+    if (network === 'BTC' && settings?.cryptoBtcAddress) return settings.cryptoBtcAddress;
+    if (network === 'BEP20' && settings?.cryptoBep20Address) return settings.cryptoBep20Address;
+    if (network === 'ERC20' && settings?.cryptoErc20Address) return settings.cryptoErc20Address;
+    return NETWORKS[network].address;
+  };
+
   const copyAddress = () => {
-    navigator.clipboard.writeText(NETWORKS[selectedNetwork].address);
+    navigator.clipboard.writeText(getAddress(selectedNetwork));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -484,6 +503,8 @@ export default function ActivatePage() {
   }
 
   const net = NETWORKS[selectedNetwork];
+  const dynamicAddress = getAddress(selectedNetwork);
+  const dynamicFee = settings?.activationFee || ACTIVATION_FEE;
 
   /* ── Render ─────────────────────────────────────────────────── */
 
@@ -510,6 +531,7 @@ export default function ActivatePage() {
                   userData={userData}
                   isChecking={isChecking}
                   onRefresh={() => fetchStatus(false)}
+                  activationFee={dynamicFee}
                 />
               )}
 
@@ -566,7 +588,7 @@ export default function ActivatePage() {
                       </div>
                       <div className="text-right">
                         <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[--text-2]">Price</div>
-                        <div className="text-2xl font-mono font-bold tabular-nums tracking-tight text-brand-glow">${ACTIVATION_FEE}</div>
+                        <div className="text-2xl font-mono font-bold tabular-nums tracking-tight text-brand-glow">${dynamicFee}</div>
                       </div>
                     </div>
 
@@ -653,7 +675,7 @@ export default function ActivatePage() {
                           <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-[--text-2]">Payment address</span>
                           <div className="flex gap-2">
                             <div className="flex-1 overflow-hidden rounded-md bg-white/[0.04] px-3 py-2.5 font-mono text-sm text-[--text-1] ring-1 ring-white/[0.10] select-all break-all leading-relaxed">
-                              {net.address}
+                              {dynamicAddress}
                             </div>
                             <button
                               onClick={copyAddress}
@@ -669,7 +691,7 @@ export default function ActivatePage() {
                         {/* Amount */}
                         <div className="flex items-center justify-between rounded-xl bg-white/[0.03] ring-1 ring-white/[0.06] px-4 py-3">
                           <span className="text-sm text-[--text-2]">Amount to pay</span>
-                          <span className="text-lg font-mono font-bold tabular-nums tracking-tight">${ACTIVATION_FEE}</span>
+                          <span className="text-lg font-mono font-bold tabular-nums tracking-tight">${dynamicFee}</span>
                         </div>
                       </motion.div>
                     </AnimatePresence>

@@ -80,23 +80,19 @@ function toPlanPayload(planForms: Record<PlanId, PlanForm>) {
 type PlatformSettingsForm = {
   supportContactNumber: string;
   usdtWalletAddress: string;
-  airtelMoneyNumber: string;
-  airtelMoneyAccountName: string;
-  airtelMoneyMerchantCode: string;
-  airtelMoneyMerchantCodeName: string;
-  mtnMomoNumber: string;
-  mtnMomoAccountName: string;
+  cryptoBtcAddress: string;
+  cryptoBep20Address: string;
+  cryptoErc20Address: string;
+  activationFee: string;
 };
 
 const EMPTY_SETTINGS: PlatformSettingsForm = {
   supportContactNumber: '',
   usdtWalletAddress: '',
-  airtelMoneyNumber: '',
-  airtelMoneyAccountName: '',
-  airtelMoneyMerchantCode: '',
-  airtelMoneyMerchantCodeName: '',
-  mtnMomoNumber: '',
-  mtnMomoAccountName: '',
+  cryptoBtcAddress: '',
+  cryptoBep20Address: '',
+  cryptoErc20Address: '',
+  activationFee: '',
 };
 
 const SETTINGS_GROUPS: Array<{
@@ -118,22 +114,15 @@ const SETTINGS_GROUPS: Array<{
       { field: 'usdtWalletAddress', label: 'USDT wallet address (TRON)', placeholder: 'TPkbb...' },
     ],
   },
+
   {
-    title: 'Airtel Money',
-    hint: 'A gateway only appears once both its number/code and its name are filled in.',
+    title: 'Crypto Payments & Activation',
+    hint: 'Wallets and activation fee shown on the activation page.',
     fields: [
-      { field: 'airtelMoneyNumber', label: 'Airtel mobile number', placeholder: '0731020815', type: 'tel' },
-      { field: 'airtelMoneyAccountName', label: 'Airtel account name', placeholder: 'Michael' },
-      { field: 'airtelMoneyMerchantCode', label: 'Airtel merchant code', placeholder: '7121441' },
-      { field: 'airtelMoneyMerchantCodeName', label: 'Airtel merchant name', placeholder: 'Micheal PhantomPip' },
-    ],
-  },
-  {
-    title: 'MTN Mobile Money',
-    hint: 'Both fields are required for this option to appear.',
-    fields: [
-      { field: 'mtnMomoNumber', label: 'MTN mobile number', placeholder: 'Not configured', type: 'tel' },
-      { field: 'mtnMomoAccountName', label: 'MTN account name', placeholder: 'Not configured' },
+      { field: 'cryptoBtcAddress', label: 'BTC Address', placeholder: '1GEi...' },
+      { field: 'cryptoBep20Address', label: 'BEP20 Address', placeholder: '0xae...' },
+      { field: 'cryptoErc20Address', label: 'ERC20 Address', placeholder: '0xae...' },
+      { field: 'activationFee', label: 'Activation Fee (USD)', placeholder: '100', type: 'number' },
     ],
   },
 ];

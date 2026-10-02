@@ -42,32 +42,26 @@ export type EditablePlan = Pick<PlanDefinition, (typeof EDITABLE_PLAN_FIELDS)[nu
 export interface PlatformSettings {
   supportContactNumber: string;
   usdtWalletAddress: string;
-  airtelMoneyNumber: string;
-  airtelMoneyAccountName: string;
-  airtelMoneyMerchantCode: string;
-  airtelMoneyMerchantCodeName: string;
-  mtnMomoNumber: string;
-  mtnMomoAccountName: string;
+  cryptoBtcAddress: string;
+  cryptoBep20Address: string;
+  cryptoErc20Address: string;
+  activationFee: string;
   plans: Record<PlanId, EditablePlan>;
 }
 
 export const SETTINGS_TEXT_FIELDS = [
   "supportContactNumber",
   "usdtWalletAddress",
-  "airtelMoneyNumber",
-  "airtelMoneyAccountName",
-  "airtelMoneyMerchantCode",
-  "airtelMoneyMerchantCodeName",
-  "mtnMomoNumber",
-  "mtnMomoAccountName",
+  "cryptoBtcAddress",
+  "cryptoBep20Address",
+  "cryptoErc20Address",
+  "activationFee",
 ] as const;
 
 export type SettingsTextField = (typeof SETTINGS_TEXT_FIELDS)[number];
 
 const PHONE_FIELDS: SettingsTextField[] = [
   "supportContactNumber",
-  "airtelMoneyNumber",
-  "mtnMomoNumber",
 ];
 
 export function normalizeContactNumber(value: string): string {

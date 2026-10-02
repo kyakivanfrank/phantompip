@@ -15,6 +15,10 @@ export async function GET() {
       {
         supportContactNumber: settings.supportContactNumber,
         plans: resolvePlans(settings),
+        cryptoBtcAddress: settings.cryptoBtcAddress,
+        cryptoBep20Address: settings.cryptoBep20Address,
+        cryptoErc20Address: settings.cryptoErc20Address,
+        activationFee: settings.activationFee,
       },
       "Public settings retrieved",
       200

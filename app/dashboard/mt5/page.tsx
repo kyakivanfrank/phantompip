@@ -163,7 +163,7 @@ export default function Mt5Page() {
       >
         <div className="flex items-center gap-3">
           <Plug className="h-8 w-8 text-cyan-400" />
-          <h1 className="text-3xl font-semibold text-white">MT5 Account Management</h1>
+          <h1 className="text-3xl font-semibold text-white">Bot Activation</h1>
         </div>
         <p className="text-gray-400">
           Manage your MetaTrader 5 credentials securely
