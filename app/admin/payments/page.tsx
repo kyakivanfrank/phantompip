@@ -286,19 +286,33 @@ export default function PaymentsPage() {
                     {/* Amount */}
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Amount</p>
-                      <p className="mt-2 text-lg font-mono font-bold text-white">${payment.amount.toFixed(2)}</p>
+                      <div className="mt-2 flex flex-col">
+                        <span className="text-lg font-mono font-bold text-white">${payment.amount.toFixed(2)}</span>
+                        <span className="text-[10px] text-yellow-500/80 leading-tight mt-1">Verify on explorer that they sent this equivalent</span>
+                      </div>
                     </div>
 
                     {/* Transaction ID */}
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">TX ID</p>
-                      <div className="mt-2 flex items-center gap-1.5 rounded-lg border border-white/[0.06] bg-black/30 p-2 font-mono text-xs text-cyan-300">
-                        <span className="break-all flex-1 pr-6 selection:bg-cyan-500/30">{payment.transactionId}</span>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">TX ID (Click to Verify)</p>
+                      <div className="mt-2 relative flex items-center gap-1.5 rounded-lg border border-white/[0.06] bg-black/30 p-2 font-mono text-xs text-cyan-300">
+                        <a 
+                          href={
+                          payment.method === 'BTC' ? `https://mempool.space/tx/${payment.transactionId}` :
+                          payment.method === 'ERC20' ? `https://etherscan.io/tx/${payment.transactionId}` :
+                          `https://bscscan.com/tx/${payment.transactionId}`
+                        }
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="break-all flex-1 pr-8 selection:bg-cyan-500/30 hover:underline hover:text-cyan-200"
+                        >
+                          {payment.transactionId}
+                        </a>
                         <button
                           onClick={() => copyToClipboard(payment.transactionId, payment.id)}
-                          className="absolute p-1 text-gray-400 hover:text-white transition-colors"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-white transition-colors bg-black/50 rounded-md backdrop-blur-sm"
                         >
-                          {copiedId === payment.id ? <Check className="h-3 w-3 text-green-400" /> : <Copy className="h-3 w-3" />}
+                          {copiedId === payment.id ? <Check className="h-3.5 w-3.5 text-green-400" /> : <Copy className="h-3.5 w-3.5" />}
                         </button>
                       </div>
                     </div>

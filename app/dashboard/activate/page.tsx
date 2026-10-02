@@ -14,7 +14,7 @@ import { useSpotlight } from '@/lib/hooks';
 
 type NetworkId = 'BTC' | 'BEP20' | 'ERC20';
 
-const ACTIVATION_FEE = Number(process.env.NEXT_PUBLIC_ACTIVATION_FEE || '150');
+const ACTIVATION_FEE = 150;
 const TELEGRAM_LINK = 'https://t.me/phantompip_community';
 
 const NETWORKS: Record<NetworkId, {
@@ -28,21 +28,21 @@ const NETWORKS: Record<NetworkId, {
     name: 'BTC',
     fullName: 'Bitcoin',
     symbol: '₿',
-    address: process.env.NEXT_PUBLIC_CRYPTO_BTC_ADDRESS || '1GEihrz3eeUHMUUqbyUHobv8uzMDdbJSvb',
+    address: '1GEihrz3eeUHMUUqbyUHobv8uzMDdbJSvb',
     description: 'Send the displayed payment amount using the Bitcoin network.',
   },
   BEP20: {
     name: 'BEP20',
     fullName: 'BNB Smart Chain (BEP20)',
     symbol: 'B',
-    address: process.env.NEXT_PUBLIC_CRYPTO_BEP20_ADDRESS || '0xaec2c7248bb98244d0ab6ea9afdbfb2da6e7fdb7',
+    address: '0xaec2c7248bb98244d0ab6ea9afdbfb2da6e7fdb7',
     description: 'Send the displayed payment amount using the BEP20 (BSC) network.',
   },
   ERC20: {
     name: 'ERC20',
     fullName: 'Ethereum (ERC20)',
     symbol: 'Ξ',
-    address: process.env.NEXT_PUBLIC_CRYPTO_ERC20_ADDRESS || '0xaec2c7248bb98244d0ab6ea9afdbfb2da6e7fdb7',
+    address: '0xaec2c7248bb98244d0ab6ea9afdbfb2da6e7fdb7',
     description: 'Send the displayed payment amount using the ERC20 network.',
   },
 };

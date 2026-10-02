@@ -143,8 +143,12 @@ export default function DashboardPage() {
                       <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Billing Cycle</p>
                       <p className="text-base font-medium text-white capitalize">{displayBillingCycle}</p>
                       
-                      <p className="text-xs text-gray-500 uppercase tracking-wider mb-1 mt-4">Monthly Payment</p>
-                      <p className="text-base font-medium text-white capitalize">{displayPaidAmount !== null ? `$${displayPaidAmount}/mo` : 'N/A'}</p>
+                      <p className="text-xs text-gray-500 uppercase tracking-wider mb-1 mt-4">
+                        {displayBillingCycle === 'lifetime' ? 'One-time Payment' : 'Monthly Payment'}
+                      </p>
+                      <p className="text-base font-medium text-white capitalize">
+                        {displayPaidAmount !== null ? `$${displayPaidAmount}${displayBillingCycle === 'lifetime' ? '' : '/mo'}` : 'N/A'}
+                      </p>
                     </div>
                   </div>
 
@@ -173,12 +177,9 @@ export default function DashboardPage() {
               )}
 
               <div className="pt-2">
-                <Link
-                  href="/dashboard/subscription"
-                  className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors flex items-center gap-1"
-                >
-                  Manage Subscription →
-                </Link>
+                <span className="text-sm text-cyan-400 font-medium flex items-center gap-1">
+                  Lifetime Access
+                </span>
               </div>
             </div>
           </div>
@@ -252,7 +253,7 @@ export default function DashboardPage() {
                     </Link>
                   ) : (
                     <Link
-                      href="/dashboard/subscription"
+                      href="/dashboard/activate"
                       className="inline-block bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
                     >
                       Activate Subscription to Connect MT5

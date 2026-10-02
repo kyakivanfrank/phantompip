@@ -215,15 +215,15 @@ export const DEFAULT_TELEGRAM_LINK = 'https://t.me/phantompip_community';
 /**
  * Bot activation fee (one-time payment)
  */
-export const ACTIVATION_FEE = Number(process.env.NEXT_PUBLIC_ACTIVATION_FEE || '150');
+export const ACTIVATION_FEE = Number(process.env.ACTIVATION_FEE || '150');
 
 /**
  * Crypto payment addresses for bot activation
  */
 export const PAYMENT_ADDRESSES = {
-  BEP20: '0xaec2c7248bb98244d0ab6ea9afdbfb2da6e7fdb7',
-  ERC20: '0xaec2c7248bb98244d0ab6ea9afdbfb2da6e7fdb7',
-  BTC: '1GEihrz3eeUHMUUqbyUHobv8uzMDdbJSvb',
+  BEP20: process.env.CRYPTO_BEP20_ADDRESS || '0xaec2c7248bb98244d0ab6ea9afdbfb2da6e7fdb7',
+  ERC20: process.env.CRYPTO_ERC20_ADDRESS || '0xaec2c7248bb98244d0ab6ea9afdbfb2da6e7fdb7',
+  BTC: process.env.CRYPTO_BTC_ADDRESS || '1GEihrz3eeUHMUUqbyUHobv8uzMDdbJSvb',
 } as const;
 
 /**
@@ -235,9 +235,9 @@ export const TELEGRAM_LINK = 'https://t.me/phantompip_community';
  * Payment destinations (legacy, kept for admin settings backward compatibility)
  */
 export const DEFAULT_PAYMENT_SETTINGS = {
-  cryptoBtcAddress: '1GEihrz3eeUHMUUqbyUHobv8uzMDdbJSvb',
-  cryptoBep20Address: '0xaec2c7248bb98244d0ab6ea9afdbfb2da6e7fdb7',
-  cryptoErc20Address: '0xaec2c7248bb98244d0ab6ea9afdbfb2da6e7fdb7',
-  activationFee: '150',
+  cryptoBtcAddress: process.env.CRYPTO_BTC_ADDRESS || '1GEihrz3eeUHMUUqbyUHobv8uzMDdbJSvb',
+  cryptoBep20Address: process.env.CRYPTO_BEP20_ADDRESS || '0xaec2c7248bb98244d0ab6ea9afdbfb2da6e7fdb7',
+  cryptoErc20Address: process.env.CRYPTO_ERC20_ADDRESS || '0xaec2c7248bb98244d0ab6ea9afdbfb2da6e7fdb7',
+  activationFee: process.env.ACTIVATION_FEE || '150',
 } as const;
 
