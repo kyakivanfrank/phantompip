@@ -90,7 +90,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <aside className="hidden md:flex fixed md:relative w-64 h-full border-r border-white/10 bg-dark-secondary/40 backdrop-blur-xl z-40 flex-shrink-0 flex-col">
           <div className="p-6 border-b border-white/10">
             <Link href="/dashboard" className="flex items-center justify-center">
-              <img src="/phantompip-logo.png" alt="Phantompip" className="h-40 w-auto rounded-full" />
+              <img src="/phantompip-logo.png" alt="Phantompip" className="h-32 w-32 mx-auto object-cover rounded-full" />
             </Link>
           </div>
 
@@ -130,7 +130,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               {/* Left */}
               <div className="flex items-center gap-3">
                 <Link href="/dashboard" className="block md:hidden">
-                  <img src="/phantompip-logo.png" alt="Phantompip" className="h-8 w-auto rounded-full" />
+                  <img src="/phantompip-logo.png" alt="Phantompip" className="h-8 w-8 rounded-full object-cover" />
                 </Link>
                 <div className="hidden sm:flex items-center gap-2">
                   {userData?.subscription?.isActive && (
@@ -146,7 +146,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div className="relative">
                   <button
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="flex items-center gap-2 p-1.5 rounded-full md:rounded-xl md:bg-white/5 hover:bg-white/10 md:border border-white/5 transition-all focus:outline-none"
+                    className="flex items-center gap-2 p-1.5 rounded-full md:rounded-xl hover:bg-white/10 transition-all focus:outline-none"
                   >
                     <div className="h-8 w-8 rounded-full bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center text-xs font-bold text-white shadow-md">
                       {userInitials}

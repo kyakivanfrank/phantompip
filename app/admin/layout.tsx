@@ -116,7 +116,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <div className="relative">
                   <button
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="flex items-center gap-2 p-1.5 rounded-full md:rounded-xl md:bg-white/5 hover:bg-white/10 md:border border-white/5 transition-all focus:outline-none"
+                    className="flex items-center gap-2 p-1.5 rounded-full md:rounded-xl hover:bg-white/10 transition-all focus:outline-none"
                   >
                     <div className="h-8 w-8 rounded-full bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center text-xs font-bold text-white shadow-md">
                       {userData?.email?.substring(0, 2).toUpperCase() || 'AD'}

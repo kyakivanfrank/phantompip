@@ -178,7 +178,7 @@ export default function DashboardPage() {
 
               <div className="pt-2">
                 <span className="text-sm text-cyan-400 font-medium flex items-center gap-1">
-                  Lifetime Access
+                  Active Subscription
                 </span>
               </div>
             </div>

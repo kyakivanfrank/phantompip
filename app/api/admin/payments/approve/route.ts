@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/server/auth";
-import { getPayment, updatePaymentStatus, updateSubscription } from "@/lib/server/db";
+import { getPayment, getUser, updatePaymentStatus, updateSubscription } from "@/lib/server/db";
 import { handleApiError, successResponse, errorResponse } from "@/lib/server/api-response";
 import { ACTIVATION_FEE } from "@/lib/constants";
 
@@ -30,19 +30,34 @@ export async function POST(req: NextRequest) {
     const userId = payment.userId;
     const now = new Date();
 
+    const user = await getUser(userId);
+    if (!user) {
+      return errorResponse("User not found", 404);
+    }
+
+    // Determine new expiry date (stack if already active)
+    let baseDate = now;
+    if (user.subscription?.expiryDate) {
+      const currentExpiry = new Date(user.subscription.expiryDate);
+      if (currentExpiry > now) {
+        baseDate = currentExpiry;
+      }
+    }
+
+    // Add 1 month
+    const expiryDate = new Date(baseDate);
+    expiryDate.setMonth(expiryDate.getMonth() + 1);
+    const expiryIso = expiryDate.toISOString().split('T')[0];
+
     // Approve payment inside the user's document
     await updatePaymentStatus(userId, paymentId, "confirmed");
-
-    // Activate user — lifetime access (10 years expiry)
-    const lifetimeExpiry = new Date(now.getTime() + 10 * 365.25 * 24 * 60 * 60 * 1000);
-    const expiryIso = lifetimeExpiry.toISOString().split('T')[0];
 
     await updateSubscription(userId, {
       status: "active",
       approvalStatus: "approved",
       approvedAt: now.toISOString(),
       startDate: now.toISOString().split('T')[0],
-      billingCycle: "lifetime",
+      billingCycle: "monthly",
       expiryDate: expiryIso,
       planName: "PhantomPip Bot",
       priceUSD: ACTIVATION_FEE,

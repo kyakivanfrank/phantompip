@@ -21,28 +21,24 @@ const NETWORKS: Record<NetworkId, {
   name: string;
   fullName: string;
   symbol: string;
-  address: string;
   description: string;
 }> = {
   BTC: {
     name: 'BTC',
     fullName: 'Bitcoin',
     symbol: '₿',
-    address: '1GEihrz3eeUHMUUqbyUHobv8uzMDdbJSvb',
     description: 'Send the displayed payment amount using the Bitcoin network.',
   },
   BEP20: {
     name: 'BEP20',
     fullName: 'BNB Smart Chain (BEP20)',
     symbol: 'B',
-    address: '0xaec2c7248bb98244d0ab6ea9afdbfb2da6e7fdb7',
     description: 'Send the displayed payment amount using the BEP20 (BSC) network.',
   },
   ERC20: {
     name: 'ERC20',
     fullName: 'Ethereum (ERC20)',
     symbol: 'Ξ',
-    address: '0xaec2c7248bb98244d0ab6ea9afdbfb2da6e7fdb7',
     description: 'Send the displayed payment amount using the ERC20 network.',
   },
 };
@@ -91,7 +87,7 @@ function PageHeader() {
   return (
     <header className="w-full flex items-center justify-between px-4 sm:px-6 py-4">
       <Link href="/dashboard/activate" className="flex items-center gap-3">
-        <img src="/phantompip-logo.png" alt="PhantomPip" className="h-10 w-10 rounded-full" />
+        <img src="/phantompip-logo.png" alt="PhantomPip" className="h-10 w-10 rounded-full object-cover" />
         <span className="text-sm font-semibold tracking-tight text-[--text-1] hidden sm:inline">PHANTOMPIP</span>
       </Link>
       <a
@@ -130,9 +126,8 @@ function PendingView({ userData, isChecking, onRefresh, activationFee }: {
       className="w-full max-w-lg mx-auto"
     >
       <div className="glass glass-edge spotlight p-6 md:p-8 space-y-8" {...spotlight}>
-        {/* Logo */}
         <div className="flex justify-center">
-          <img src="/phantompip-logo.png" alt="PhantomPip" className="h-14 w-14 rounded-full ring-1 ring-white/15" />
+          <img src="/phantompip-logo.png" alt="PhantomPip" className="h-14 w-14 rounded-full object-cover ring-1 ring-white/15" />
         </div>
 
         {/* Animated pulse rings */}
@@ -444,10 +439,10 @@ export default function ActivatePage() {
   /* ── Copy address ───────────────────────────────────────────── */
 
   const getAddress = (network: NetworkId) => {
-    if (network === 'BTC' && settings?.cryptoBtcAddress) return settings.cryptoBtcAddress;
-    if (network === 'BEP20' && settings?.cryptoBep20Address) return settings.cryptoBep20Address;
-    if (network === 'ERC20' && settings?.cryptoErc20Address) return settings.cryptoErc20Address;
-    return NETWORKS[network].address;
+    if (network === 'BTC') return settings?.cryptoBtcAddress || '';
+    if (network === 'BEP20') return settings?.cryptoBep20Address || '';
+    if (network === 'ERC20') return settings?.cryptoErc20Address || '';
+    return '';
   };
 
   const copyAddress = () => {
@@ -578,9 +573,7 @@ export default function ActivatePage() {
                   >
                     <div className="flex items-center justify-between flex-wrap gap-4">
                       <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-cyan-500/30 to-violet-500/30 flex items-center justify-center ring-1 ring-white/15">
-                          <img src="/phantompip-logo.png" alt="" className="h-8 w-8 rounded-full" />
-                        </div>
+                        <img src="/phantompip-logo.png" alt="PhantomPip" className="h-12 w-12 rounded-full object-cover ring-1 ring-white/15" />
                         <div>
                           <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[--text-2]">Phantompip</div>
                           <h2 className="text-xl font-semibold tracking-tight">Bot Access</h2>
