@@ -12,7 +12,7 @@ export default function AuthLayout({
       <div className="relative z-10 w-full max-w-md flex flex-col items-center">
         {/* Logo */}
         <Link href="/" className="inline-flex items-center gap-2 mb-8 transition-opacity hover:opacity-80">
-          <img src="/phantompip-logo.png" alt="Phantompip" className="h-24 w-auto rounded-[33%]" />
+          <img src="/phantompip-logo.png" alt="Phantompip" className="h-24 w-auto rounded-full" />
         </Link>
 
         {/* Page Content Injection */}

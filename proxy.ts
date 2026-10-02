@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { NextMiddleware } from "next/server";
 import { verifySessionToken } from "./lib/server/auth";
-import { triggerOptimisticBackup } from "./lib/server/db";
+import { triggerOptimisticBackup, getUser } from "./lib/server/db";
 
 export const proxy: NextMiddleware = async (request: NextRequest) => {
   void triggerOptimisticBackup();
@@ -48,6 +48,19 @@ export const proxy: NextMiddleware = async (request: NextRequest) => {
     // If admin tries to access user dashboard, redirect to admin
     if (decoded.isAdmin && pathname.startsWith("/dashboard")) {
       return NextResponse.redirect(new URL("/admin", request.url));
+    }
+
+    if (!decoded.isAdmin) {
+      const user = await getUser(decoded.userId);
+      const isActivated = user?.subscription?.status === 'active';
+      
+      if (!isActivated && pathname !== "/dashboard/activate") {
+        return NextResponse.redirect(new URL("/dashboard/activate", request.url));
+      }
+      
+      if (isActivated && pathname === "/dashboard/activate") {
+        return NextResponse.redirect(new URL("/dashboard", request.url));
+      }
     }
   }
 

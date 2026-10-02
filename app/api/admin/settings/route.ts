@@ -7,10 +7,8 @@ import {
   savePlatformSettings,
   verifyAdminPassword,
   SETTINGS_TEXT_FIELDS,
-  type EditablePlan,
   type PlatformSettings,
 } from "@/lib/server/settings";
-import { PLAN_ORDER, type PlanId } from "@/lib/plans";
 import { errorResponse, handleApiError, successResponse } from "@/lib/server/api-response";
 
 export async function GET() {

@@ -52,7 +52,7 @@ export default function Support() {
       <nav className="sticky top-0 z-40 transition-colors duration-300 border-b border-white/[0.06] bg-dark/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <Link href="/" className="flex items-center active" aria-current="page">
-            <img src="/phantompip-logo.png" alt="Phantompip" className="h-10 w-auto rounded-[33%]" />
+            <img src="/phantompip-logo.png" alt="Phantompip" className="h-10 w-auto rounded-full" />
           </Link>
           <div className="hidden items-center gap-9 md:flex">
             <a href="/#capabilities" className="text-xs font-medium text-gray-400 hover:text-white transition">
@@ -107,7 +107,7 @@ export default function Support() {
               Back
             </Link>
             <Link href="/" className="flex items-center">
-              <img src="/phantompip-logo.png" alt="Phantompip" className="h-8 w-auto rounded-[33%]" />
+              <img src="/phantompip-logo.png" alt="Phantompip" className="h-8 w-auto rounded-full" />
             </Link>
             <div className="w-12"></div>
           </motion.div>

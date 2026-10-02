@@ -35,13 +35,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           } else {
             setUserData(user);
             setIsLoading(false);
-
-            // Gate: redirect non-activated users to /dashboard/activate
-            const isActivated =
-              user.subscription?.isActive === true;
-            if (!isActivated && pathname !== '/dashboard/activate') {
-              router.push('/dashboard/activate');
-            }
           }
         } else {
           router.push('/login');
@@ -97,7 +90,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <aside className="hidden md:flex fixed md:relative w-64 h-full border-r border-white/10 bg-dark-secondary/40 backdrop-blur-xl z-40 flex-shrink-0 flex-col">
           <div className="p-6 border-b border-white/10">
             <Link href="/dashboard" className="flex items-center justify-center">
-              <img src="/phantompip-logo.png" alt="Phantompip" className="h-40 w-auto rounded-[33%]" />
+              <img src="/phantompip-logo.png" alt="Phantompip" className="h-40 w-auto rounded-full" />
             </Link>
           </div>
 
@@ -137,7 +130,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               {/* Left */}
               <div className="flex items-center gap-3">
                 <Link href="/dashboard" className="block md:hidden">
-                  <img src="/phantompip-logo.png" alt="Phantompip" className="h-8 w-auto rounded-[33%]" />
+                  <img src="/phantompip-logo.png" alt="Phantompip" className="h-8 w-auto rounded-full" />
                 </Link>
                 <div className="hidden sm:flex items-center gap-2">
                   {userData?.subscription?.isActive && (

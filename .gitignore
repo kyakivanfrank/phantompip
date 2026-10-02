@@ -42,3 +42,6 @@ yarn-error.log*
 Thumbs.db
 
 .graphify-out/
+graphify-out/
+cloudflared.exe
+*.exe

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plug, Check, AlertCircle, Lock, Eye, EyeOff, Zap } from 'lucide-react';
@@ -56,12 +56,7 @@ export default function Mt5Page() {
         const isActive = subscription?.isActive === true;
         setCanConnect(isActive);
 
-        if (false) {
-          const matchedPlan = Object.values(plansRef.current).find(p => p.name === subscription.planName);
-          setActivePlanData(matchedPlan || null);
-        } else {
-          setActivePlanData(null);
-        }
+
 
         // Fetch existing credentials
         if (isActive || data?.data?.user?.mt5?.isConnected) {

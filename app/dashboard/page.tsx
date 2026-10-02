@@ -12,10 +12,8 @@ import {
   KeyRound,
   Server,
   CheckCircle2,
-  AlertCircle,
-  Zap
+  AlertCircle
 } from 'lucide-react';
-import { usePublicSettings } from '@/lib/hooks';
 
 type DashboardUser = {
   id: string;
@@ -47,7 +45,6 @@ type DashboardUser = {
 };
 
 export default function DashboardPage() {
-  const { plans } = usePublicSettings();
   const [userData, setUserData] = useState<DashboardUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -80,8 +77,6 @@ export default function DashboardPage() {
   const hasMt5 = userData?.mt5?.isConnected && userData?.mt5?.loginId;
 
   const hasActivePlan = userData?.subscription?.status === 'active' && userData?.subscription?.approvalStatus === 'approved' && userData?.subscription?.remainingDays > 0;
-  const rawPlanName = hasActivePlan ? userData?.subscription?.planName || '' : '';
-  const resolvedPlan = hasActivePlan ? (Object.values(plans).find(p => p.name === rawPlanName) || null) : null;
   const displayBillingCycle = hasActivePlan ? userData?.subscription?.billingCycle : 'N/A';
   const displayPaidAmount = hasActivePlan ? userData?.subscription?.paidAmount : null;
   const displayExpiryDate = hasActivePlan ? userData?.subscription?.expiryDate : 'N/A';

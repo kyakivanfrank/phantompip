@@ -91,7 +91,7 @@ function PageHeader() {
   return (
     <header className="w-full flex items-center justify-between px-4 sm:px-6 py-4">
       <Link href="/dashboard/activate" className="flex items-center gap-3">
-        <img src="/phantompip-logo.png" alt="PhantomPip" className="h-10 w-10 rounded-[33%]" />
+        <img src="/phantompip-logo.png" alt="PhantomPip" className="h-10 w-10 rounded-full" />
         <span className="text-sm font-semibold tracking-tight text-[--text-1] hidden sm:inline">PHANTOMPIP</span>
       </Link>
       <a
@@ -132,7 +132,7 @@ function PendingView({ userData, isChecking, onRefresh, activationFee }: {
       <div className="glass glass-edge spotlight p-6 md:p-8 space-y-8" {...spotlight}>
         {/* Logo */}
         <div className="flex justify-center">
-          <img src="/phantompip-logo.png" alt="PhantomPip" className="h-14 w-14 rounded-[33%] ring-1 ring-white/15" />
+          <img src="/phantompip-logo.png" alt="PhantomPip" className="h-14 w-14 rounded-full ring-1 ring-white/15" />
         </div>
 
         {/* Animated pulse rings */}
@@ -579,7 +579,7 @@ export default function ActivatePage() {
                     <div className="flex items-center justify-between flex-wrap gap-4">
                       <div className="flex items-center gap-4">
                         <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-cyan-500/30 to-violet-500/30 flex items-center justify-center ring-1 ring-white/15">
-                          <img src="/phantompip-logo.png" alt="" className="h-8 w-8 rounded-[33%]" />
+                          <img src="/phantompip-logo.png" alt="" className="h-8 w-8 rounded-full" />
                         </div>
                         <div>
                           <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[--text-2]">Phantompip</div>

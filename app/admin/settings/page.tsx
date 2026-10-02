@@ -2,80 +2,10 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Eye, EyeOff, SlidersHorizontal, ShieldCheck, Layers } from 'lucide-react';
+import { Lock, Eye, EyeOff, SlidersHorizontal, ShieldCheck } from 'lucide-react';
 import { invalidatePublicSettings } from '@/lib/hooks';
-import { PLAN_ORDER, type PlanId } from '@/lib/plans';
 
-/** Plan fields as the form holds them: price and features are edited as text. */
-type PlanForm = {
-  name: string;
-  price: string;
-  expectedProfit: string;
-  recommendedAccount: string;
-  bestFor: string;
-  description: string;
-  features: string;
-};
 
-const EMPTY_PLAN: PlanForm = {
-  name: '',
-  price: '',
-  expectedProfit: '',
-  recommendedAccount: '',
-  bestFor: '',
-  description: '',
-  features: '',
-};
-
-const EMPTY_PLANS = PLAN_ORDER.reduce((acc, planId) => {
-  acc[planId] = { ...EMPTY_PLAN };
-  return acc;
-}, {} as Record<PlanId, PlanForm>);
-
-const PLAN_FIELDS: Array<{ field: keyof PlanForm; label: string; placeholder: string; wide?: boolean }> = [
-  { field: 'name', label: 'Plan name', placeholder: 'Starter Scalper' },
-  { field: 'price', label: 'Price (USD / month)', placeholder: '70' },
-  { field: 'expectedProfit', label: 'Expected daily profit', placeholder: '$100 – $200' },
-  { field: 'recommendedAccount', label: 'Recommended account', placeholder: '$10 - $200' },
-  { field: 'bestFor', label: 'Best for', placeholder: 'Beginners and small account traders' },
-];
-
-/** API shape (typed price, array of features) -> form shape (all text). */
-function toPlanForms(apiPlans: any): Record<PlanId, PlanForm> {
-  return PLAN_ORDER.reduce((acc, planId) => {
-    const plan = apiPlans?.[planId] || {};
-    acc[planId] = {
-      name: plan.name ?? '',
-      price: plan.price === undefined || plan.price === null ? '' : String(plan.price),
-      expectedProfit: plan.expectedProfit ?? '',
-      recommendedAccount: plan.recommendedAccount ?? '',
-      bestFor: plan.bestFor ?? '',
-      description: plan.description ?? '',
-      features: Array.isArray(plan.features) ? plan.features.join('\n') : '',
-    };
-    return acc;
-  }, {} as Record<PlanId, PlanForm>);
-}
-
-/** Form shape -> API shape. */
-function toPlanPayload(planForms: Record<PlanId, PlanForm>) {
-  return PLAN_ORDER.reduce((acc, planId) => {
-    const plan = planForms[planId];
-    acc[planId] = {
-      name: plan.name.trim(),
-      price: Number(plan.price),
-      expectedProfit: plan.expectedProfit.trim(),
-      recommendedAccount: plan.recommendedAccount.trim(),
-      bestFor: plan.bestFor.trim(),
-      description: plan.description.trim(),
-      features: plan.features
-        .split('\n')
-        .map((feature) => feature.trim())
-        .filter(Boolean),
-    };
-    return acc;
-  }, {} as Record<PlanId, any>);
-}
 
 type PlatformSettingsForm = {
   telegramSupportLink: string;
@@ -134,7 +64,6 @@ export default function AdminSettingsPage() {
   // the database so they can change at any time; every save is confirmed with
   // the admin's own login password.
   const [settings, setSettings] = useState<PlatformSettingsForm>(EMPTY_SETTINGS);
-  const [plans, setPlans] = useState<Record<PlanId, PlanForm>>(EMPTY_PLANS);
   const [adminPassword, setAdminPassword] = useState('');
   const [showAdminPassword, setShowAdminPassword] = useState(false);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
@@ -161,7 +90,6 @@ export default function AdminSettingsPage() {
         if (active) {
           const loaded = data.data?.settings || {};
           setSettings({ ...EMPTY_SETTINGS, ...loaded });
-          setPlans(toPlanForms(loaded.plans));
         }
       } catch (err: any) {
         if (active) setSettingsError(err.message || 'Unable to load platform settings');
@@ -181,11 +109,7 @@ export default function AdminSettingsPage() {
     setSettingsMessage('');
   };
 
-  const updatePlan = (planId: PlanId, field: keyof PlanForm, value: string) => {
-    setPlans((prev) => ({ ...prev, [planId]: { ...prev[planId], [field]: value } }));
-    setSettingsError('');
-    setSettingsMessage('');
-  };
+
 
   const handleSettingsSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -223,7 +147,6 @@ export default function AdminSettingsPage() {
 
       const saved = data.data?.settings || {};
       setSettings({ ...EMPTY_SETTINGS, ...saved });
-      setPlans(toPlanForms(saved.plans));
       setAdminPassword('');
       invalidatePublicSettings();
       setSettingsMessage(data.message || 'Settings updated. Changes are live across the site.');
