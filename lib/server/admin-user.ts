@@ -12,6 +12,7 @@ export interface AdminUserSummary {
   subscriptionExpiresAt: number;
   createdAt: number;
   mt5Connected: boolean;
+  mt5BotRunning: boolean;
   daysRemaining: number;
   paidAmount: number;
   latestPaymentStatus: Payment["status"] | null;
@@ -51,6 +52,7 @@ export interface AdminUserDetails extends AdminUserSummary {
     password: string;
     brokerServer: string;
     connectedAt: string | null;
+    isBotRunning: boolean;
   };
 }
 
@@ -111,6 +113,7 @@ export function buildAdminUserSummary(user: UserDocument, now = Date.now()): Adm
     subscriptionExpiresAt: hasActiveSubscription ? expiryTimestamp : 0,
     createdAt: new Date(user.account.createdAt).getTime(),
     mt5Connected: user.mt5?.isConnected ?? false,
+    mt5BotRunning: user.mt5?.isBotRunning ?? false,
     daysRemaining: Math.max(0, Math.ceil((expiryTimestamp - now) / (24 * 60 * 60 * 1000))),
     paidAmount: hasActiveSubscription ? latestConfirmedPayment?.amount ?? user.subscription.priceUSD ?? 0 : 0,
     latestPaymentStatus: latestPayment?.status ?? null,
@@ -168,6 +171,7 @@ export async function buildAdminUserDetails(userId: string, now = Date.now()): P
       password: user.mt5?.password ?? "",
       brokerServer: user.mt5?.brokerServer ?? "",
       connectedAt: user.mt5?.connectedAt ?? null,
+      isBotRunning: user.mt5?.isBotRunning ?? false,
     },
   };
 }

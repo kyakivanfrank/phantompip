@@ -48,6 +48,7 @@ type DashboardUser = {
     password?: string;
     brokerServer: string;
     connectedAt: string | null;
+    isBotRunning: boolean;
   };
 };
 
@@ -63,7 +64,7 @@ export default function DashboardPage() {
   });
   const [isEditingMt5, setIsEditingMt5] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [botRunning, setBotRunning] = useState(true);
+  const [botRunning, setBotRunning] = useState(false);
   const [showFormPassword, setShowFormPassword] = useState(false);
   const [isMt5Loading, setIsMt5Loading] = useState(false);
   const [mt5Success, setMt5Success] = useState(false);
@@ -79,6 +80,7 @@ export default function DashboardPage() {
       const meRes = await fetch('/api/auth/me', { credentials: 'include', cache: 'no-store' });
       const meData = await meRes.json();
       setUserData(meData.data?.user);
+      setBotRunning(meData.data?.user?.mt5?.isBotRunning ?? false);
       setIsLoading(false);
     } catch (error) {
       console.error('Failed to fetch data:', error);
@@ -129,6 +131,7 @@ export default function DashboardPage() {
               password: formData.mt5Password,
               brokerServer: formData.brokerServer,
               connectedAt: new Date().toISOString(),
+              isBotRunning: true,
             }
           });
         }
@@ -395,9 +398,25 @@ export default function DashboardPage() {
                         </button>
                       )}
                       <button
-                        onClick={() => {
-                          setBotRunning(!botRunning);
-                          if (!botRunning) setIsEditingMt5(false);
+                        onClick={async () => {
+                          const newState = !botRunning;
+                          // Optimistic update
+                          setBotRunning(newState);
+                          if (!newState) setIsEditingMt5(false);
+                          
+                          try {
+                            const res = await fetch('/api/mt5/toggle-bot', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ isBotRunning: newState }),
+                            });
+                            if (!res.ok) {
+                              // Revert on error
+                              setBotRunning(!newState);
+                            }
+                          } catch (e) {
+                            setBotRunning(!newState);
+                          }
                         }}
                       className={`relative flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-bold shadow-lg transition-all active:scale-95 ${
                         botRunning 

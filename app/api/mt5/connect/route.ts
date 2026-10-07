@@ -57,6 +57,7 @@ export async function POST(req: NextRequest) {
       brokerServer: sanitizeInput(brokerServer),
       connectedAt: now,
       isConnected: true,
+      isBotRunning: true,
     });
 
     return successResponse(

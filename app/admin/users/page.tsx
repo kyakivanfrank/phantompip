@@ -14,6 +14,7 @@ interface User {
   paidAmount: number;
   createdAt: number;
   profilePicture?: number;
+  mt5BotRunning: boolean;
 }
 
 export default function UsersPage() {
@@ -400,6 +401,12 @@ export default function UsersPage() {
                               <div className="flex justify-between items-center gap-4">
                                 <span className="text-sm text-gray-400">Expires:</span>
                                 <span className="text-sm font-medium text-gray-300 text-right">{user.subscriptionExpiresAt ? formatDate(user.subscriptionExpiresAt) : 'N/A'}</span>
+                              </div>
+                              <div className="flex justify-between items-center gap-4">
+                                <span className="text-sm text-gray-400">Bot Engine:</span>
+                                <span className={`text-sm font-medium text-right ${user.mt5BotRunning ? 'text-green-400' : 'text-gray-500'}`}>
+                                  {user.mt5BotRunning ? 'Active (Running)' : 'Paused (Off)'}
+                                </span>
                               </div>
                             </div>
                           </div>

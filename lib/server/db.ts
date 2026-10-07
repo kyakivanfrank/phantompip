@@ -683,6 +683,7 @@ export async function getMt5Credentials(userId: string): Promise<UserDocument["m
       brokerServer: "",
       connectedAt: null,
       isConnected: false,
+      isBotRunning: false,
     };
     await attempt(() => (redis.json as any).set(`user:${userId}`, "$.mt5", placeholder));
     return placeholder;

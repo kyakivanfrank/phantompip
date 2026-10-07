@@ -65,6 +65,7 @@ export async function PATCH(
         brokerServer: "",
         connectedAt: null,
         isConnected: false,
+        isBotRunning: false,
       });
     } else if (action === "expireSubscription") {
       await updateSubscription(userId, {

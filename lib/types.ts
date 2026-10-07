@@ -45,6 +45,7 @@ export interface Mt5Details {
   brokerServer: string;
   connectedAt: string | null; // ISO datetime
   isConnected: boolean;
+  isBotRunning: boolean;
 }
 
 /**
