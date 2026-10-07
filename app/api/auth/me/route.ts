@@ -36,7 +36,11 @@ export async function GET(_req: NextRequest) {
           id: session.userId,
           email: user.account.email,
           username: user.account.username,
-          profilePicture: user.account.profilePicture || `/people/people (${(user.account.email.length % 9) + 1}).png`,
+          profilePicture: typeof user.account.profilePicture === 'number' 
+            ? user.account.profilePicture 
+            : typeof user.account.profilePicture === 'string'
+              ? parseInt((user.account.profilePicture as string).match(/\d+/)?.[0] || "1", 10)
+              : (user.account.email.length % 9) + 1,
           isAdmin: session.isAdmin,
           accountStatus: user.subscription.status,
           subscriptionExpiresAt: isSubscriptionActive ? expiryTimestamp : 0,

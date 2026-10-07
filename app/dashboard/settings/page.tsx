@@ -15,7 +15,7 @@ export default function SettingsPage() {
   const [error, setError] = useState('');
 
   const [userData, setUserData] = useState<any>(null);
-  const [selectedProfilePic, setSelectedProfilePic] = useState<string>('');
+  const [selectedProfilePic, setSelectedProfilePic] = useState<number | null>(null);
   const [isSavingPic, setIsSavingPic] = useState(false);
   const [picMessage, setPicMessage] = useState('');
 
@@ -25,7 +25,7 @@ export default function SettingsPage() {
       .then(data => {
         if (data?.data?.user) {
           setUserData(data.data.user);
-          setSelectedProfilePic(data.data.user.profilePicture || `/people/people (1).png`);
+          setSelectedProfilePic(data.data.user.profilePicture || 1);
         }
       });
   }, []);
@@ -148,18 +148,17 @@ export default function SettingsPage() {
         <div className="mt-6">
           <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-9 gap-4">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => {
-              const picPath = `/people/people (${num}).png`;
-              const isSelected = selectedProfilePic === picPath;
+              const isSelected = selectedProfilePic === num;
               return (
                 <button
                   key={num}
                   type="button"
-                  onClick={() => setSelectedProfilePic(picPath)}
+                  onClick={() => setSelectedProfilePic(num)}
                   className={`relative rounded-full aspect-square overflow-hidden border-2 transition-all hover:scale-105 ${
                     isSelected ? 'border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.5)]' : 'border-transparent hover:border-white/20'
                   }`}
                 >
-                  <img src={picPath} alt={`Avatar ${num}`} className="h-full w-full object-cover" />
+                  <img src={`/people/people (${num}).png`} alt={`Avatar ${num}`} className="h-full w-full object-cover" />
                 </button>
               );
             })}

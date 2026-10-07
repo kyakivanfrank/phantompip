@@ -148,7 +148,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     className="flex items-center gap-2 p-1.5 rounded-full md:rounded-xl hover:bg-white/10 transition-all focus:outline-none"
                   >
                     {userData?.profilePicture ? (
-                      <img src={userData.profilePicture} alt="Profile" className="h-8 w-8 rounded-full object-cover shadow-md border border-white/10" />
+                      <img src={`/people/people (${userData.profilePicture}).png`} alt="Profile" className="h-8 w-8 rounded-full object-cover shadow-md border border-white/10" />
                     ) : (
                       <div className="h-8 w-8 rounded-full bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center text-xs font-bold text-white shadow-md">
                         {userInitials}

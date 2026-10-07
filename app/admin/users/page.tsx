@@ -13,6 +13,7 @@ interface User {
   subscriptionExpiresAt: number;
   paidAmount: number;
   createdAt: number;
+  profilePicture?: number;
 }
 
 export default function UsersPage() {
@@ -338,6 +339,13 @@ export default function UsersPage() {
                     className="flex-1 px-4 pr-6 py-4 flex items-center justify-between"
                   >
                   <div className="flex items-center gap-4 flex-1">
+                    {user.profilePicture ? (
+                      <img src={`/people/people (${user.profilePicture}).png`} alt={user.fullName} className="h-10 w-10 rounded-full object-cover border border-white/10 shadow-sm" />
+                    ) : (
+                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center text-sm font-bold text-white shadow-sm border border-white/10">
+                        {user.fullName.substring(0, 2).toUpperCase()}
+                      </div>
+                    )}
                     <div className="text-left">
                       <p className="font-medium text-white">{user.fullName}</p>
                       <p className="text-sm text-gray-400">{user.email}</p>

@@ -14,6 +14,7 @@ interface CredentialItem {
   brokerServer?: string;
   hasCredentials: boolean;
   connectedAt?: number;
+  profilePicture?: number;
 }
 
 export default function Mt5VaultPage() {
@@ -89,14 +90,20 @@ export default function Mt5VaultPage() {
     >
       {/* User Info */}
       <div className="mb-6 border-b border-white/[0.1] pb-4">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-4">
+          {item.profilePicture ? (
+            <img src={`/people/people (${item.profilePicture}).png`} alt={item.userFullName} className="h-12 w-12 rounded-full object-cover border border-white/10 shadow-sm" />
+          ) : (
+            <div className="h-12 w-12 rounded-full bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center text-lg font-bold text-white shadow-sm border border-white/10">
+              {item.userFullName.substring(0, 2).toUpperCase()}
+            </div>
+          )}
           <div>
             <h3 className="text-lg font-semibold text-white">{item.userFullName}</h3>
-            <p className="mt-2 text-xs text-gray-400">{item.userId}</p>
+            <p className="mt-1 text-xs text-gray-400">{item.userId}</p>
           </div>
-      
         </div>
-        <div className="mt-2 grid gap-4 sm:grid-cols-2">
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <div>
             <p className="text-xs text-gray-400">Email</p>
             <p className="mt-1 font-mono text-sm text-gray-300">{item.userEmail}</p>

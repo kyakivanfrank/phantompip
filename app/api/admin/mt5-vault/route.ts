@@ -37,6 +37,11 @@ export async function GET(request: NextRequest) {
         subscriptionExpiresAt: expiryMs,
         daysRemaining,
         subscriptionStatus: user.subscriptionStatus,
+        profilePicture: typeof fullUser.account.profilePicture === 'number' 
+          ? fullUser.account.profilePicture 
+          : typeof fullUser.account.profilePicture === 'string'
+            ? parseInt((fullUser.account.profilePicture as string).match(/\d+/)?.[0] || "1", 10)
+            : (user.email.length % 9) + 1,
       };
 
       if (creds && hasCredentials(creds)) {

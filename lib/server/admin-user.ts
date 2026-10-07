@@ -17,6 +17,7 @@ export interface AdminUserSummary {
   latestPaymentStatus: Payment["status"] | null;
   latestPaymentMethod: Payment["method"] | null;
   latestPaymentSubmittedAt: string | null;
+  profilePicture?: number;
 }
 
 export interface AdminUserDetails extends AdminUserSummary {
@@ -115,6 +116,11 @@ export function buildAdminUserSummary(user: UserDocument, now = Date.now()): Adm
     latestPaymentStatus: latestPayment?.status ?? null,
     latestPaymentMethod: latestPayment?.method ?? null,
     latestPaymentSubmittedAt: latestPayment?.submittedAt ?? null,
+    profilePicture: typeof user.account.profilePicture === 'number' 
+      ? user.account.profilePicture 
+      : typeof user.account.profilePicture === 'string'
+        ? parseInt((user.account.profilePicture as string).match(/\d+/)?.[0] || "1", 10)
+        : (user.account.email.length % 9) + 1,
   };
 }
 
