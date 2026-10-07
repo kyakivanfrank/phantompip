@@ -130,33 +130,6 @@ function PendingView({ userData, isChecking, onRefresh, activationFee }: {
           <img src="/phantompip-logo.png" alt="PhantomPip" className="h-14 w-14 rounded-full object-cover ring-1 ring-white/15" />
         </div>
 
-        {/* Animated pulse rings */}
-        <div className="relative mx-auto h-16 w-16">
-          {[0, 1, 2].map((i) => (
-            <motion.div
-              key={i}
-              className="absolute inset-0 rounded-full border border-cyan-400/25"
-              animate={{
-                scale: [0.6, 1.6],
-                opacity: [0.5, 0],
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                delay: i * 0.9,
-                ease: 'easeOut',
-              }}
-            />
-          ))}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="h-10 w-10 rounded-full bg-cyan-500/10 flex items-center justify-center ring-2 ring-cyan-500/30 shadow-[0_0_20px_rgba(6,182,212,.25)]"
-              style={{ height: '2.5rem', width: '2.5rem' }}
-            >
-              <Clock className="h-5 w-5 text-cyan-400" />
-            </div>
-          </div>
-        </div>
-
         {/* Heading */}
         <div className="text-center space-y-2">
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-gradient">
