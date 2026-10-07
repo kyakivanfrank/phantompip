@@ -292,13 +292,22 @@ export default function DashboardPage() {
                 <div>
                   <h3 className="text-base font-medium text-white">MT5 Connection</h3>
                   {hasMt5 ? (
-                    <div className="mt-2 flex items-center gap-2 text-sm text-green-400 font-medium">
-                      <span className="relative flex h-3 w-3">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                      </span>
-                      System is actively trading
-                    </div>
+                    botRunning ? (
+                      <div className="mt-2 flex items-center gap-2 text-sm text-green-400 font-medium">
+                        <span className="relative flex h-3 w-3">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                        </span>
+                        System is actively trading
+                      </div>
+                    ) : (
+                      <div className="mt-2 flex items-center gap-2 text-sm text-gray-400 font-medium">
+                        <span className="relative flex h-3 w-3">
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-gray-500"></span>
+                        </span>
+                        System is paused
+                      </div>
+                    )
                   ) : (
                     <p className="mt-1 text-sm text-gray-400">Engine currently offline</p>
                   )}
@@ -367,18 +376,15 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => setIsEditingMt5(!isEditingMt5)}
-                        disabled={botRunning}
-                        title={botRunning ? "Stop the bot to edit credentials" : "Edit Credentials"}
-                        className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
-                          botRunning 
-                            ? 'border-white/5 text-gray-500 cursor-not-allowed bg-transparent' 
-                            : 'border-white/10 text-gray-300 hover:bg-white/5'
-                        }`}
-                      >
-                        {isEditingMt5 ? 'Cancel' : <Pencil className="h-4 w-4" />}
-                      </button>
+                      {!botRunning && (
+                        <button
+                          onClick={() => setIsEditingMt5(!isEditingMt5)}
+                          title="Edit Credentials"
+                          className="rounded-lg border px-3 py-2 text-sm font-medium transition-colors border-white/10 text-gray-300 hover:bg-white/5"
+                        >
+                          {isEditingMt5 ? 'Cancel' : <Pencil className="h-4 w-4" />}
+                        </button>
+                      )}
                       <button
                         onClick={() => {
                           setBotRunning(!botRunning);
