@@ -23,10 +23,10 @@ export default function Mt5Page() {
   });
 
   const [existingCredentials, setExistingCredentials] = useState<ExistingCredentials | null>(null);
-  
+
   // State for the existing connection credentials card
   const [showPassword, setShowPassword] = useState(false);
-  
+
   // State for the new credential submission form field
   const [showFormPassword, setShowFormPassword] = useState(false);
 
@@ -36,12 +36,12 @@ export default function Mt5Page() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const [showWarningOverlay, setShowWarningOverlay] = useState(false);
-  
-  
+
+
   // The access check runs once, so read the catalogue through a ref to avoid
   // matching against a stale copy once the live plans arrive.
-  
-  
+
+
 
   useEffect(() => {
     const checkAccess = async () => {
@@ -129,7 +129,7 @@ export default function Mt5Page() {
           router.replace(data.details.redirectTo);
           return;
         }
-        setError(data.error || 'Failed to activate bot');
+        setError(data.error || 'Failed to update bot');
       }
     } catch (_err) {
       setError('Error activating bot');
@@ -288,8 +288,8 @@ export default function Mt5Page() {
           {!canConnect && !existingCredentials && (
             <div
               className={`absolute inset-0 z-10 flex flex-col items-center justify-center rounded-xl transition-all duration-500 ${showWarningOverlay
-                  ? 'border border-white/[0.15] bg-slate-900/70 p-6 text-center backdrop-blur-md'
-                  : 'cursor-pointer bg-transparent'
+                ? 'border border-white/[0.15] bg-slate-900/70 p-6 text-center backdrop-blur-md'
+                : 'cursor-pointer bg-transparent'
                 }`}
               onClick={() => {
                 if (!showWarningOverlay) setShowWarningOverlay(true);
@@ -419,7 +419,7 @@ export default function Mt5Page() {
               ) : (
                 <span className="inline-flex items-center gap-2">
                   <Plug className="h-4 w-4" />
-                  {existingCredentials ? 'Update Credentials' : 'Activate Bot'}
+                  {existingCredentials ? 'Update Credentials' : 'update bot'}
                 </span>
               )}
             </button>
@@ -445,7 +445,7 @@ export default function Mt5Page() {
               </li>
               <li className="flex gap-3">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cyan-500/20 text-cyan-400 font-medium">4</span>
-                <span>Enter the details above and click <strong className="text-white">Activate Bot</strong></span>
+                <span>Enter the details above and click <strong className="text-white">update bot</strong></span>
               </li>
             </ol>
           </div>

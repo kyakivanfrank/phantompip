@@ -84,7 +84,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
-      
+
       {/* 1. Personalized Header Banner */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -123,7 +123,7 @@ export default function DashboardPage() {
 
 
       <div className="grid gap-8 md:grid-cols-12">
-        
+
         {/* 2. Personal Board (Subscription & Info Panel) */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -133,7 +133,7 @@ export default function DashboardPage() {
         >
           <div>
             <h2 className="text-lg font-medium text-white mb-4">Account Overview</h2>
-            
+
             <div className="bg-dark-secondary/20 border border-white/[0.05] rounded-2xl p-6 space-y-6">
               {userData?.subscription ? (
                 <>
@@ -142,7 +142,7 @@ export default function DashboardPage() {
                     <div className="col-span-2 sm:col-span-1 flex flex-col justify-center">
                       <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Billing Cycle</p>
                       <p className="text-base font-medium text-white capitalize">{displayBillingCycle}</p>
-                      
+
                       <p className="text-xs text-gray-500 uppercase tracking-wider mb-1 mt-4">
                         {displayBillingCycle === 'lifetime' ? 'One-time Payment' : 'Monthly Payment'}
                       </p>
@@ -163,10 +163,9 @@ export default function DashboardPage() {
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Time Remaining</p>
-                      <p className={`text-base font-medium ${
-                        displayRemainingDays > 7 ? 'text-green-400' : 
-                        (displayRemainingDays > 0 ? 'text-yellow-400' : 'text-gray-400')
-                      }`}>
+                      <p className={`text-base font-medium ${displayRemainingDays > 7 ? 'text-green-400' :
+                          (displayRemainingDays > 0 ? 'text-yellow-400' : 'text-gray-400')
+                        }`}>
                         {displayRemainingDays > 0 ? `${displayRemainingDays} Days` : '0 Days'}
                       </p>
                     </div>
@@ -193,7 +192,7 @@ export default function DashboardPage() {
           className="md:col-span-5"
         >
           <h2 className="text-lg font-medium text-white mb-4">Trading Engine</h2>
-          
+
           <div className="relative overflow-hidden rounded-2xl border border-white/[0.1] bg-dark-secondary/40 p-6 backdrop-blur-xl">
             {/* Background glowing effect if active */}
             {hasMt5 && (
@@ -201,7 +200,7 @@ export default function DashboardPage() {
             )}
 
             <div className="relative z-10 space-y-6">
-              
+
               {/* Header / Status */}
               <div className="flex items-start justify-between">
                 <div>
@@ -231,7 +230,7 @@ export default function DashboardPage() {
                       <p className="text-sm font-mono text-white">{userData.mt5.loginId}</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-3">
                     <Server className="h-4 w-4 text-cyan-400" />
                     <div>
@@ -249,7 +248,7 @@ export default function DashboardPage() {
                       href="/dashboard/mt5"
                       className="inline-block bg-cyan-500 hover:bg-cyan-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
                     >
-                      Activate Bot
+                      update bot
                     </Link>
                   ) : (
                     <Link
