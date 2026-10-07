@@ -24,6 +24,7 @@ type DashboardUser = {
   id: string;
   email: string;
   username: string;
+  profilePicture?: number;
   accountStatus: string;
   subscriptionExpiresAt: number;
   mt5Connected: boolean;
@@ -178,9 +179,17 @@ export default function DashboardPage() {
         className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/[0.1] pb-6"
       >
         <div className="flex items-center gap-4">
-          <div className="h-16 w-16 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30">
-            <UserCircle className="h-8 w-8 text-cyan-400" />
-          </div>
+          {userData?.profilePicture ? (
+            <img 
+              src={`/people/people (${userData.profilePicture}).png`} 
+              alt="Profile" 
+              className="h-16 w-16 rounded-full object-cover border border-cyan-500/30 shadow-md" 
+            />
+          ) : (
+            <div className="h-16 w-16 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30">
+              <UserCircle className="h-8 w-8 text-cyan-400" />
+            </div>
+          )}
           <div>
             <h1 className="text-3xl font-semibold text-white">
               {userData?.username ? userData.username : 'Trader'}

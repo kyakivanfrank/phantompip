@@ -25,7 +25,7 @@ export async function PUT(req: NextRequest) {
     }
 
     user.account.profilePicture = profilePicture;
-    await primaryDb.set(`user:${session.userId}`, JSON.stringify(user));
+    await (primaryDb.json as any).set(`user:${session.userId}`, "$", user);
 
     return successResponse({ profilePicture }, "Profile picture updated successfully");
   } catch (error) {

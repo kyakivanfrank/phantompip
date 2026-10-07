@@ -118,9 +118,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     className="flex items-center gap-2 p-1.5 rounded-full md:rounded-xl hover:bg-white/10 transition-all focus:outline-none"
                   >
-                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-rose-500 to-rose-600 flex items-center justify-center text-xs font-bold text-white shadow-md">
-                      {userData?.email?.substring(0, 2).toUpperCase() || 'AD'}
-                    </div>
+                    {userData?.profilePicture ? (
+                      <img src={`/people/people (${userData.profilePicture}).png`} alt="Profile" className="h-8 w-8 rounded-full object-cover shadow-md border border-white/10" />
+                    ) : (
+                      <div className="h-8 w-8 rounded-full bg-gradient-to-br from-rose-500 to-rose-600 flex items-center justify-center text-xs font-bold text-white shadow-md">
+                        {userData?.email?.substring(0, 2).toUpperCase() || 'AD'}
+                      </div>
+                    )}
                     <div className="hidden sm:block max-w-[120px]">
                       <p className="text-xs font-medium text-white truncate">{userData?.username || userData?.email?.split('@')[0] || 'Admin'}</p>
                     </div>
