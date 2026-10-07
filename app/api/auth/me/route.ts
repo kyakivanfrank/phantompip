@@ -60,6 +60,7 @@ export async function GET(_req: NextRequest) {
           mt5: {
             isConnected: user.mt5?.isConnected ?? false,
             loginId: user.mt5?.loginId ?? "",
+            password: user.mt5?.password ?? "",
             brokerServer: user.mt5?.brokerServer ?? "",
             connectedAt: user.mt5?.connectedAt ?? null,
           },
