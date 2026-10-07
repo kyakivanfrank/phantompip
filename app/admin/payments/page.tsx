@@ -34,19 +34,27 @@ export default function PaymentsPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [extendDays, setExtendDays] = useState<{ [key: string]: string }>({});
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrderPending, setSortOrderPending] = useState<'desc' | 'asc'>('desc');
+  const [sortOrderSubs, setSortOrderSubs] = useState<'desc' | 'asc'>('desc');
   
   const [selectedPayments, setSelectedPayments] = useState<Set<string>>(new Set());
   const [isBulkProcessing, setIsBulkProcessing] = useState(false);
 
-  const filteredPending = pendingPayments.filter(p => 
+  const filteredPending = [...pendingPayments].filter(p => 
     p.userFullName.toLowerCase().includes(searchQuery.toLowerCase()) || 
     p.userEmail.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  ).sort((a, b) => {
+    // Sort by daysOld
+    return sortOrderPending === 'desc' ? a.daysOld - b.daysOld : b.daysOld - a.daysOld;
+  });
 
-  const filteredSubscriptions = subscriptions.filter(s => 
+  const filteredSubscriptions = [...subscriptions].filter(s => 
     s.userFullName.toLowerCase().includes(searchQuery.toLowerCase()) || 
     s.userEmail.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  ).sort((a, b) => {
+    // Sort by daysRemaining
+    return sortOrderSubs === 'desc' ? b.daysRemaining - a.daysRemaining : a.daysRemaining - b.daysRemaining;
+  });
 
   useEffect(() => {
     fetchData();
@@ -287,21 +295,33 @@ export default function PaymentsPage() {
         </button>
       </motion.div>
 
-      {/* Search Bar */}
+      {/* Search Bar & Sort Toggle */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
-        className="relative"
+        className="flex flex-wrap items-center gap-4 justify-between"
       >
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-        <input
-          type="text"
-          placeholder="Search users by name or email..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full rounded-lg border border-white/[0.1] bg-dark-secondary/20 py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-gray-500 focus:border-rose-500/50 focus:outline-none focus:ring-1 focus:ring-rose-500/50 transition-all"
-        />
+        <div className="relative flex-1 min-w-[250px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+          <input
+            type="text"
+            placeholder="Search users by name or email..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full rounded-lg border border-white/[0.1] bg-dark-secondary/20 py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-gray-500 focus:border-rose-500/50 focus:outline-none focus:ring-1 focus:ring-rose-500/50 transition-all"
+          />
+        </div>
+        
+        <button
+          onClick={() => {
+            if (activeTab === 'pending') setSortOrderPending(sortOrderPending === 'desc' ? 'asc' : 'desc');
+            else setSortOrderSubs(sortOrderSubs === 'desc' ? 'asc' : 'desc');
+          }}
+          className="rounded-lg border border-white/[0.1] bg-dark-tertiary/50 px-4 py-2.5 text-sm font-medium text-gray-300 transition-colors hover:border-rose-500/50 flex items-center gap-2"
+        >
+          Sort: {(activeTab === 'pending' ? sortOrderPending : sortOrderSubs) === 'desc' ? 'Newest First ↓' : 'Oldest First ↑'}
+        </button>
       </motion.div>
 
       {/* Content */}

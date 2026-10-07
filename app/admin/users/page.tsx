@@ -20,6 +20,7 @@ export default function UsersPage() {
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [isLoading, setIsLoading] = useState(true);
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
@@ -49,8 +50,15 @@ export default function UsersPage() {
       filtered = filtered.filter(u => u.accountStatus === filterStatus);
     }
 
+    // Sort by createdAt
+    filtered.sort((a, b) => {
+      const timeA = a.createdAt || 0;
+      const timeB = b.createdAt || 0;
+      return sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
+    });
+
     setFilteredUsers(filtered);
-  }, [users, searchTerm, filterStatus]);
+  }, [users, searchTerm, filterStatus, sortOrder]);
 
   const fetchUsers = async () => {
     try {
@@ -213,20 +221,29 @@ export default function UsersPage() {
         </div>
 
         {/* Status Filter */}
-        <div className="flex flex-wrap gap-2">
-          {['all', 'Active', 'Pending Approval', 'Expired', 'Rejected', 'Inactive'].map((status) => (
-            <button
-              key={status}
-              onClick={() => setFilterStatus(status)}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                filterStatus === status
-                  ? 'bg-rose-500 text-white'
-                  : 'border border-white/[0.1] text-gray-300 hover:border-rose-500/50'
-              }`}
-            >
-              {status === 'all' ? 'All Users' : status}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-2 justify-between">
+          <div className="flex flex-wrap gap-2">
+            {['all', 'Active', 'Pending Approval', 'Expired', 'Rejected', 'Inactive'].map((status) => (
+              <button
+                key={status}
+                onClick={() => setFilterStatus(status)}
+                className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                  filterStatus === status
+                    ? 'bg-rose-500 text-white'
+                    : 'border border-white/[0.1] text-gray-300 hover:border-rose-500/50'
+                }`}
+              >
+                {status === 'all' ? 'All Users' : status}
+              </button>
+            ))}
+          </div>
+          
+          <button
+            onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
+            className="rounded-lg border border-white/[0.1] bg-dark-tertiary/50 px-4 py-2 text-sm font-medium text-gray-300 transition-colors hover:border-rose-500/50 flex items-center gap-2"
+          >
+            Sort: {sortOrder === 'desc' ? 'Newest First ↓' : 'Oldest First ↑'}
+          </button>
         </div>
       </motion.div>
 
