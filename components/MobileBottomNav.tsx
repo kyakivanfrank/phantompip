@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Home, Plug, Settings } from 'lucide-react';
+import { Home, Settings } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
 interface MobileBottomNavProps {
@@ -16,7 +16,6 @@ export function MobileBottomNav({ userData }: MobileBottomNavProps) {
 
   const navItems = [
     { href: '/dashboard', label: 'Home', icon: Home },
-    { href: '/dashboard/mt5', label: 'Bot Activation', icon: Plug },
     { href: '/dashboard/settings', label: 'Settings', icon: Settings },
   ];
 

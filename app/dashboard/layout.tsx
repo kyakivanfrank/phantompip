@@ -3,13 +3,12 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { LogOut, Home, Plug, Settings, User, ChevronDown } from 'lucide-react';
+import { LogOut, Home, Settings, User, ChevronDown } from 'lucide-react';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { ToastProvider } from '@/components/Toast';
 
 const NAV_LINKS = [
   { href: '/dashboard', label: 'Dashboard', icon: Home, exact: true },
-  { href: '/dashboard/mt5', label: 'Bot Activation', icon: Plug },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ];
 
