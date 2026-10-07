@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import {
-  Copy, Check, ShieldCheck, Clock, ExternalLink,
+  Copy, Check, ShieldCheck, ExternalLink,
   AlertCircle, Send, XCircle, RefreshCw, MessageCircle
 } from 'lucide-react';
 import { useSpotlight } from '@/lib/hooks';
