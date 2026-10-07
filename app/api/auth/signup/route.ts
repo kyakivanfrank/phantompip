@@ -62,6 +62,7 @@ export async function POST(req: NextRequest) {
         passwordHash,
         createdAt: nowIso,
         lastLoginAt: nowIso,
+        profilePicture: `/people/people (${Math.floor(Math.random() * 9) + 1}).png`,
       },
       subscription: {
         status: "inactive",

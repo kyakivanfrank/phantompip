@@ -36,6 +36,7 @@ export async function GET(_req: NextRequest) {
           id: session.userId,
           email: user.account.email,
           username: user.account.username,
+          profilePicture: user.account.profilePicture || `/people/people (${(user.account.email.length % 9) + 1}).png`,
           isAdmin: session.isAdmin,
           accountStatus: user.subscription.status,
           subscriptionExpiresAt: isSubscriptionActive ? expiryTimestamp : 0,

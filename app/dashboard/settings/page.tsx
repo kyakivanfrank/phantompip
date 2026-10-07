@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogOut, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { LogOut, Mail, Lock, Eye, EyeOff, UserCircle } from 'lucide-react';
 
 export default function SettingsPage() {
   const [passwordForm, setPasswordForm] = useState({
@@ -13,6 +13,41 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+
+  const [userData, setUserData] = useState<any>(null);
+  const [selectedProfilePic, setSelectedProfilePic] = useState<string>('');
+  const [isSavingPic, setIsSavingPic] = useState(false);
+  const [picMessage, setPicMessage] = useState('');
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(res => res.json())
+      .then(data => {
+        if (data?.data?.user) {
+          setUserData(data.data.user);
+          setSelectedProfilePic(data.data.user.profilePicture || `/people/people (1).png`);
+        }
+      });
+  }, []);
+
+  const handleUpdateProfilePic = async () => {
+    setIsSavingPic(true);
+    setPicMessage('');
+    try {
+      const response = await fetch('/api/settings/profile-picture', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profilePicture: selectedProfilePic }),
+      });
+      if (!response.ok) throw new Error('Failed to update avatar');
+      setPicMessage('Avatar updated! (Refresh the page to see changes in navigation)');
+      setUserData({ ...userData, profilePicture: selectedProfilePic });
+    } catch (err) {
+      setPicMessage('Error updating avatar.');
+    } finally {
+      setIsSavingPic(false);
+    }
+  };
 
   // Visibility states for password fields
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -93,6 +128,53 @@ export default function SettingsPage() {
         <p className="text-gray-400">
           Manage your account support and sessions.
         </p>
+      </motion.div>
+
+      {/* Profile Picture Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="glass rounded-xl p-6 border border-white/[0.05] bg-dark-secondary/40 backdrop-blur-sm"
+      >
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-gray-400">Profile Picture</h2>
+            <p className="mt-1 text-sm text-gray-400">Choose a pro avatar for your account.</p>
+          </div>
+          <UserCircle className="size-5 text-cyan-400" />
+        </div>
+
+        <div className="mt-6">
+          <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-9 gap-4">
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => {
+              const picPath = `/people/people (${num}).png`;
+              const isSelected = selectedProfilePic === picPath;
+              return (
+                <button
+                  key={num}
+                  type="button"
+                  onClick={() => setSelectedProfilePic(picPath)}
+                  className={`relative rounded-full aspect-square overflow-hidden border-2 transition-all hover:scale-105 ${
+                    isSelected ? 'border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.5)]' : 'border-transparent hover:border-white/20'
+                  }`}
+                >
+                  <img src={picPath} alt={`Avatar ${num}`} className="h-full w-full object-cover" />
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-6">
+            <button
+              onClick={handleUpdateProfilePic}
+              disabled={isSavingPic || selectedProfilePic === userData?.profilePicture}
+              className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-cyan-500 px-4 text-sm font-medium text-white hover:bg-cyan-400 transition disabled:cursor-not-allowed disabled:bg-cyan-500/60"
+            >
+              {isSavingPic ? 'Saving...' : 'Update Avatar'}
+            </button>
+            {picMessage && <p className={`text-sm mt-3 ${picMessage.includes('Error') ? 'text-rose-400' : 'text-emerald-400'}`}>{picMessage}</p>}
+          </div>
+        </div>
       </motion.div>
 
       {/* Password Section */}

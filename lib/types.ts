@@ -36,6 +36,7 @@ export interface Account {
   passwordHash: string; // bcrypt hash - NEVER plain text
   createdAt: string; // ISO datetime
   lastLoginAt: string; // ISO datetime
+  profilePicture?: string;
 }
 
 export interface Mt5Details {
