@@ -44,9 +44,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Add 1 month
+    // Lifetime subscription (100 years)
     const expiryDate = new Date(baseDate);
-    expiryDate.setMonth(expiryDate.getMonth() + 1);
+    expiryDate.setFullYear(expiryDate.getFullYear() + 100);
     const expiryIso = expiryDate.toISOString().split('T')[0];
 
     // Approve payment inside the user's document
@@ -57,9 +57,9 @@ export async function POST(req: NextRequest) {
       approvalStatus: "approved",
       approvedAt: now.toISOString(),
       startDate: now.toISOString().split('T')[0],
-      billingCycle: "monthly",
+      billingCycle: "lifetime",
       expiryDate: expiryIso,
-      planName: "PhantomPip Bot",
+      planName: "PhantomPip Bot (Lifetime)",
       priceUSD: ACTIVATION_FEE,
     });
 

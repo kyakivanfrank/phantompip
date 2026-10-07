@@ -26,6 +26,7 @@ export default function Mt5Page() {
 
   // State for the existing connection credentials card
   const [showPassword, setShowPassword] = useState(false);
+  const [botRunning, setBotRunning] = useState(true);
 
   // State for the new credential submission form field
   const [showFormPassword, setShowFormPassword] = useState(false);
@@ -227,6 +228,39 @@ export default function Mt5Page() {
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* Bot Controls */}
+              <div className="mt-6 pt-6 border-t border-green-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h4 className="text-sm font-semibold text-white mb-1">Bot Engine Status</h4>
+                  <p className="text-xs text-green-400/80">
+                    {botRunning ? 'Engine is actively trading on this account.' : 'Engine is currently paused.'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setBotRunning(!botRunning)}
+                  className={`relative flex items-center justify-center gap-2 rounded-lg px-6 py-2.5 text-sm font-bold shadow-lg transition-all active:scale-95 ${
+                    botRunning 
+                      ? 'bg-rose-500 hover:bg-rose-600 text-white shadow-rose-500/20' 
+                      : 'bg-green-500 hover:bg-green-600 text-white shadow-green-500/20'
+                  }`}
+                >
+                  {botRunning ? (
+                    <>
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                      </span>
+                      Stop Bot
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="h-4 w-4" />
+                      Start Bot
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </div>

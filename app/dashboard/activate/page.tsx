@@ -391,10 +391,10 @@ export default function ActivatePage() {
       ]);
 
       if (!authRes.ok) { router.push('/login'); return; }
-      
+
       const authData = await authRes.json();
       const user = authData?.data?.user;
-      
+
       if (settingsRes.ok) {
         const settingsData = await settingsRes.json();
         setSettings(settingsData?.data || null);
@@ -460,16 +460,10 @@ export default function ActivatePage() {
       return;
     }
 
-    if (selectedNetwork === 'BTC') {
-      if (!/^[a-fA-F0-9]{64}$/.test(txId)) {
-        setError('Invalid BTC transaction ID. It should be a 64-character hex string.');
-        return;
-      }
-    } else if (selectedNetwork === 'BEP20' || selectedNetwork === 'ERC20') {
-      if (!/^0x[a-fA-F0-9]{64}$/.test(txId)) {
-        setError(`Invalid ${selectedNetwork} transaction ID. It should start with '0x' followed by 64 hex characters.`);
-        return;
-      }
+    // Soft validation: Just ensure it's a reasonably long string, let the admin do the final verify
+    if (txId.length < 5) {
+      setError('Please enter a valid Transaction ID.');
+      return;
     }
 
     setIsSubmitting(true);
@@ -568,9 +562,6 @@ export default function ActivatePage() {
                 >
                   {/* Welcome */}
                   <motion.div variants={fadeUp} className="text-center sm:text-left">
-                    <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[--text-2] mb-2">
-                      Phantompip Terminal
-                    </div>
                     <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gradient">
                       Activate your bot
                     </h1>
@@ -601,6 +592,7 @@ export default function ActivatePage() {
 
                     <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       {[
+                        'Lifetime subscription',
                         'PhantomPip bot access',
                         'Account activation',
                         'Telegram support',

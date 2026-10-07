@@ -21,6 +21,7 @@ interface Subscription {
   expiryDate: string;
   daysRemaining: number;
   paidAmount: number;
+  isLifetime?: boolean;
 }
 
 type ActionType = 'approve' | 'reject' | 'extend' | 'ban' | null;
@@ -77,18 +78,23 @@ export default function PaymentsPage() {
       // Build subscriptions list from users
       const subs = (usersData.data?.users || [])
         .filter((u: any) => u.accountStatus === 'Active')
-        .map((u: any) => ({
-          userId: u.id,
-          userFullName: u.fullName,
-          userEmail: u.email,
-          expiryDate: new Date(u.subscriptionExpiresAt).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-          }),
-          daysRemaining: Math.ceil((u.subscriptionExpiresAt - Date.now()) / (24 * 60 * 60 * 1000)),
-          paidAmount: u.paidAmount || 0,
-        }));
+        .map((u: any) => {
+          const days = Math.ceil((u.subscriptionExpiresAt - Date.now()) / (24 * 60 * 60 * 1000));
+          const isLifetime = days > 30000;
+          return {
+            userId: u.id,
+            userFullName: u.fullName,
+            userEmail: u.email,
+            expiryDate: isLifetime ? 'Lifetime' : new Date(u.subscriptionExpiresAt).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+            }),
+            daysRemaining: days,
+            isLifetime,
+            paidAmount: u.paidAmount || 0,
+          };
+        });
 
       setSubscriptions(subs);
     } catch (error) {
@@ -524,8 +530,8 @@ export default function PaymentsPage() {
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Expiry Date</p>
                       <p className="mt-2 font-bold text-white text-base">{sub.expiryDate}</p>
-                      <p className={`text-xs mt-0.5 ${sub.daysRemaining > 7 ? 'text-green-400' : sub.daysRemaining > 0 ? 'text-yellow-400' : 'text-red-400'}`}>
-                        {sub.daysRemaining} days remaining
+                      <p className={`text-xs mt-0.5 ${sub.isLifetime || sub.daysRemaining > 7 ? 'text-green-400' : sub.daysRemaining > 0 ? 'text-yellow-400' : 'text-red-400'}`}>
+                        {sub.isLifetime ? 'Forever' : `${sub.daysRemaining} days remaining`}
                       </p>
                     </div>
 

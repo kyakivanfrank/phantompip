@@ -23,8 +23,9 @@ export function isValidMt5LoginId(loginId: string): boolean {
 // Accepts: TRC20 hashes (64 hex chars)
 export function isValidTransactionId(txId: string): boolean {
   const trimmed = txId.trim();
-  // Must be 5–200 characters, allow alphanumeric, hyphens, underscores, slashes, dots, spaces
-  return /^[\w\-\.\/\s]{5,200}$/.test(trimmed) && trimmed.length >= 5;
+  // Just ensure it's not totally empty and has at least some characters. 
+  // Admin manually verifies it anyway.
+  return trimmed.length >= 5 && trimmed.length <= 500;
 }
 
 // Sanitize input to prevent XSS

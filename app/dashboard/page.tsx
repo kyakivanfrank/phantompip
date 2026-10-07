@@ -79,8 +79,8 @@ export default function DashboardPage() {
   const hasActivePlan = userData?.subscription?.status === 'active' && userData?.subscription?.approvalStatus === 'approved' && userData?.subscription?.remainingDays > 0;
   const displayBillingCycle = hasActivePlan ? userData?.subscription?.billingCycle : 'N/A';
   const displayPaidAmount = hasActivePlan ? userData?.subscription?.paidAmount : null;
-  const displayExpiryDate = hasActivePlan ? userData?.subscription?.expiryDate : 'N/A';
-  const displayRemainingDays = hasActivePlan ? (userData?.subscription?.remainingDays ?? 0) : 0;
+  const displayExpiryDate = hasActivePlan ? (userData?.subscription?.billingCycle === 'lifetime' ? 'Lifetime' : userData?.subscription?.expiryDate) : 'N/A';
+  const displayRemainingDays = hasActivePlan ? (userData?.subscription?.billingCycle === 'lifetime' ? Infinity : (userData?.subscription?.remainingDays ?? 0)) : 0;
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
@@ -163,10 +163,10 @@ export default function DashboardPage() {
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Time Remaining</p>
-                      <p className={`text-base font-medium ${displayRemainingDays > 7 ? 'text-green-400' :
+                      <p className={`text-base font-medium ${displayRemainingDays === Infinity || displayRemainingDays > 7 ? 'text-green-400' :
                           (displayRemainingDays > 0 ? 'text-yellow-400' : 'text-gray-400')
                         }`}>
-                        {displayRemainingDays > 0 ? `${displayRemainingDays} Days` : '0 Days'}
+                        {displayRemainingDays === Infinity ? 'Forever' : (displayRemainingDays > 0 ? `${displayRemainingDays} Days` : '0 Days')}
                       </p>
                     </div>
                   </div>
