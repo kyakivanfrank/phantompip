@@ -30,7 +30,13 @@ export const backupDb = createUpstashClient(
 const backupHoursFromEnv = Number.parseInt(process.env.BACKUP_NUMBER_OF_HOURS || "4", 10);
 const backupIntervalHours = Number.isFinite(backupHoursFromEnv) && backupHoursFromEnv > 0 ? backupHoursFromEnv : 4;
 const backupIntervalSeconds = backupIntervalHours * 60 * 60;
+
+const forgetHoursFromEnv = Number.parseInt(process.env.FORGET_NUMBER_OF_HOURS || "24", 10);
+const forgetIntervalHours = Number.isFinite(forgetHoursFromEnv) && forgetHoursFromEnv > 0 ? forgetHoursFromEnv : 24;
+const forgetIntervalSeconds = forgetIntervalHours * 60 * 60;
+
 const TIMEOUT_KEY = "system:last_backup_time";
+const FORGET_TIMEOUT_KEY = "system:last_forget_time";
 const JSON_BACKED_KEY_PREFIXES = ["user:"];
 
 let redisClient: Redis | null = primaryDb;
@@ -196,11 +202,24 @@ export function triggerOptimisticBackup() {
           writes.push((backupDb.json as any).set(entry.key, "$", entry.value));
         }
 
-        if (writes.length === 0) {
-          return null;
+        if (writes.length > 0) {
+          await Promise.all(writes);
         }
 
-        return await Promise.all(writes);
+        // True 1:1 mirroring: remove keys from backup that are gone from primary
+        try {
+          const allBackupKeys = await backupDb.keys("*");
+          const primaryKeySet = new Set(allKeys);
+          const keysToDelete = allBackupKeys.filter(k => !primaryKeySet.has(k) && k !== TIMEOUT_KEY && k !== FORGET_TIMEOUT_KEY);
+          
+          if (keysToDelete.length > 0) {
+            await backupDb.del(...keysToDelete as [any]);
+          }
+        } catch (delErr) {
+          console.error("[Backup Engine Deletion Error]:", delErr);
+        }
+
+        return true;
       } catch (syncError) {
         // Fail-safe: If a network error happens mid-sync, delete the lock key immediately
         // This stops the system from locking you out of updates for 4 hours on a failure
@@ -221,10 +240,65 @@ function isJsonBackedKey(key: string) {
   return key === "users:index" || JSON_BACKED_KEY_PREFIXES.some((prefix) => key.startsWith(prefix));
 }
 
-export function getRedis(): Redis | typeof inMemory {
-  if (redisClient) return redisClient;
+let mirroredRedisClient: any = null;
 
-  return inMemory;
+export function getRedis(): Redis | typeof inMemory {
+  const baseClient = redisClient || inMemory;
+  if (!backupDb || baseClient === inMemory) return baseClient;
+
+  if (!mirroredRedisClient) {
+    mirroredRedisClient = new Proxy(baseClient, {
+      get(target, prop) {
+        if (prop === 'set') {
+          return async (...args: any[]) => {
+            const res = await (target.set as any)(...args);
+            await backupDb.set(...args as [any, any]).catch(e => console.error("[Backup Mirror Error]", e));
+            return res;
+          };
+        }
+        if (prop === 'del') {
+          return async (...args: any[]) => {
+            const res = await (target.del as any)(...args);
+            await backupDb.del(...args as [any]).catch(e => console.error("[Backup Mirror Error]", e));
+            return res;
+          };
+        }
+        if (prop === 'json') {
+          return new Proxy(target.json as any, {
+            get(jsonTarget, jsonProp) {
+              if (jsonProp === 'set') {
+                return async (...args: any[]) => {
+                  const res = await jsonTarget.set(...args);
+                  await (backupDb.json as any).set(...args).catch((e: any) => console.error("[Backup Mirror Error]", e));
+                  return res;
+                };
+              }
+              if (jsonProp === 'arrappend') {
+                return async (...args: any[]) => {
+                  const res = await jsonTarget.arrappend(...args);
+                  await (backupDb.json as any).arrappend(...args).catch((e: any) => console.error("[Backup Mirror Error]", e));
+                  return res;
+                };
+              }
+              if (jsonProp === 'del') {
+                return async (...args: any[]) => {
+                  const res = await jsonTarget.del(...args);
+                  await (backupDb.json as any).del(...args).catch((e: any) => console.error("[Backup Mirror Error]", e));
+                  return res;
+                };
+              }
+              const val = jsonTarget[jsonProp];
+              return typeof val === 'function' ? val.bind(jsonTarget) : val;
+            }
+          });
+        }
+        const val = (target as any)[prop];
+        return typeof val === 'function' ? val.bind(target) : val;
+      }
+    });
+  }
+
+  return mirroredRedisClient;
 }
 
 export async function attempt<T>(fn: () => Promise<T>, timeoutMs = 3000, retries = 2): Promise<T> {
@@ -247,6 +321,86 @@ export async function attempt<T>(fn: () => Promise<T>, timeoutMs = 3000, retries
 
 function emailKey(email: string) {
   return `email:${normalizeEmail(email)}`;
+}
+
+// -----------------------------------------------------------------------------
+// AUTOMATED FORGETTING (CLEANUP)
+// -----------------------------------------------------------------------------
+
+let optimisticForgetInFlight = false;
+
+export function triggerAutomatedForgetting() {
+  if (!primaryDb || optimisticForgetInFlight) return;
+  optimisticForgetInFlight = true;
+
+  primaryDb
+    .set(FORGET_TIMEOUT_KEY, String(Date.now()), {
+      nx: true,
+      ex: forgetIntervalSeconds,
+    })
+    .then(async (lockResult) => {
+      if (lockResult !== "OK") return;
+
+      try {
+        const index = await getAllUsers();
+        const now = Date.now();
+        const HOUR = 60 * 60 * 1000;
+        const NO_PAYMENT_MS = 24 * HOUR;
+        const PENDING_MS = 4 * 24 * HOUR;
+        const REJECTED_MS = 24 * HOUR;
+        
+        const ts = (s: any) => { const t = Date.parse(s); return Number.isFinite(t) ? t : NaN; };
+
+        // For each user in the index, check if they need to be forgotten
+        for (const entry of index) {
+          if (entry.isAdmin) continue;
+          
+          const user = await getUser(entry.userId);
+          if (!user) continue;
+
+          const sub = user.subscription || {} as any;
+          const payments = Array.isArray(sub.payments) ? sub.payments : [];
+
+          const everApproved =
+            sub.approvalStatus === "approved" ||
+            sub.status === "active" ||
+            sub.status === "expired" ||
+            !!sub.approvedAt ||
+            payments.some((p: any) => p.status === "confirmed");
+            
+          if (everApproved) continue;
+
+          let shouldForget = false;
+
+          if (payments.length === 0) {
+            const created = ts(user.account?.createdAt);
+            if (Number.isFinite(created) && now - created >= NO_PAYMENT_MS) shouldForget = true;
+          } else if (payments.some((p: any) => p.status === "pending")) {
+            const latestSubmitted = Math.max(...payments.map((p: any) => ts(p.submittedAt)).filter(Number.isFinite));
+            if (Number.isFinite(latestSubmitted) && now - latestSubmitted >= PENDING_MS) shouldForget = true;
+          } else {
+            // All payments rejected
+            const rejectedTimes = payments.map((p: any) => ts(p.rejectedAt ?? p.submittedAt)).filter(Number.isFinite);
+            const lastRejected = rejectedTimes.length ? Math.max(...rejectedTimes) : NaN;
+            if (Number.isFinite(lastRejected) && now - lastRejected >= REJECTED_MS) shouldForget = true;
+          }
+
+          if (shouldForget) {
+            console.log(`[Automated Forgetting] Wiping user ${user.userId} (${user.account.email})`);
+            await deleteUser(user.userId);
+          }
+        }
+      } catch (err) {
+        await primaryDb.del(FORGET_TIMEOUT_KEY).catch(() => {});
+        throw err;
+      }
+    })
+    .catch((err) => {
+      console.error("[Forget Engine Error]:", err);
+    })
+    .finally(() => {
+      optimisticForgetInFlight = false;
+    });
 }
 
 // -----------------------------------------------------------------------------

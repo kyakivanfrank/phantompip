@@ -45,3 +45,6 @@ Thumbs.db
 graphify-out/
 cloudflared.exe
 *.exe
+
+# Forget-users review list (contains user emails)
+forget_list.txt
