@@ -20,10 +20,17 @@ export const proxy: NextMiddleware = async (request: NextRequest) => {
 
   // Check if route is public
   if (publicRoutes.includes(pathname)) {
-    // If user is already logged in, redirect from login/signup
+    // If user has a session cookie on login/signup, check validity
     if ((pathname === "/login" || pathname === "/signup") && sessionCookie?.value) {
       const decoded = await verifySessionToken(sessionCookie.value);
       if (decoded && decoded.expiresAt > Date.now()) {
+        const user = await getUser(decoded.userId);
+        if (!user) {
+          // User was deleted! Clear dead session cookie and allow login/signup page to load
+          const response = NextResponse.next();
+          response.cookies.delete("phantompip_session");
+          return response;
+        }
         return NextResponse.redirect(
           decoded.isAdmin ? new URL("/admin", request.url) : new URL("/dashboard", request.url)
         );
@@ -32,7 +39,7 @@ export const proxy: NextMiddleware = async (request: NextRequest) => {
     return NextResponse.next();
   }
 
-  // Check if route requires authentication
+  // Check if route requires user authentication
   if (protectedRoutes.some((route) => pathname.startsWith(route))) {
     if (!sessionCookie?.value) {
       return NextResponse.redirect(new URL("/login", request.url));
@@ -40,7 +47,18 @@ export const proxy: NextMiddleware = async (request: NextRequest) => {
 
     const decoded = await verifySessionToken(sessionCookie.value);
     if (!decoded || decoded.expiresAt < Date.now()) {
-      return NextResponse.redirect(new URL("/login", request.url));
+      const response = NextResponse.redirect(new URL("/login", request.url));
+      response.cookies.delete("phantompip_session");
+      return response;
+    }
+
+    // Check if user still exists in database
+    const user = await getUser(decoded.userId);
+    if (!user) {
+      // User was deleted! Invalidate session cookie and redirect to login
+      const response = NextResponse.redirect(new URL("/login?deleted=true", request.url));
+      response.cookies.delete("phantompip_session");
+      return response;
     }
 
     // If admin tries to access user dashboard, redirect to admin
@@ -49,7 +67,6 @@ export const proxy: NextMiddleware = async (request: NextRequest) => {
     }
 
     if (!decoded.isAdmin) {
-      const user = await getUser(decoded.userId);
       const isActivated = user?.subscription?.status === 'active';
       
       if (!isActivated && pathname !== "/dashboard/activate") {
@@ -70,12 +87,16 @@ export const proxy: NextMiddleware = async (request: NextRequest) => {
 
     const decoded = await verifySessionToken(sessionCookie.value);
     if (!decoded || decoded.expiresAt < Date.now()) {
-      return NextResponse.redirect(new URL("/login", request.url));
+      const response = NextResponse.redirect(new URL("/login", request.url));
+      response.cookies.delete("phantompip_session");
+      return response;
     }
 
-    // Check admin status
-    if (!decoded.isAdmin) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+    const user = await getUser(decoded.userId);
+    if (!user || !user.isAdmin) {
+      const response = NextResponse.redirect(new URL("/login?deleted=true", request.url));
+      response.cookies.delete("phantompip_session");
+      return response;
     }
   }
 

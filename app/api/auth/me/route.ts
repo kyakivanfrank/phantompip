@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
-import { requireAuth } from "@/lib/server/auth";
+import { requireAuth, clearSessionCookie } from "@/lib/server/auth";
 import { getUser } from "@/lib/server/db";
 import { handleApiError, successResponse, errorResponse } from "@/lib/server/api-response";
 
@@ -11,7 +11,8 @@ export async function GET(_req: NextRequest) {
     const user = await getUser(session.userId);
 
     if (!user) {
-      return errorResponse("User not found", 404);
+      await clearSessionCookie();
+      return errorResponse("User account not found or deleted", 401);
     }
 
     const now = Date.now();

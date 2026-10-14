@@ -78,9 +78,17 @@ export default function DashboardPage() {
   const fetchData = async () => {
     try {
       const meRes = await fetch('/api/auth/me', { credentials: 'include', cache: 'no-store' });
+      if (!meRes.ok) {
+        window.location.replace('/login?deleted=true');
+        return;
+      }
       const meData = await meRes.json();
-      setUserData(meData.data?.user);
-      setBotRunning(meData.data?.user?.mt5?.isBotRunning ?? false);
+      if (!meData.data?.user) {
+        window.location.replace('/login?deleted=true');
+        return;
+      }
+      setUserData(meData.data.user);
+      setBotRunning(meData.data.user?.mt5?.isBotRunning ?? false);
       setIsLoading(false);
     } catch (error) {
       console.error('Failed to fetch data:', error);

@@ -6,6 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { LogOut, Home, Settings, User, ChevronDown } from 'lucide-react';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { ToastProvider } from '@/components/Toast';
+import { SessionWatcher } from '@/components/SessionWatcher';
 
 const NAV_LINKS = [
   { href: '/dashboard', label: 'Dashboard', icon: Home, exact: true },
@@ -23,7 +24,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include', cache: 'no-store' })
       .then(res => {
-        if (!res.ok) throw new Error('Not authenticated');
+        if (!res.ok) {
+          window.location.replace('/login?deleted=true');
+          throw new Error('Not authenticated');
+        }
         return res.json();
       })
       .then(data => {
@@ -36,13 +40,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             setIsLoading(false);
           }
         } else {
-          router.push('/login');
+          window.location.replace('/login?deleted=true');
         }
       })
-      .catch(() => router.push('/login'));
+      .catch(() => {
+        // Will be caught by SessionWatcher or redirect above
+      });
   }, [router, pathname]);
-
-
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -55,8 +59,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, []);
 
   const handleLogout = async () => {
+    try {
+      localStorage.setItem('phantompip_logout_signal', JSON.stringify({ timestamp: Date.now(), reason: 'logout' }));
+    } catch {}
     await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
-    router.push('/login');
+    window.location.replace('/login');
   };
 
   const isActive = (href: string, exact?: boolean) =>
@@ -77,6 +84,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (!isActivated && pathname === '/dashboard/activate') {
     return (
       <ToastProvider>
+        <SessionWatcher />
         {children}
       </ToastProvider>
     );
@@ -84,6 +92,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <ToastProvider>
+      <SessionWatcher />
       <div className="flex h-screen w-screen overflow-hidden flex-col md:flex-row bg-dark">
         {/* Desktop Sidebar */}
         <aside className="hidden md:flex fixed md:relative w-64 h-full border-r border-white/10 bg-dark-secondary/40 backdrop-blur-xl z-40 flex-shrink-0 flex-col">

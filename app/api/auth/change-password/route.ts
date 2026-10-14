@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
-import { requireAuth } from "@/lib/server/auth";
+import { requireAuth, clearSessionCookie } from "@/lib/server/auth";
 import { getUser, resetUserPassword } from "@/lib/server/db";
 import { hashPassword, verifyPassword } from "@/lib/server/hashing";
 import { handleApiError, successResponse, errorResponse } from "@/lib/server/api-response";
@@ -29,7 +29,8 @@ export async function POST(request: NextRequest) {
 
     const user = await getUser(session.userId);
     if (!user?.account?.passwordHash) {
-      return errorResponse("User account not found", 404);
+      await clearSessionCookie();
+      return errorResponse("User account not found or deleted", 401);
     }
 
     const isCurrentPasswordValid = await verifyPassword(currentPassword, user.account.passwordHash);

@@ -20,14 +20,23 @@ export default function SettingsPage() {
   const [picMessage, setPicMessage] = useState('');
 
   useEffect(() => {
-    fetch('/api/auth/me')
-      .then(res => res.json())
+    fetch('/api/auth/me', { cache: 'no-store' })
+      .then(res => {
+        if (!res.ok) {
+          window.location.replace('/login?deleted=true');
+          return null;
+        }
+        return res.json();
+      })
       .then(data => {
         if (data?.data?.user) {
           setUserData(data.data.user);
           setSelectedProfilePic(data.data.user.profilePicture || 1);
+        } else if (data) {
+          window.location.replace('/login?deleted=true');
         }
-      });
+      })
+      .catch(() => {});
   }, []);
 
   const handleUpdateProfilePic = async () => {

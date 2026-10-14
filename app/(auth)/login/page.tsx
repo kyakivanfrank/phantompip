@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
@@ -13,6 +13,16 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [deletedNotice, setDeletedNotice] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('deleted') === 'true') {
+        setDeletedNotice(true);
+      }
+    }
+  }, []);
 
   // Visibility states
   const [showPassword, setShowPassword] = useState(false);
@@ -75,6 +85,19 @@ export default function LoginPage() {
             className="mt-4 rounded-md ring-1 ring-red-500/25 bg-red-500/10 p-3"
           >
             <p className="text-xs text-red-400">{error}</p>
+          </motion.div>
+        )}
+
+        {/* Deleted Account Notice */}
+        {deletedNotice && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="mt-4 rounded-md ring-1 ring-amber-500/30 bg-amber-500/10 p-3"
+          >
+            <p className="text-xs text-amber-400 font-medium">
+              Your account has been deleted or is no longer active. You have been securely logged out.
+            </p>
           </motion.div>
         )}
 

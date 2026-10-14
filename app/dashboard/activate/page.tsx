@@ -363,7 +363,7 @@ export default function ActivatePage() {
         fetch('/api/settings/public', { cache: 'no-store' })
       ]);
 
-      if (!authRes.ok) { router.push('/login'); return; }
+      if (!authRes.ok) { window.location.replace('/login?deleted=true'); return; }
 
       const authData = await authRes.json();
       const user = authData?.data?.user;
@@ -372,7 +372,7 @@ export default function ActivatePage() {
         const settingsData = await settingsRes.json();
         setSettings(settingsData?.data || null);
       }
-      if (!user) { router.push('/login'); return; }
+      if (!user) { window.location.replace('/login?deleted=true'); return; }
       if (user.isAdmin) { router.push('/admin'); return; }
 
       setUserData(user);
@@ -391,7 +391,7 @@ export default function ActivatePage() {
         setPageState('form');
       }
     } catch {
-      router.push('/login');
+      window.location.replace('/login?deleted=true');
     } finally {
       setIsChecking(false);
     }

@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
 import { randomUUID } from "crypto";
-import { requireAuth } from "@/lib/server/auth";
+import { requireAuth, clearSessionCookie } from "@/lib/server/auth";
 import { createPayment, getUser, updateSubscription } from "@/lib/server/db";
 import {
   isValidTransactionId,
@@ -49,11 +49,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if user already has an active subscription (already activated)
+    // Check if user exists
     const existingUser = await getUser(session.userId);
+    if (!existingUser) {
+      await clearSessionCookie();
+      return errorResponse("User account not found or deleted", 401);
+    }
+
     if (
-      existingUser?.subscription?.status === "active" &&
-      existingUser?.subscription?.approvalStatus === "approved"
+      existingUser.subscription?.status === "active" &&
+      existingUser.subscription?.approvalStatus === "approved"
     ) {
       return errorResponse("Your bot is already activated.", 400);
     }

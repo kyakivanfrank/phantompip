@@ -6,6 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { LogOut, Users, CreditCard, Key, TrendingUp, ChevronDown, CheckCircle, Settings } from 'lucide-react';
 import { AdminMobileBottomNav } from '@/components/AdminMobileBottomNav';
 import { ToastProvider } from '@/components/Toast';
+import { SessionWatcher } from '@/components/SessionWatcher';
 
 const NAV_LINKS = [
   { href: '/admin', label: 'Dashboard', icon: TrendingUp, exact: true },
@@ -31,10 +32,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           setUserData(data.user);
           setIsLoading(false);
         } else {
-          router.push('/dashboard');
+          window.location.replace('/login?deleted=true');
         }
       })
-      .catch(() => router.push('/login'));
+      .catch(() => window.location.replace('/login?deleted=true'));
   }, [router]);
 
   useEffect(() => {
@@ -46,8 +47,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, []);
 
   const handleLogout = async () => {
+    try {
+      localStorage.setItem('phantompip_logout_signal', JSON.stringify({ timestamp: Date.now(), reason: 'logout' }));
+    } catch {}
     await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
-    router.push('/login');
+    window.location.replace('/login');
   };
 
   const isActive = (href: string, exact?: boolean) =>
@@ -61,6 +65,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <ToastProvider>
+      <SessionWatcher />
       <div className="flex h-screen w-screen overflow-hidden flex-col md:flex-row bg-dark">
         {/* Desktop Sidebar */}
         <aside className="hidden md:flex fixed md:relative w-64 h-full border-r border-white/10 bg-dark-secondary/40 backdrop-blur-xl z-40 flex-shrink-0 flex-col">

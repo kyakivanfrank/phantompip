@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
-import { requireAuth } from "@/lib/server/auth";
+import { requireAuth, clearSessionCookie } from "@/lib/server/auth";
 import { getUser, setMt5Credentials } from "@/lib/server/db";
 import {
   isValidMt5LoginId,
@@ -16,7 +16,8 @@ export async function POST(req: NextRequest) {
     const user = await getUser(session.userId);
 
     if (!user) {
-      return errorResponse("User not found", 404);
+      await clearSessionCookie();
+      return errorResponse("User account not found or deleted", 401);
     }
 
     const expiryTimestamp = new Date(user.subscription.expiryDate).getTime();
