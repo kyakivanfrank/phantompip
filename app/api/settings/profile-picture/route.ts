@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
 import { requireAuth } from "@/lib/server/auth";
-import { getUser, primaryDb } from "@/lib/server/db";
+import { getUser, updateUserProfilePicture } from "@/lib/server/db";
 import { handleApiError, successResponse, errorResponse } from "@/lib/server/api-response";
 
 export async function PUT(req: NextRequest) {
@@ -20,14 +20,14 @@ export async function PUT(req: NextRequest) {
       return errorResponse("User not found", 404);
     }
 
-    if (!primaryDb) {
-      return errorResponse("Database connection failed", 500);
-    }
+    const pictureNumber =
+      typeof profilePicture === "number"
+        ? profilePicture
+        : parseInt(String(profilePicture).match(/\d+/)?.[0] || "1", 10);
 
-    user.account.profilePicture = profilePicture;
-    await (primaryDb.json as any).set(`user:${session.userId}`, "$", user);
+    await updateUserProfilePicture(session.userId, pictureNumber);
 
-    return successResponse({ profilePicture }, "Profile picture updated successfully");
+    return successResponse({ profilePicture: pictureNumber }, "Profile picture updated successfully");
   } catch (error) {
     return handleApiError(error);
   }

@@ -4,8 +4,7 @@
 
 
 // -----------------------------------------------------------------------------
-// REDIS JSON SCHEMA TYPES
-// -----------------------------------------------------------------------------
+// CORE SCHEMA TYPES
 // -----------------------------------------------------------------------------
 
 export interface Payment {
@@ -49,7 +48,7 @@ export interface Mt5Details {
 }
 
 /**
- * The unified User document structure (`user:{userId}`)
+ * The unified User document structure
  */
 export interface UserDocument {
   userId: string;
@@ -60,7 +59,7 @@ export interface UserDocument {
 }
 
 /**
- * Lightweight index object for `users:index`
+ * Lightweight index object for user summaries
  */
 export interface UserIndexEntry {
   userId: string;

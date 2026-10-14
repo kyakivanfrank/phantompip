@@ -48,3 +48,7 @@ cloudflared.exe
 
 # Forget-users review list (contains user emails)
 forget_list.txt
+
+# Snapshots & DB exports
+upstash-snapshot/
+*.bak

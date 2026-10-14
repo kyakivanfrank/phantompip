@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     // Hash password
     const passwordHash = await hashPassword(password);
 
-    // Create user document according to RedisJSON schema
+    // Create user document
     const userId = "usr_" + randomUUID().substring(0, 8);
     const nowIso = new Date().toISOString();
 

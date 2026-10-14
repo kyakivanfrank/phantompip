@@ -1,48 +1,12 @@
-import { Redis } from "@upstash/redis";
+import { getSupabase } from "./supabase";
 import { normalizeEmail } from "./validation";
 import { UserDocument, UserIndexEntry, Payment } from "@/lib/types";
 
-function createUpstashClient(url?: string, token?: string) {
-  if (!url || !token) {
-    return null;
-  }
-
-  try {
-    return new Redis({
-      url,
-      token,
-    });
-  } catch {
-    return null;
-  }
-}
-
-export const primaryDb = createUpstashClient(
-  process.env.UPSTASH_REDIS_REST_URL,
-  process.env.UPSTASH_REDIS_REST_TOKEN
-);
-
-export const backupDb = createUpstashClient(
-  process.env.UPSTASH_REDIS_BACKUP_DB_REST_URL,
-  process.env.UPSTASH_REDIS_BACKUP_DB_REST_TOKEN
-);
-
-const backupHoursFromEnv = Number.parseInt(process.env.BACKUP_NUMBER_OF_HOURS || "4", 10);
-const backupIntervalHours = Number.isFinite(backupHoursFromEnv) && backupHoursFromEnv > 0 ? backupHoursFromEnv : 4;
-const backupIntervalSeconds = backupIntervalHours * 60 * 60;
-
-const forgetHoursFromEnv = Number.parseInt(process.env.FORGET_NUMBER_OF_HOURS || "24", 10);
-const forgetIntervalHours = Number.isFinite(forgetHoursFromEnv) && forgetHoursFromEnv > 0 ? forgetHoursFromEnv : 24;
-const forgetIntervalSeconds = forgetIntervalHours * 60 * 60;
-
-const TIMEOUT_KEY = "system:last_backup_time";
-const FORGET_TIMEOUT_KEY = "system:last_forget_time";
-const JSON_BACKED_KEY_PREFIXES = ["user:"];
-
-let redisClient: Redis | null = primaryDb;
-let optimisticBackupInFlight = false;
-
-export async function mapWithConcurrency<T, R>(items: T[], worker: (item: T, index: number) => Promise<R>, concurrency = 10): Promise<R[]> {
+export async function mapWithConcurrency<T, R>(
+  items: T[],
+  worker: (item: T, index: number) => Promise<R>,
+  concurrency = 10
+): Promise<R[]> {
   if (!items.length) return [];
 
   const results = new Array<R>(items.length);
@@ -60,254 +24,19 @@ export async function mapWithConcurrency<T, R>(items: T[], worker: (item: T, ind
   return results;
 }
 
-// Memory mock that partially supports RedisJSON (for fallback)
-const inMemory = (() => {
-  const store = new Map<string, any>();
-  const strings = new Map<string, string>();
-
-
-  function resolvePath(obj: any, path: string) {
-    if (path === '$') return { parent: null, key: null, target: obj };
-    const parts = path.replace('$.', '').split('.');
-    let current = obj;
-    for (let i = 0; i < parts.length - 1; i++) {
-      if (!current[parts[i]]) current[parts[i]] = {};
-      current = current[parts[i]];
-    }
-    return { parent: current, key: parts[parts.length - 1], target: current[parts[parts.length - 1]] };
-  }
-
-  return {
-    async get(key: string) {
-      return strings.get(key) ?? null;
-    },
-    async set(key: string, value: string) {
-      strings.set(key, value);
-      return 'OK';
-    },
-    async del(key: string) {
-      const had1 = store.delete(key);
-      const had2 = strings.delete(key);
-      return had1 || had2 ? 1 : 0;
-    },
-    async hset(key: string, data: Record<string, any>) {
-      const cur = store.get(key) ?? {};
-      store.set(key, { ...cur, ...data });
-      return Object.keys(data).length;
-    },
-    async hgetall(key: string) {
-      return store.get(key) ?? {};
-    },
-    json: {
-      async get(key: string, options?: { path: string }) {
-        const obj = store.get(key);
-        if (!obj) return null;
-        if (!options || !options.path || options.path === '$') return obj;
-        const { target } = resolvePath(obj, options.path);
-        return target ?? null;
-      },
-      async set(key: string, path: string, value: any) {
-        if (!store.has(key)) store.set(key, {});
-        const obj = store.get(key);
-        if (path === '$') {
-          store.set(key, value);
-        } else {
-          const { parent, key: lastKey } = resolvePath(obj, path);
-          parent[lastKey!] = value;
-        }
-        return 'OK';
-      },
-      async arrappend(key: string, path: string, ...values: any[]) {
-        const obj = store.get(key);
-        if (!obj) return 0;
-        const { parent, key: lastKey, target } = resolvePath(obj, path);
-        if (!Array.isArray(target)) {
-          parent[lastKey!] = [];
-        }
-        parent[lastKey!].push(...values);
-        return parent[lastKey!].length;
-      }
-    }
-  } as any;
-})();
-
-export function triggerOptimisticBackup() {
-  if (!primaryDb || !backupDb || optimisticBackupInFlight) {
-    return;
-  }
-
-  optimisticBackupInFlight = true;
-
-  primaryDb
-    .set(TIMEOUT_KEY, String(Date.now()), {
-      nx: true,
-      ex: backupIntervalSeconds,
-    })
-    .then(async (lockResult) => {
-      if (lockResult !== "OK") {
-        return null;
-      }
-
-      try {
-        const allKeys = await primaryDb.keys("*");
-        const targetKeys = allKeys.filter((key) => key !== TIMEOUT_KEY);
-
-        if (targetKeys.length === 0) {
-          return null;
-        }
-
-        // Separate keys by their Redis data type
-        const jsonKeys = targetKeys.filter(isJsonBackedKey);
-        const stringKeys = targetKeys.filter((k) => !isJsonBackedKey(k));
-
-        const scalarPayload: Record<string, string | number> = {};
-        const jsonPayload: Array<{ key: string; value: any }> = [];
-
-        // 1. Fetch all standard strings in one single direct command
-        if (stringKeys.length > 0) {
-          const stringValues = await primaryDb.mget(...stringKeys);
-          stringKeys.forEach((key, index) => {
-            if (stringValues[index] !== null && stringValues[index] !== undefined) {
-              scalarPayload[key] = stringValues[index] as string | number;
-            }
-          });
-        }
-
-        // 2. Fetch all JSON objects in one single direct command using the correct array configuration
-        if (jsonKeys.length > 0) {
-          const jsonValues = await (primaryDb.json as any).mget(jsonKeys, "$");
-          if (jsonValues && Array.isArray(jsonValues)) {
-            jsonKeys.forEach((key, index) => {
-              let parsedVal = jsonValues[index];
-              if (parsedVal !== null && parsedVal !== undefined) {
-                if (Array.isArray(parsedVal)) {
-                  parsedVal = parsedVal[0];
-                }
-                jsonPayload.push({ key, value: parsedVal });
-              }
-            });
-          }
-        }
-
-        // 3. Direct upsert writes into the backup database
-        const writes: Promise<any>[] = [];
-
-        // Write standard strings out all at once
-        if (Object.keys(scalarPayload).length > 0) {
-          writes.push(backupDb.mset(scalarPayload as any));
-        }
-
-        // Write JSON objects using the SDK's pipelining mechanics
-        for (const entry of jsonPayload) {
-          writes.push((backupDb.json as any).set(entry.key, "$", entry.value));
-        }
-
-        if (writes.length > 0) {
-          await Promise.all(writes);
-        }
-
-        // True 1:1 mirroring: remove keys from backup that are gone from primary
-        try {
-          const allBackupKeys = await backupDb.keys("*");
-          const primaryKeySet = new Set(allKeys);
-          const keysToDelete = allBackupKeys.filter(k => !primaryKeySet.has(k) && k !== TIMEOUT_KEY && k !== FORGET_TIMEOUT_KEY);
-          
-          if (keysToDelete.length > 0) {
-            await backupDb.del(...keysToDelete as [any]);
-          }
-        } catch (delErr) {
-          console.error("[Backup Engine Deletion Error]:", delErr);
-        }
-
-        return true;
-      } catch (syncError) {
-        // Fail-safe: If a network error happens mid-sync, delete the lock key immediately
-        // This stops the system from locking you out of updates for 4 hours on a failure
-        await primaryDb.del(TIMEOUT_KEY).catch(() => {});
-        throw syncError;
-      }
-    })
-    .catch((err) => {
-      // Keeps everything invisible to website visitors, logging issues only inside server logs
-      console.error("[Backup Engine Error]:", err);
-      return undefined;
-    })
-    .finally(() => {
-      optimisticBackupInFlight = false;
-    });
-}
-function isJsonBackedKey(key: string) {
-  return key === "users:index" || JSON_BACKED_KEY_PREFIXES.some((prefix) => key.startsWith(prefix));
-}
-
-let mirroredRedisClient: any = null;
-
-export function getRedis(): Redis | typeof inMemory {
-  const baseClient = redisClient || inMemory;
-  if (!backupDb || baseClient === inMemory) return baseClient;
-
-  if (!mirroredRedisClient) {
-    mirroredRedisClient = new Proxy(baseClient, {
-      get(target, prop) {
-        if (prop === 'set') {
-          return async (...args: any[]) => {
-            const res = await (target.set as any)(...args);
-            await backupDb.set(...args as [any, any]).catch(e => console.error("[Backup Mirror Error]", e));
-            return res;
-          };
-        }
-        if (prop === 'del') {
-          return async (...args: any[]) => {
-            const res = await (target.del as any)(...args);
-            await backupDb.del(...args as [any]).catch(e => console.error("[Backup Mirror Error]", e));
-            return res;
-          };
-        }
-        if (prop === 'json') {
-          return new Proxy(target.json as any, {
-            get(jsonTarget, jsonProp) {
-              if (jsonProp === 'set') {
-                return async (...args: any[]) => {
-                  const res = await jsonTarget.set(...args);
-                  await (backupDb.json as any).set(...args).catch((e: any) => console.error("[Backup Mirror Error]", e));
-                  return res;
-                };
-              }
-              if (jsonProp === 'arrappend') {
-                return async (...args: any[]) => {
-                  const res = await jsonTarget.arrappend(...args);
-                  await (backupDb.json as any).arrappend(...args).catch((e: any) => console.error("[Backup Mirror Error]", e));
-                  return res;
-                };
-              }
-              if (jsonProp === 'del') {
-                return async (...args: any[]) => {
-                  const res = await jsonTarget.del(...args);
-                  await (backupDb.json as any).del(...args).catch((e: any) => console.error("[Backup Mirror Error]", e));
-                  return res;
-                };
-              }
-              const val = jsonTarget[jsonProp];
-              return typeof val === 'function' ? val.bind(jsonTarget) : val;
-            }
-          });
-        }
-        const val = (target as any)[prop];
-        return typeof val === 'function' ? val.bind(target) : val;
-      }
-    });
-  }
-
-  return mirroredRedisClient;
-}
-
-export async function attempt<T>(fn: () => Promise<T>, timeoutMs = 3000, retries = 2): Promise<T> {
+export async function attempt<T>(
+  fn: () => Promise<T>,
+  timeoutMs = 5000,
+  retries = 2
+): Promise<T> {
   let lastErr: any;
   for (let i = 0; i <= retries; i++) {
     try {
       const res = await Promise.race([
         fn(),
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs)),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("Database operation timed out")), timeoutMs)
+        ),
       ]);
       return res as T;
     } catch (err) {
@@ -319,147 +48,206 @@ export async function attempt<T>(fn: () => Promise<T>, timeoutMs = 3000, retries
   throw lastErr;
 }
 
-function emailKey(email: string) {
-  return `email:${normalizeEmail(email)}`;
-}
-
-// -----------------------------------------------------------------------------
-// AUTOMATED FORGETTING (CLEANUP)
-// -----------------------------------------------------------------------------
-
-let optimisticForgetInFlight = false;
-
-export function triggerAutomatedForgetting() {
-  if (!primaryDb || optimisticForgetInFlight) return;
-  optimisticForgetInFlight = true;
-
-  primaryDb
-    .set(FORGET_TIMEOUT_KEY, String(Date.now()), {
-      nx: true,
-      ex: forgetIntervalSeconds,
-    })
-    .then(async (lockResult) => {
-      if (lockResult !== "OK") return;
-
-      try {
-        const index = await getAllUsers();
-        const now = Date.now();
-        const HOUR = 60 * 60 * 1000;
-        const NO_PAYMENT_MS = 24 * HOUR;
-        const PENDING_MS = 4 * 24 * HOUR;
-        const REJECTED_MS = 24 * HOUR;
-        
-        const ts = (s: any) => { const t = Date.parse(s); return Number.isFinite(t) ? t : NaN; };
-
-        // For each user in the index, check if they need to be forgotten
-        for (const entry of index) {
-          if (entry.isAdmin) continue;
-          
-          const user = await getUser(entry.userId);
-          if (!user) continue;
-
-          const sub = user.subscription || {} as any;
-          const payments = Array.isArray(sub.payments) ? sub.payments : [];
-
-          const everApproved =
-            sub.approvalStatus === "approved" ||
-            sub.status === "active" ||
-            sub.status === "expired" ||
-            !!sub.approvedAt ||
-            payments.some((p: any) => p.status === "confirmed");
-            
-          if (everApproved) continue;
-
-          let shouldForget = false;
-
-          if (payments.length === 0) {
-            const created = ts(user.account?.createdAt);
-            if (Number.isFinite(created) && now - created >= NO_PAYMENT_MS) shouldForget = true;
-          } else if (payments.some((p: any) => p.status === "pending")) {
-            const latestSubmitted = Math.max(...payments.map((p: any) => ts(p.submittedAt)).filter(Number.isFinite));
-            if (Number.isFinite(latestSubmitted) && now - latestSubmitted >= PENDING_MS) shouldForget = true;
-          } else {
-            // All payments rejected
-            const rejectedTimes = payments.map((p: any) => ts(p.rejectedAt ?? p.submittedAt)).filter(Number.isFinite);
-            const lastRejected = rejectedTimes.length ? Math.max(...rejectedTimes) : NaN;
-            if (Number.isFinite(lastRejected) && now - lastRejected >= REJECTED_MS) shouldForget = true;
-          }
-
-          if (shouldForget) {
-            console.log(`[Automated Forgetting] Wiping user ${user.userId} (${user.account.email})`);
-            await deleteUser(user.userId);
-          }
-        }
-      } catch (err) {
-        await primaryDb.del(FORGET_TIMEOUT_KEY).catch(() => {});
-        throw err;
-      }
-    })
-    .catch((err) => {
-      console.error("[Forget Engine Error]:", err);
-    })
-    .finally(() => {
-      optimisticForgetInFlight = false;
-    });
-}
-
 // -----------------------------------------------------------------------------
 // USER OPERATIONS
 // -----------------------------------------------------------------------------
 
-export async function createUser(userId: string, userData: UserDocument) {
-  const redis = getRedis();
+export async function createUser(userId: string, userData: UserDocument): Promise<UserDocument> {
+  const supabase = getSupabase();
+  const normalizedEmail = normalizeEmail(userData.account.email);
+  const nowIso = new Date().toISOString();
 
-  // Force MT5 placeholders
-  const normalizedUserData = {
-    ...userData,
-    mt5: userData.mt5 || {
-      loginId: "",
-      password: "",
-      brokerServer: "",
-      connectedAt: null,
-      isConnected: false,
-    },
-  };
-
-  // Create user document
-  await attempt(() => (redis.json as any).set(`user:${userId}`, "$", normalizedUserData));
-
-  // Set email lookup mapping (since redis json doesn't support secondary indexing easily)
-  await attempt(() => redis.set(emailKey(normalizedUserData.account.email), userId));
-
-  // Add to lightweight index
-  const indexEntry: UserIndexEntry = {
-    userId: userData.userId,
+  const userPayload = {
+    id: userId,
+    email: normalizedEmail,
     username: userData.account.username,
-    email: userData.account.email,
-    subscriptionStatus: userData.subscription.status,
-    approvalStatus: userData.subscription.approvalStatus,
-    expiryDate: userData.subscription.expiryDate,
-    isAdmin: userData.isAdmin
+    password_hash: userData.account.passwordHash,
+    is_admin: Boolean(userData.isAdmin),
+    profile_picture: userData.account.profilePicture || null,
+    created_at: userData.account.createdAt || nowIso,
+    last_login_at: userData.account.lastLoginAt || nowIso,
   };
 
-  const index = await attempt(() => (redis.json as any).get("users:index"));
-  if (!index) {
-    await attempt(() => (redis.json as any).set("users:index", "$", [indexEntry]));
-  } else {
-    await attempt(() => (redis.json as any).arrappend("users:index", "$", indexEntry));
+  const sub = userData.subscription || ({} as any);
+  const subscriptionPayload = {
+    status: sub.status || "inactive",
+    approval_status: sub.approvalStatus || "none",
+    plan_name: sub.planName || "No Plan",
+    price_usd: sub.priceUSD || 0,
+    billing_cycle: sub.billingCycle || "monthly",
+    start_date: sub.startDate ? sub.startDate.slice(0, 10) : null,
+    expiry_date: sub.expiryDate ? sub.expiryDate.slice(0, 10) : null,
+    approved_at: sub.approvedAt || null,
+  };
+
+  const mt5 = userData.mt5 || {
+    loginId: "",
+    password: "",
+    brokerServer: "",
+    connectedAt: null,
+    isConnected: false,
+    isBotRunning: false,
+  };
+
+  const mt5Payload = {
+    login_id: mt5.loginId || "",
+    password: mt5.password || "",
+    broker_server: mt5.brokerServer || "",
+    connected_at: mt5.connectedAt || null,
+    is_connected: Boolean(mt5.isConnected),
+    is_bot_running: Boolean(mt5.isBotRunning),
+  };
+
+  const { error } = await supabase.rpc("app_create_user", {
+    p_user: userPayload,
+    p_subscription: subscriptionPayload,
+    p_mt5: mt5Payload,
+  });
+
+  if (error) {
+    throw new Error(`Failed to create user in database: ${error.message}`);
   }
 
   return userData;
 }
 
 export async function getUser(userId: string): Promise<UserDocument | null> {
-  const redis = getRedis();
-  const res = await attempt(() => (redis.json as any).get(`user:${userId}`));
-  if (Array.isArray(res)) return res[0] as UserDocument | null; // Redis upstash driver sometimes wraps in array
-  return res as UserDocument | null;
+  const supabase = getSupabase();
+
+  const { data: user, error: userError } = await supabase
+    .from("users")
+    .select(`
+      id,
+      email,
+      username,
+      password_hash,
+      is_admin,
+      profile_picture,
+      created_at,
+      last_login_at,
+      subscriptions (
+        status,
+        approval_status,
+        plan_name,
+        price_usd,
+        billing_cycle,
+        start_date,
+        expiry_date,
+        approved_at
+      ),
+      mt5_accounts (
+        login_id,
+        password,
+        broker_server,
+        connected_at,
+        is_connected,
+        is_bot_running
+      ),
+      payments (
+        id,
+        amount,
+        method,
+        network,
+        transaction_ref,
+        status,
+        submitted_at
+      )
+    `)
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (userError) {
+    throw new Error(`Failed to fetch user ${userId}: ${userError.message}`);
+  }
+
+  if (!user) {
+    return null;
+  }
+
+  const sub = Array.isArray(user.subscriptions)
+    ? user.subscriptions[0]
+    : user.subscriptions;
+
+  const mt5 = Array.isArray(user.mt5_accounts)
+    ? user.mt5_accounts[0]
+    : user.mt5_accounts;
+
+  const paymentsList = (user.payments || []) as any[];
+  const sortedPayments: Payment[] = paymentsList
+    .map((p) => ({
+      paymentId: p.id,
+      amount: Number(p.amount),
+      method: p.method,
+      network: p.network,
+      transactionRef: p.transaction_ref,
+      status: p.status,
+      submittedAt: p.submitted_at,
+    }))
+    .sort(
+      (a, b) =>
+        new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()
+    );
+
+  const userDoc: UserDocument = {
+    userId: user.id,
+    isAdmin: user.is_admin,
+    account: {
+      username: user.username,
+      email: user.email,
+      passwordHash: user.password_hash,
+      createdAt: user.created_at,
+      lastLoginAt: user.last_login_at || user.created_at,
+      profilePicture:
+        user.profile_picture !== null ? user.profile_picture : undefined,
+    },
+    subscription: {
+      status: sub?.status || "inactive",
+      approvalStatus: sub?.approval_status || "none",
+      planName: sub?.plan_name || "No Plan",
+      priceUSD: Number(sub?.price_usd ?? 0),
+      billingCycle: sub?.billing_cycle || "monthly",
+      startDate: sub?.start_date ? String(sub.start_date) : "",
+      expiryDate: sub?.expiry_date ? String(sub.expiry_date) : "",
+      approvedAt: sub?.approved_at || null,
+      payments: sortedPayments,
+    },
+    mt5: mt5
+      ? {
+          loginId: mt5.login_id || "",
+          password: mt5.password || "",
+          brokerServer: mt5.broker_server || "",
+          connectedAt: mt5.connected_at || null,
+          isConnected: Boolean(mt5.is_connected),
+          isBotRunning: Boolean(mt5.is_bot_running),
+        }
+      : {
+          loginId: "",
+          password: "",
+          brokerServer: "",
+          connectedAt: null,
+          isConnected: false,
+          isBotRunning: false,
+        },
+  };
+
+  return userDoc;
 }
 
 export async function getUserIdByEmail(email: string): Promise<string | null> {
-  const redis = getRedis();
-  const res = await attempt(() => redis.get(emailKey(email)));
-  return res as string | null;
+  const supabase = getSupabase();
+  const normalized = normalizeEmail(email);
+
+  const { data, error } = await supabase
+    .from("users")
+    .select("id")
+    .eq("email", normalized)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to lookup user by email: ${error.message}`);
+  }
+
+  return data?.id || null;
 }
 
 export async function getUserByEmail(email: string): Promise<UserDocument | null> {
@@ -468,197 +256,326 @@ export async function getUserByEmail(email: string): Promise<UserDocument | null
   return await getUser(userId);
 }
 
-export async function setUserByEmail(email: string, userId: string) {
-  const redis = getRedis();
-  return await attempt(() => redis.set(emailKey(email), userId));
+export async function setUserByEmail(_email: string, _userId: string): Promise<void> {
+  // Maintained for backward compatibility. In Supabase Postgres, email is a unique column on users.
+  return;
 }
 
-export async function deleteUser(userId: string) {
-  const redis = getRedis();
-  const user = await getUser(userId);
-  if (user) {
-    await attempt(() => redis.del(emailKey(user.account.email)));
+export async function deleteUser(userId: string): Promise<void> {
+  const supabase = getSupabase();
+
+  // Deleting user row cascades to subscriptions, payments, and mt5_accounts automatically
+  const { error } = await supabase.from("users").delete().eq("id", userId);
+  if (error) {
+    throw new Error(`Failed to delete user ${userId}: ${error.message}`);
   }
-
-  // Delete document
-  await attempt(() => redis.del(`user:${userId}`));
-
-  // Remove from index
-  const index = (await attempt(() => (redis.json as any).get("users:index"))) as UserIndexEntry[] || [];
-  let unwrappedIndex = Array.isArray(index) && Array.isArray(index[0]) ? index[0] : index;
-  if (!Array.isArray(unwrappedIndex)) unwrappedIndex = [];
-
-  const updated = unwrappedIndex.filter((u: UserIndexEntry) => u.userId !== userId);
-  await attempt(() => (redis.json as any).set("users:index", "$", updated));
 }
 
 export async function getAllUsers(): Promise<UserIndexEntry[]> {
-  const redis = getRedis();
-  const index = await attempt(() => (redis.json as any).get("users:index"));
+  const supabase = getSupabase();
 
-  if (!index) return [];
-  // Handle upstash returning array of array for JSON.GET
-  if (Array.isArray(index) && Array.isArray(index[0])) return index[0];
-  if (Array.isArray(index)) return index;
+  const { data, error } = await supabase
+    .from("users")
+    .select(`
+      id,
+      username,
+      email,
+      is_admin,
+      subscriptions (
+        status,
+        approval_status,
+        expiry_date
+      )
+    `)
+    .order("created_at", { ascending: false });
 
-  return [];
+  if (error) {
+    throw new Error(`Failed to get all users: ${error.message}`);
+  }
+
+  return (data || []).map((row: any) => {
+    const sub = Array.isArray(row.subscriptions)
+      ? row.subscriptions[0]
+      : row.subscriptions;
+
+    return {
+      userId: row.id,
+      username: row.username,
+      email: row.email,
+      subscriptionStatus: sub?.status || "inactive",
+      approvalStatus: sub?.approval_status || "none",
+      expiryDate: sub?.expiry_date ? String(sub.expiry_date) : "",
+      isAdmin: row.is_admin,
+    };
+  });
 }
 
-export async function updateUserDetails(userId: string, updates: { username?: string, email?: string }) {
-  const redis = getRedis();
-  const user = await getUser(userId);
-  if (!user) return;
+export async function updateUserDetails(
+  userId: string,
+  updates: { username?: string; email?: string }
+): Promise<void> {
+  const supabase = getSupabase();
+  const payload: Record<string, any> = {};
 
-  // CRITICAL FIX: Explicitly stringify plain string values. Upstash's serializer passes raw
-  // strings through untouched, but RedisJSON.SET requires a valid JSON literal, so an unquoted
-  // string fails to parse and throws a 500.
-  if (updates.username) {
-    await attempt(() => (redis.json as any).set(`user:${userId}`, "$.account.username", JSON.stringify(updates.username)));
-  }
+  if (updates.username) payload.username = updates.username;
+  if (updates.email) payload.email = normalizeEmail(updates.email);
 
-  if (updates.email && updates.email !== user.account.email) {
-    await attempt(() => redis.del(emailKey(user.account.email)));
-    await attempt(() => redis.set(emailKey(updates.email!), userId));
-    await attempt(() => (redis.json as any).set(`user:${userId}`, "$.account.email", JSON.stringify(updates.email)));
-  }
+  if (Object.keys(payload).length === 0) return;
 
-  // Sync index
-  if (updates.username || updates.email) {
-    const index = await getAllUsers();
-    const i = index.findIndex(u => u.userId === userId);
-    if (i !== -1) {
-      if (updates.username) index[i].username = updates.username;
-      if (updates.email) index[i].email = updates.email;
-      await attempt(() => (redis.json as any).set("users:index", "$", index));
-    }
+  const { error } = await supabase.from("users").update(payload).eq("id", userId);
+  if (error) {
+    throw new Error(`Failed to update user details: ${error.message}`);
   }
 }
 
-// -----------------------------------------------------------------------------
-// ADMIN / SUBSCRIPTION OPERATIONS
-// -----------------------------------------------------------------------------
+export async function updateUserProfilePicture(
+  userId: string,
+  profilePicture: number
+): Promise<void> {
+  const supabase = getSupabase();
+  const { error } = await supabase
+    .from("users")
+    .update({ profile_picture: profilePicture })
+    .eq("id", userId);
 
-export async function resetUserPassword(userId: string, newPasswordHash: string) {
-  const redis = getRedis();
-  // CRITICAL FIX: Explicitly stringify the plain string value. Upstash's serializer passes
-  // raw strings through untouched, but RedisJSON.SET requires a valid JSON literal — an
-  // unquoted bcrypt hash (e.g. "$2b$10$...") fails to parse and throws a 500.
-  return await attempt(() => (redis.json as any).set(`user:${userId}`, "$.account.passwordHash", JSON.stringify(newPasswordHash)));
-}
-
-export async function updateSubscription(userId: string, updates: Partial<UserDocument["subscription"]>) {
-  const redis = getRedis();
-  for (const [key, value] of Object.entries(updates)) {
-    if (key !== 'payments') {
-      // CRITICAL FIX: Explicitly stringify values to prevent JSON parsing crashes on strings
-      await attempt(() => (redis.json as any).set(`user:${userId}`, `$.subscription.${key}`, JSON.stringify(value)));
-    }
-  }
-
-  // Sync index
-  const index = await getAllUsers();
-  const i = index.findIndex(u => u.userId === userId);
-  if (i !== -1) {
-    if (updates.status) index[i].subscriptionStatus = updates.status;
-    if (updates.approvalStatus) index[i].approvalStatus = updates.approvalStatus;
-    if (updates.expiryDate) index[i].expiryDate = updates.expiryDate;
-    await attempt(() => (redis.json as any).set("users:index", "$", index));
+  if (error) {
+    throw new Error(`Failed to update profile picture: ${error.message}`);
   }
 }
+
+export async function resetUserPassword(
+  userId: string,
+  newPasswordHash: string
+): Promise<void> {
+  const supabase = getSupabase();
+  const { error } = await supabase
+    .from("users")
+    .update({ password_hash: newPasswordHash })
+    .eq("id", userId);
+
+  if (error) {
+    throw new Error(`Failed to reset password: ${error.message}`);
+  }
+}
+
+export async function updateSubscription(
+  userId: string,
+  updates: Partial<UserDocument["subscription"]>
+): Promise<void> {
+  const supabase = getSupabase();
+  const payload: Record<string, any> = {};
+
+  if (updates.status !== undefined) payload.status = updates.status;
+  if (updates.approvalStatus !== undefined) payload.approval_status = updates.approvalStatus;
+  if (updates.planName !== undefined) payload.plan_name = updates.planName;
+  if (updates.priceUSD !== undefined) payload.price_usd = updates.priceUSD;
+  if (updates.billingCycle !== undefined) payload.billing_cycle = updates.billingCycle;
+  if (updates.startDate !== undefined)
+    payload.start_date = updates.startDate ? updates.startDate.slice(0, 10) : null;
+  if (updates.expiryDate !== undefined)
+    payload.expiry_date = updates.expiryDate ? updates.expiryDate.slice(0, 10) : null;
+  if (updates.approvedAt !== undefined) payload.approved_at = updates.approvedAt;
+
+  if (Object.keys(payload).length === 0) return;
+
+  const { error } = await supabase
+    .from("subscriptions")
+    .update(payload)
+    .eq("user_id", userId);
+
+  if (error) {
+    throw new Error(`Failed to update subscription: ${error.message}`);
+  }
+}
+
 // -----------------------------------------------------------------------------
 // PAYMENT OPERATIONS
 // -----------------------------------------------------------------------------
 
-export async function createPayment(userId: string, payment: Payment) {
-  const redis = getRedis();
+export async function createPayment(userId: string, payment: Payment): Promise<any> {
+  const supabase = getSupabase();
 
-  // 1. Fetch current user to check existing payments
-  const user = await getUser(userId);
-  if (!user || !user.subscription) return null;
+  const { data: inserted, error } = await supabase.rpc("app_create_payment", {
+    p_payment: {
+      id: payment.paymentId,
+      user_id: userId,
+      amount: payment.amount,
+      method: payment.method,
+      network: payment.network,
+      transaction_ref: payment.transactionRef,
+      status: payment.status || "pending",
+      submitted_at: payment.submittedAt || new Date().toISOString(),
+    },
+  });
 
-  // 2. Ensure the payments array exists
-  const existingPayments = user.subscription.payments || [];
+  if (error) {
+    throw new Error(`Failed to create payment: ${error.message}`);
+  }
 
-  // 3. Deduplication Check: Prevent double-click submissions
-  const isDuplicate = existingPayments.some(p => p.paymentId === payment.paymentId);
-
-  if (isDuplicate) {
+  if (inserted === false) {
     console.log(`Duplicate payment ${payment.paymentId} prevented for user ${userId}`);
     return "DUPLICATE_PREVENTED";
   }
 
-  // 4. Safe to append
-  return await attempt(() => (redis.json as any).arrappend(`user:${userId}`, "$.subscription.payments", payment));
+  return true;
 }
+
 export async function getUserPayments(userId: string): Promise<Payment[]> {
-  const user = await getUser(userId);
-  if (!user || !user.subscription || !user.subscription.payments) return [];
-  return [...user.subscription.payments].reverse();
-}
+  const supabase = getSupabase();
 
-export async function getAllPayments() {
-  const index = await getAllUsers();
-  const paymentGroups = await mapWithConcurrency(index, async (entry) => {
-    const user = await getUser(entry.userId);
-    if (!user || !user.subscription || !Array.isArray(user.subscription.payments)) {
-      return [] as any[];
-    }
+  const { data, error } = await supabase
+    .from("payments")
+    .select("id, amount, method, network, transaction_ref, status, submitted_at")
+    .eq("user_id", userId)
+    .order("submitted_at", { ascending: false });
 
-    return user.subscription.payments.map((payment) => ({
-      ...payment,
-      userId: user.userId,
-      userEmail: user.account.email,
-      username: user.account.username,
-    }));
-  }, 10);
-
-  const allPayments: any[] = [];
-  const seenPaymentIds = new Set<string>();
-
-  for (const payments of paymentGroups) {
-    for (const payment of payments) {
-      if (!seenPaymentIds.has(payment.paymentId)) {
-        seenPaymentIds.add(payment.paymentId);
-        allPayments.push(payment);
-      }
-    }
+  if (error) {
+    throw new Error(`Failed to fetch user payments: ${error.message}`);
   }
 
-  return allPayments.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+  return (data || []).map((p: any) => ({
+    paymentId: p.id,
+    amount: Number(p.amount),
+    method: p.method,
+    network: p.network,
+    transactionRef: p.transaction_ref,
+    status: p.status,
+    submittedAt: p.submitted_at,
+  }));
 }
 
-export async function getPayment(paymentId: string) {
-  const allPayments = await getAllPayments();
-  return allPayments.find(p => p.paymentId === paymentId) || null;
+export async function getAllPayments(): Promise<any[]> {
+  const supabase = getSupabase();
+
+  const { data, error } = await supabase
+    .from("payments")
+    .select(`
+      id,
+      user_id,
+      amount,
+      method,
+      network,
+      transaction_ref,
+      status,
+      submitted_at,
+      users (
+        email,
+        username
+      )
+    `)
+    .order("submitted_at", { ascending: false });
+
+  if (error) {
+    throw new Error(`Failed to fetch all payments: ${error.message}`);
+  }
+
+  return (data || []).map((p: any) => {
+    const user = Array.isArray(p.users) ? p.users[0] : p.users;
+    return {
+      paymentId: p.id,
+      userId: p.user_id,
+      amount: Number(p.amount),
+      method: p.method,
+      network: p.network,
+      transactionRef: p.transaction_ref,
+      status: p.status,
+      submittedAt: p.submitted_at,
+      userEmail: user?.email || "",
+      username: user?.username || "",
+    };
+  });
 }
 
-export async function updatePaymentStatus(userId: string, paymentId: string, status: string, additionalUpdates?: any) {
-  const redis = getRedis();
-  const user = await getUser(userId);
-  if (!user || !user.subscription || !user.subscription.payments) return;
-  
-  for (let i = 0; i < user.subscription.payments.length; i++) {
-    if (user.subscription.payments[i].paymentId === paymentId) {
-      
-      // CRITICAL FIX: Explicitly stringify the plain string value for Upstash
-      await attempt(() => (redis.json as any).set(`user:${userId}`, `$.subscription.payments[${i}].status`, JSON.stringify(status)));
-      
-      if (additionalUpdates) {
-        for (const [key, value] of Object.entries(additionalUpdates)) {
-          await attempt(() => (redis.json as any).set(`user:${userId}`, `$.subscription.payments[${i}].${key}`, JSON.stringify(value)));
-        }
-      }
-      
-    }
+export async function getPayment(paymentId: string): Promise<any | null> {
+  const supabase = getSupabase();
+
+  const { data, error } = await supabase
+    .from("payments")
+    .select(`
+      id,
+      user_id,
+      amount,
+      method,
+      network,
+      transaction_ref,
+      status,
+      submitted_at,
+      users (
+        email,
+        username
+      )
+    `)
+    .eq("id", paymentId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to fetch payment ${paymentId}: ${error.message}`);
+  }
+
+  if (!data) return null;
+
+  const user = Array.isArray(data.users) ? data.users[0] : data.users;
+  return {
+    paymentId: data.id,
+    userId: data.user_id,
+    amount: Number(data.amount),
+    method: data.method,
+    network: data.network,
+    transactionRef: data.transaction_ref,
+    status: data.status,
+    submittedAt: data.submitted_at,
+    userEmail: user?.email || "",
+    username: user?.username || "",
+  };
+}
+
+export async function updatePaymentStatus(
+  userId: string,
+  paymentId: string,
+  status: string,
+  additionalUpdates?: any
+): Promise<void> {
+  const supabase = getSupabase();
+  const payload: Record<string, any> = {
+    status,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (status === "confirmed") {
+    payload.confirmed_at = new Date().toISOString();
+  } else if (status === "rejected") {
+    payload.rejected_at = new Date().toISOString();
+  }
+
+  if (additionalUpdates) {
+    if (additionalUpdates.transactionRef)
+      payload.transaction_ref = additionalUpdates.transactionRef;
+    if (additionalUpdates.amount !== undefined)
+      payload.amount = additionalUpdates.amount;
+    if (additionalUpdates.method) payload.method = additionalUpdates.method;
+    if (additionalUpdates.network) payload.network = additionalUpdates.network;
+  }
+
+  const { error } = await supabase
+    .from("payments")
+    .update(payload)
+    .eq("id", paymentId)
+    .eq("user_id", userId);
+
+  if (error) {
+    throw new Error(`Failed to update payment status: ${error.message}`);
   }
 }
 
-
-// Support older wrapper APIs (for legacy routes that might still exist)
-export async function updatePayment(paymentId: string, updates: any) {
+export async function updatePayment(paymentId: string, updates: any): Promise<void> {
   const payment = await getPayment(paymentId);
   if (payment) {
-    await updatePaymentStatus(payment.userId, paymentId, updates.status || payment.status, updates);
+    await updatePaymentStatus(
+      payment.userId,
+      paymentId,
+      updates.status || payment.status,
+      updates
+    );
   }
 }
 
@@ -666,17 +583,46 @@ export async function updatePayment(paymentId: string, updates: any) {
 // MT5 OPERATIONS
 // -----------------------------------------------------------------------------
 
-export async function setMt5Credentials(userId: string, credentials: UserDocument["mt5"]) {
-  const redis = getRedis();
-  return await attempt(() => (redis.json as any).set(`user:${userId}`, "$.mt5", credentials));
+export async function setMt5Credentials(
+  userId: string,
+  credentials: UserDocument["mt5"]
+): Promise<void> {
+  const supabase = getSupabase();
+  const payload = {
+    user_id: userId,
+    login_id: credentials?.loginId || "",
+    password: credentials?.password || "",
+    broker_server: credentials?.brokerServer || "",
+    connected_at: credentials?.connectedAt || null,
+    is_connected: Boolean(credentials?.isConnected),
+    is_bot_running: Boolean(credentials?.isBotRunning),
+  };
+
+  const { error } = await supabase
+    .from("mt5_accounts")
+    .upsert(payload, { onConflict: "user_id" });
+
+  if (error) {
+    throw new Error(`Failed to set MT5 credentials: ${error.message}`);
+  }
 }
 
-export async function getMt5Credentials(userId: string): Promise<UserDocument["mt5"] | null> {
-  const redis = getRedis();
-  const res = await attempt(() => (redis.json as any).get(`user:${userId}`, { path: "$.mt5" }));
-  const credentials = Array.isArray(res) ? res[0] : res;
+export async function getMt5Credentials(
+  userId: string
+): Promise<UserDocument["mt5"] | null> {
+  const supabase = getSupabase();
 
-  if (!credentials) {
+  const { data, error } = await supabase
+    .from("mt5_accounts")
+    .select("login_id, password, broker_server, connected_at, is_connected, is_bot_running")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to get MT5 credentials: ${error.message}`);
+  }
+
+  if (!data) {
     const placeholder = {
       loginId: "",
       password: "",
@@ -685,12 +631,16 @@ export async function getMt5Credentials(userId: string): Promise<UserDocument["m
       isConnected: false,
       isBotRunning: false,
     };
-    await attempt(() => (redis.json as any).set(`user:${userId}`, "$.mt5", placeholder));
+    await setMt5Credentials(userId, placeholder);
     return placeholder;
   }
 
-  return credentials as UserDocument["mt5"] | null;
+  return {
+    loginId: data.login_id || "",
+    password: data.password || "",
+    brokerServer: data.broker_server || "",
+    connectedAt: data.connected_at,
+    isConnected: Boolean(data.is_connected),
+    isBotRunning: Boolean(data.is_bot_running),
+  };
 }
-
-// -----------------------------------------------------------------------------
-

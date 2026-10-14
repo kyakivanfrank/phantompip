@@ -1,12 +1,5 @@
-import {
-  getRedis,
-  attempt,
-  triggerOptimisticBackup,
-  getAllUsers,
-  getUser,
-  updateSubscription,
-  mapWithConcurrency,
-} from "./db";
+import { getSupabase } from "./supabase";
+import { getUser } from "./db";
 import { verifyPassword } from "./hashing";
 import { DEFAULT_PAYMENT_SETTINGS, DEFAULT_TELEGRAM_LINK } from "@/lib/constants";
 import { PLANS, PLAN_ORDER, type PlanDefinition, type PlanId } from "@/lib/plans";
@@ -15,16 +8,11 @@ import { PLANS, PLAN_ORDER, type PlanDefinition, type PlanId } from "@/lib/plans
  * Runtime-editable platform settings.
  *
  * The support contact, the payment destinations and the subscription plan
- * details used to live in .env / lib/plans.ts. They now live in Redis so an
- * admin can change them at any time from Admin -> Settings without a redeploy.
- * DEFAULT_TELEGRAM_LINK / DEFAULT_PAYMENT_SETTINGS (lib/constants.ts)
- * and PLANS (lib/plans.ts) are the seed for a database never written to.
+ * details are stored in Supabase Postgres (platform_settings and plans tables)
+ * so an admin can change them at any time from Admin -> Settings without a redeploy.
  *
  * Editing requires the admin to re-enter their own login password.
  */
-
-const SETTINGS_KEY = "system:settings";
-const LEGACY_SUPPORT_CONTACT_KEY = "system:support_contact_number";
 
 /** Plan fields an admin may edit. Ids and marketing flags stay code-owned. */
 export const EDITABLE_PLAN_FIELDS = [
@@ -60,9 +48,7 @@ export const SETTINGS_TEXT_FIELDS = [
 
 export type SettingsTextField = (typeof SETTINGS_TEXT_FIELDS)[number];
 
-const PHONE_FIELDS: SettingsTextField[] = [
-  "telegramSupportLink",
-];
+const PHONE_FIELDS: SettingsTextField[] = ["telegramSupportLink"];
 
 export function normalizeContactNumber(value: string): string {
   return value.replace(/[^\d+\s()-]/g, "").replace(/\s+/g, " ").trim();
@@ -130,49 +116,61 @@ function coercePlans(raw: any, defaults: Record<PlanId, EditablePlan>): Record<P
   return result;
 }
 
-function coerceStored(raw: unknown, defaults: PlatformSettings): PlatformSettings {
-  let parsed: any = raw;
-
-  if (typeof raw === "string") {
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      return { ...defaults };
-    }
-  }
-
-  if (!parsed || typeof parsed !== "object") return { ...defaults };
-
-  const result: PlatformSettings = { ...defaults, plans: defaults.plans };
-
-  for (const field of SETTINGS_TEXT_FIELDS) {
-    const value = parsed[field];
-    if (typeof value === "string" && value.trim()) {
-      result[field] = value.trim();
-    }
-  }
-
-  result.plans = coercePlans(parsed.plans, defaults.plans);
-  return result;
-}
-
 export async function getPlatformSettings(): Promise<PlatformSettings> {
   const defaults = seedDefaults();
 
   try {
-    const redis = getRedis();
-    const stored = await attempt(() => redis.get(SETTINGS_KEY));
-    const settings = coerceStored(stored, defaults);
+    const supabase = getSupabase();
 
-    if (!stored) {
-      // Pre-dates the combined settings key; keep honouring the old standalone value.
-      const legacy = await attempt(() => redis.get(LEGACY_SUPPORT_CONTACT_KEY));
-      if (typeof legacy === "string" && legacy.trim()) {
-        settings.telegramSupportLink = legacy.trim();
+    const [settingsRes, plansRes] = await Promise.all([
+      supabase.from("platform_settings").select("*").eq("id", true).maybeSingle(),
+      supabase.from("plans").select("*"),
+    ]);
+
+    if (settingsRes.error) {
+      console.error("Failed to read platform_settings from Supabase:", settingsRes.error);
+    }
+
+    const settingsRow = settingsRes.data;
+    const plansRows = plansRes.data || [];
+
+    const result: PlatformSettings = { ...defaults, plans: { ...defaults.plans } };
+
+    if (settingsRow) {
+      if (settingsRow.telegram_support_link !== null && settingsRow.telegram_support_link !== undefined) {
+        result.telegramSupportLink = String(settingsRow.telegram_support_link);
+      }
+      if (settingsRow.crypto_btc_address !== null && settingsRow.crypto_btc_address !== undefined) {
+        result.cryptoBtcAddress = String(settingsRow.crypto_btc_address);
+      }
+      if (settingsRow.crypto_bep20_address !== null && settingsRow.crypto_bep20_address !== undefined) {
+        result.cryptoBep20Address = String(settingsRow.crypto_bep20_address);
+      }
+      if (settingsRow.crypto_erc20_address !== null && settingsRow.crypto_erc20_address !== undefined) {
+        result.cryptoErc20Address = String(settingsRow.crypto_erc20_address);
+      }
+      if (settingsRow.activation_fee !== null && settingsRow.activation_fee !== undefined) {
+        result.activationFee = String(settingsRow.activation_fee);
       }
     }
 
-    return settings;
+    if (plansRows.length > 0) {
+      const storedPlans: Record<string, any> = {};
+      for (const row of plansRows) {
+        storedPlans[row.id] = {
+          name: row.name,
+          price: Number(row.price),
+          description: row.description,
+          recommendedAccount: row.recommended_account,
+          bestFor: row.best_for,
+          expectedProfit: row.expected_profit,
+          features: row.features,
+        };
+      }
+      result.plans = coercePlans(storedPlans, defaults.plans);
+    }
+
+    return result;
   } catch (error) {
     console.error("Failed to read platform settings:", error);
     return defaults;
@@ -216,9 +214,38 @@ export async function savePlatformSettings(
     next.plans = coercePlans(updates.plans, current.plans);
   }
 
-  const redis = getRedis();
-  await attempt(() => redis.set(SETTINGS_KEY, JSON.stringify(next)));
-  triggerOptimisticBackup();
+  const supabase = getSupabase();
+
+  const settingsPayload = {
+    telegram_support_link: next.telegramSupportLink,
+    crypto_btc_address: next.cryptoBtcAddress,
+    crypto_bep20_address: next.cryptoBep20Address,
+    crypto_erc20_address: next.cryptoErc20Address,
+    activation_fee: next.activationFee,
+  };
+
+  const plansPayload: Record<string, any> = {};
+  for (const [id, plan] of Object.entries(next.plans)) {
+    plansPayload[id] = {
+      name: plan.name,
+      price: plan.price,
+      description: plan.description,
+      recommendedAccount: plan.recommendedAccount,
+      bestFor: plan.bestFor,
+      expectedProfit: plan.expectedProfit,
+      features: plan.features,
+    };
+  }
+
+  const { error } = await supabase.rpc("app_save_settings", {
+    p_settings: settingsPayload,
+    p_plans: plansPayload,
+  });
+
+  if (error) {
+    throw new Error(`Failed to save platform settings: ${error.message}`);
+  }
+
   return next;
 }
 
@@ -231,26 +258,16 @@ export async function applyPlanRenames(renames: Record<string, string>): Promise
   const pairs = Object.entries(renames).filter(([from, to]) => from && to && from !== to);
   if (!pairs.length) return 0;
 
-  const lookup = new Map(pairs);
-  const index = await getAllUsers();
+  const supabase = getSupabase();
+  const { data, error } = await supabase.rpc("app_rename_plans", {
+    p_renames: renames,
+  });
 
-  const updated = await mapWithConcurrency(
-    index.filter((entry) => !entry.isAdmin),
-    async (entry) => {
-      const user = await getUser(entry.userId);
-      const currentName = user?.subscription?.planName;
-      if (!currentName) return 0;
+  if (error) {
+    throw new Error(`Failed to apply plan renames: ${error.message}`);
+  }
 
-      const newName = lookup.get(currentName);
-      if (!newName) return 0;
-
-      await updateSubscription(entry.userId, { planName: newName });
-      return 1;
-    },
-    8
-  );
-
-  return updated.reduce<number>((total, n) => total + n, 0);
+  return typeof data === "number" ? data : 0;
 }
 
 /**

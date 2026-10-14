@@ -17,8 +17,8 @@ export function validateEnvironment(): EnvironmentValidation {
 
   // Required variables for production
   const requiredVars = [
-    "UPSTASH_REDIS_REST_URL",
-    "UPSTASH_REDIS_REST_TOKEN",
+    "SUPABASE_URL",
+    "SUPABASE_SERVICE_ROLE_KEY",
     "ENCRYPTION_KEY",
   ];
 
