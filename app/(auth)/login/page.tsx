@@ -88,18 +88,6 @@ export default function LoginPage() {
           </motion.div>
         )}
 
-        {/* Deleted Account Notice */}
-        {deletedNotice && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="mt-4 rounded-md ring-1 ring-amber-500/30 bg-amber-500/10 p-3"
-          >
-            <p className="text-xs text-amber-400 font-medium">
-              Your account has been deleted or is no longer active. You have been securely logged out.
-            </p>
-          </motion.div>
-        )}
 
         {/* Dynamic Forgot Password / Support Message */}
         <AnimatePresence>
@@ -199,8 +187,8 @@ export default function LoginPage() {
       </div>
 
       <div className="mt-8 flex justify-center">
-        <Link 
-          href="/signup" 
+        <Link
+          href="/signup"
           className="group inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-medium text-[--text-2] bg-white/[0.05] shadow-[inset_0_1px_0_rgba(255,255,255,.07),0_0_0_1px_rgba(255,255,255,.10)] transition-all duration-150 hover:text-white hover:bg-indigo-500/10 hover:shadow-[inset_0_1px_0_rgba(255,255,255,.08),0_0_0_1px_rgba(99,102,241,.35)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70"
         >
           <span>No account?</span>
