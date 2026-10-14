@@ -1,4 +1,4 @@
-import { getSupabase } from "./supabase";
+import { executeRead, executeWrite } from "./supabase";
 import { getUser } from "./db";
 import { verifyPassword } from "./hashing";
 import { DEFAULT_PAYMENT_SETTINGS, DEFAULT_TELEGRAM_LINK } from "@/lib/constants";
@@ -120,57 +120,57 @@ export async function getPlatformSettings(): Promise<PlatformSettings> {
   const defaults = seedDefaults();
 
   try {
-    const supabase = getSupabase();
+    return await executeRead("getPlatformSettings", async (supabase) => {
+      const [settingsRes, plansRes] = await Promise.all([
+        supabase.from("platform_settings").select("*").eq("id", true).maybeSingle(),
+        supabase.from("plans").select("*"),
+      ]);
 
-    const [settingsRes, plansRes] = await Promise.all([
-      supabase.from("platform_settings").select("*").eq("id", true).maybeSingle(),
-      supabase.from("plans").select("*"),
-    ]);
-
-    if (settingsRes.error) {
-      console.error("Failed to read platform_settings from Supabase:", settingsRes.error);
-    }
-
-    const settingsRow = settingsRes.data;
-    const plansRows = plansRes.data || [];
-
-    const result: PlatformSettings = { ...defaults, plans: { ...defaults.plans } };
-
-    if (settingsRow) {
-      if (settingsRow.telegram_support_link !== null && settingsRow.telegram_support_link !== undefined) {
-        result.telegramSupportLink = String(settingsRow.telegram_support_link);
+      if (settingsRes.error) {
+        console.error("Failed to read platform_settings from Supabase:", settingsRes.error);
       }
-      if (settingsRow.crypto_btc_address !== null && settingsRow.crypto_btc_address !== undefined) {
-        result.cryptoBtcAddress = String(settingsRow.crypto_btc_address);
-      }
-      if (settingsRow.crypto_bep20_address !== null && settingsRow.crypto_bep20_address !== undefined) {
-        result.cryptoBep20Address = String(settingsRow.crypto_bep20_address);
-      }
-      if (settingsRow.crypto_erc20_address !== null && settingsRow.crypto_erc20_address !== undefined) {
-        result.cryptoErc20Address = String(settingsRow.crypto_erc20_address);
-      }
-      if (settingsRow.activation_fee !== null && settingsRow.activation_fee !== undefined) {
-        result.activationFee = String(settingsRow.activation_fee);
-      }
-    }
 
-    if (plansRows.length > 0) {
-      const storedPlans: Record<string, any> = {};
-      for (const row of plansRows) {
-        storedPlans[row.id] = {
-          name: row.name,
-          price: Number(row.price),
-          description: row.description,
-          recommendedAccount: row.recommended_account,
-          bestFor: row.best_for,
-          expectedProfit: row.expected_profit,
-          features: row.features,
-        };
-      }
-      result.plans = coercePlans(storedPlans, defaults.plans);
-    }
+      const settingsRow = settingsRes.data;
+      const plansRows = plansRes.data || [];
 
-    return result;
+      const result: PlatformSettings = { ...defaults, plans: { ...defaults.plans } };
+
+      if (settingsRow) {
+        if (settingsRow.telegram_support_link !== null && settingsRow.telegram_support_link !== undefined) {
+          result.telegramSupportLink = String(settingsRow.telegram_support_link);
+        }
+        if (settingsRow.crypto_btc_address !== null && settingsRow.crypto_btc_address !== undefined) {
+          result.cryptoBtcAddress = String(settingsRow.crypto_btc_address);
+        }
+        if (settingsRow.crypto_bep20_address !== null && settingsRow.crypto_bep20_address !== undefined) {
+          result.cryptoBep20Address = String(settingsRow.crypto_bep20_address);
+        }
+        if (settingsRow.crypto_erc20_address !== null && settingsRow.crypto_erc20_address !== undefined) {
+          result.cryptoErc20Address = String(settingsRow.crypto_erc20_address);
+        }
+        if (settingsRow.activation_fee !== null && settingsRow.activation_fee !== undefined) {
+          result.activationFee = String(settingsRow.activation_fee);
+        }
+      }
+
+      if (plansRows.length > 0) {
+        const storedPlans: Record<string, any> = {};
+        for (const row of plansRows) {
+          storedPlans[row.id] = {
+            name: row.name,
+            price: Number(row.price),
+            description: row.description,
+            recommendedAccount: row.recommended_account,
+            bestFor: row.best_for,
+            expectedProfit: row.expected_profit,
+            features: row.features,
+          };
+        }
+        result.plans = coercePlans(storedPlans, defaults.plans);
+      }
+
+      return result;
+    });
   } catch (error) {
     console.error("Failed to read platform settings:", error);
     return defaults;
@@ -214,8 +214,6 @@ export async function savePlatformSettings(
     next.plans = coercePlans(updates.plans, current.plans);
   }
 
-  const supabase = getSupabase();
-
   const settingsPayload = {
     telegram_support_link: next.telegramSupportLink,
     crypto_btc_address: next.cryptoBtcAddress,
@@ -237,16 +235,18 @@ export async function savePlatformSettings(
     };
   }
 
-  const { error } = await supabase.rpc("app_save_settings", {
-    p_settings: settingsPayload,
-    p_plans: plansPayload,
+  return await executeWrite("savePlatformSettings", async (supabase) => {
+    const { error } = await supabase.rpc("app_save_settings", {
+      p_settings: settingsPayload,
+      p_plans: plansPayload,
+    });
+
+    if (error) {
+      throw new Error(`Failed to save platform settings: ${error.message}`);
+    }
+
+    return next;
   });
-
-  if (error) {
-    throw new Error(`Failed to save platform settings: ${error.message}`);
-  }
-
-  return next;
 }
 
 /**
@@ -258,16 +258,17 @@ export async function applyPlanRenames(renames: Record<string, string>): Promise
   const pairs = Object.entries(renames).filter(([from, to]) => from && to && from !== to);
   if (!pairs.length) return 0;
 
-  const supabase = getSupabase();
-  const { data, error } = await supabase.rpc("app_rename_plans", {
-    p_renames: renames,
+  return await executeWrite("applyPlanRenames", async (supabase) => {
+    const { data, error } = await supabase.rpc("app_rename_plans", {
+      p_renames: renames,
+    });
+
+    if (error) {
+      throw new Error(`Failed to apply plan renames: ${error.message}`);
+    }
+
+    return typeof data === "number" ? data : 0;
   });
-
-  if (error) {
-    throw new Error(`Failed to apply plan renames: ${error.message}`);
-  }
-
-  return typeof data === "number" ? data : 0;
 }
 
 /**
