@@ -7,6 +7,7 @@ import { LogOut, Home, Settings, User, ChevronDown } from 'lucide-react';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { ToastProvider } from '@/components/Toast';
 import { SessionWatcher } from '@/components/SessionWatcher';
+import { BackToTop } from '@/components/BackToTop';
 
 const NAV_LINKS = [
   { href: '/dashboard', label: 'Dashboard', icon: Home, exact: true },
@@ -203,13 +204,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </header>
 
           {/* Main Content */}
-          <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 p-4 sm:p-6 md:p-8">
+          <main
+            id="dashboard-main-scroll"
+            className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 p-4 sm:p-6 md:p-8 scroll-smooth"
+          >
             <div className="max-w-7xl mx-auto w-full pb-24 md:pb-8">
               {children}
             </div>
           </main>
         </div>
 
+        <BackToTop targetId="dashboard-main-scroll" accent="cyan" />
         <MobileBottomNav userData={userData} onLogout={handleLogout} />
 
 

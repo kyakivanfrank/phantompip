@@ -7,6 +7,7 @@ import { LogOut, Users, CreditCard, Key, TrendingUp, ChevronDown, CheckCircle, S
 import { AdminMobileBottomNav } from '@/components/AdminMobileBottomNav';
 import { ToastProvider } from '@/components/Toast';
 import { SessionWatcher } from '@/components/SessionWatcher';
+import { AdminBackToTop } from '@/components/AdminBackToTop';
 
 const NAV_LINKS = [
   { href: '/admin', label: 'Dashboard', icon: TrendingUp, exact: true },
@@ -23,6 +24,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [userData, setUserData] = useState<any>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (mainRef.current) {
+      mainRef.current.scrollTop = 0;
+    }
+  }, [pathname]);
 
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include', cache: 'no-store' })
@@ -160,11 +168,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
           </header>
 
-          <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 p-4 sm:p-6 md:p-8 bg-dark">
+          <main
+            id="admin-main-scroll"
+            ref={mainRef}
+            className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 p-4 sm:p-6 md:p-8 bg-dark scroll-smooth"
+          >
             <div className="max-w-7xl mx-auto w-full">{children}</div>
           </main>
         </div>
 
+        <AdminBackToTop targetRef={mainRef} />
         <AdminMobileBottomNav />
       </div>
     </ToastProvider>
