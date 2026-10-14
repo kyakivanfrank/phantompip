@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
@@ -13,16 +13,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [deletedNotice, setDeletedNotice] = useState(false);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('deleted') === 'true') {
-        setDeletedNotice(true);
-      }
-    }
-  }, []);
+
 
   // Visibility states
   const [showPassword, setShowPassword] = useState(false);
