@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       site_url:
-        description: 'Target Vercel URL (e.g. https://phantompip.vercel.app). Leave empty to use GitHub Secret/Variable SITE_URL'
+        description: 'Target Site URL (leave empty to use default: https://phantompip.com)'
         required: false
-        default: ''
+        default: 'https://phantompip.com'
 
 jobs:
   cleanup:
@@ -23,10 +23,10 @@ jobs:
           VAR_URL: ${{ vars.SITE_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
-          TARGET="${INPUT_URL:-${SECRET_URL:-$VAR_URL}}"
+          TARGET="${INPUT_URL:-${SECRET_URL:-${VAR_URL:-https://phantompip.com}}}"
 
           if [ -z "$TARGET" ]; then
-            echo "::error::No site URL provided! Please set 'SITE_URL' in GitHub repository Secrets or Variables (e.g. https://your-project.vercel.app)."
+            echo "::error::No site URL provided! Please set 'SITE_URL' in GitHub repository Secrets or Variables."
             exit 1
           fi
 

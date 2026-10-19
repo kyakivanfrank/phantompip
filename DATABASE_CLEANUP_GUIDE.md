@@ -797,11 +797,11 @@ Because Vercel's Hobby (Free) tier restricts cron jobs to once per day and limit
 - **Independence**: Runs completely in this repository without depending on other projects.
 - **Zero Cost**: Takes ~5 seconds per run (consuming under 8 minutes/month of GitHub's 2,000 free monthly minutes).
 
-#### Quick Setup in GitHub:
+- **Pre-Configured Default URL**: `https://phantompip.com` is already pre-configured in the workflow, so it runs automatically without requiring manual setup!
+
+#### Optional Configuration:
 1. In your GitHub repository, go to **Settings** -> **Secrets and variables** -> **Actions**.
-2. Under **Variables** (or Secrets), click **New repository variable**:
-   - **Name**: `SITE_URL`
-   - **Value**: Your live deployment URL (e.g. `https://phantompip.vercel.app`)
+2. If you ever need to override the URL, create a repository variable `SITE_URL`.
 3. *(Optional)* If you set a `CRON_SECRET` in Vercel environment variables, add it under **Repository secrets**:
    - **Name**: `CRON_SECRET`
    - **Value**: Your secret string
