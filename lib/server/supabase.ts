@@ -55,7 +55,14 @@ export function getPrimaryClient(): SupabaseClient {
 export function getBackupClient(): SupabaseClient | null {
   if (!backupClient) {
     const { url, serviceKey } = getBackupConfig();
-    if (!url || !serviceKey) {
+    const primaryConfig = getPrimaryConfig();
+    if (
+      !url ||
+      !serviceKey ||
+      !url.trim() ||
+      !serviceKey.trim() ||
+      url.trim() === primaryConfig.url?.trim()
+    ) {
       return null;
     }
 
