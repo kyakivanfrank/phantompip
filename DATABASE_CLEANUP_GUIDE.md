@@ -790,14 +790,22 @@ node scripts/remove_unauthorized_admins.mjs
 
 ## 5. Automated 8-Hour Maintenance Options
 
-### Option A: Cloud Production via Vercel Cron (Recommended)
-Because `vercel.json` contains:
-```json
-"crons": [{ "path": "/api/admin/cron-cleanup", "schedule": "0 */8 * * *" }]
-```
-Once deployed to Vercel, Vercel automatically sends an HTTP request every 8 hours to `/api/admin/cron-cleanup`. 
-- No background terminal or server process needed.
-- If you set `CRON_SECRET` in your environment variables, Vercel automatically passes `Authorization: Bearer <CRON_SECRET>` to authenticate the request.
+### Option A: Cloud Automation via GitHub Actions (100% Free & Unlimited)
+Because Vercel's Hobby (Free) tier restricts cron jobs to once per day and limits total crons across projects, automated cleanup is handled by a scheduled GitHub Actions workflow in `.github/workflows/cleanup-cron.yml`.
+
+- **Schedule**: Automatically runs every 8 hours (`0 */8 * * *`) at 00:00, 08:00, and 16:00 UTC.
+- **Independence**: Runs completely in this repository without depending on other projects.
+- **Zero Cost**: Takes ~5 seconds per run (consuming under 8 minutes/month of GitHub's 2,000 free monthly minutes).
+
+#### Quick Setup in GitHub:
+1. In your GitHub repository, go to **Settings** -> **Secrets and variables** -> **Actions**.
+2. Under **Variables** (or Secrets), click **New repository variable**:
+   - **Name**: `SITE_URL`
+   - **Value**: Your live deployment URL (e.g. `https://phantompip.vercel.app`)
+3. *(Optional)* If you set a `CRON_SECRET` in Vercel environment variables, add it under **Repository secrets**:
+   - **Name**: `CRON_SECRET`
+   - **Value**: Your secret string
+4. **Manual Run**: You can also manually trigger the cleanup anytime by going to **Actions** -> **Automated Database Cleanup (8-Hour)** -> **Run workflow**.
 
 ### Option B: Local or VPS Continuous Daemon
 If running locally, on a VPS, or in a Docker container, start the standby daemon:

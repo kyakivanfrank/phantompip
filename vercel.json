@@ -1,11 +1,5 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
-  "framework": "nextjs",
-  "crons": [
-    {
-      "path": "/api/admin/cron-cleanup",
-      "schedule": "0 */8 * * *"
-    }
-  ]
+  "framework": "nextjs"
 }
