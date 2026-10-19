@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "users:audit": "node scripts/analyze_users.mjs",
+    "users:cleanup:dry": "node scripts/cleanup_inactive_users.mjs",
+    "users:cleanup:dry-8h": "node scripts/cleanup_inactive_users.mjs --older-than-hours=8",
+    "users:cleanup:execute": "node scripts/cleanup_inactive_users.mjs --execute",
+    "users:cleanup:daemon": "node scripts/cleanup_inactive_users.mjs --execute --daemon"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.0",

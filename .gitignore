@@ -50,5 +50,6 @@ cloudflared.exe
 forget_list.txt
 
 # Snapshots & DB exports
-upstash-snapshot/
 *.bak
+.playwright-mcp/
+*.tsbuildinfo
