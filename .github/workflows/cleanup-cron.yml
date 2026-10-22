@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       site_url:
-        description: 'Target Site URL (leave empty to use default: https://phantompip.com)'
+        description: 'Target Site URL (leave empty to use default: https://www.phantompip.com)'
         required: false
-        default: 'https://phantompip.com'
+        default: 'https://www.phantompip.com'
 
 jobs:
   cleanup:
@@ -23,7 +23,7 @@ jobs:
           VAR_URL: ${{ vars.SITE_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
-          TARGET="${INPUT_URL:-${SECRET_URL:-${VAR_URL:-https://phantompip.com}}}"
+          TARGET="${INPUT_URL:-${SECRET_URL:-${VAR_URL:-https://www.phantompip.com}}}"
 
           if [ -z "$TARGET" ]; then
             echo "::error::No site URL provided! Please set 'SITE_URL' in GitHub repository Secrets or Variables."
@@ -40,7 +40,7 @@ jobs:
             AUTH_HEADER="Authorization: Bearer $CRON_SECRET"
           fi
 
-          HTTP_RESPONSE=$(curl -s -S -w "\nHTTP_STATUS:%{http_code}" -X POST "$ENDPOINT" \
+          HTTP_RESPONSE=$(curl -s -S -L --max-time 30 --retry 2 --retry-delay 5 -w "\nHTTP_STATUS:%{http_code}" -X POST "$ENDPOINT" \
             ${AUTH_HEADER:+-H "$AUTH_HEADER"} \
             -H "User-Agent: github-actions-cron" \
             -H "Content-Type: application/json")
